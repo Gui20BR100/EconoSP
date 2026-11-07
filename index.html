@@ -36,29 +36,26 @@
     <!-- Métricas rápidas no header -->
     <div class="quick-stats-bar">
       <div class="stat-item danger">
-        <strong id="statTollsCount">14 Pedágios</strong>
+        <strong id="statTollsCount">... Pedágios</strong>
       </div>
       <div class="stat-item radar">
-        <strong id="statRadarsCount">11 Radares</strong>
+        <strong id="statRadarsCount">... Radares</strong>
       </div>
-      <div class="stat-item waze-stat">
-        <strong id="statWazeCount">36 Ocorrências</strong>
+      <div class="stat-item gas-stat">
+        <strong id="statGasCount">... Postos</strong>
       </div>
     </div>
 
     <!-- Botões de Ação do Header -->
     <div class="header-actions">
-      <button id="btnToggleDrawer" class="btn-header drawer-toggle-btn" title="Abrir ou fechar painel de Ocorrências, Custos e Rodízio">
-        Ocorrências e Rodízio
+      <button id="btnToggleDrawer" class="btn-header drawer-toggle-btn" title="Abrir ou fechar painel de Pedágios, Radares, Custos e Rodízio">
+        Painel Rodoviário
       </button>
       <button id="btnOpenAuth" class="btn-header auth-btn" title="Entrar na sua conta ou cadastrar novo perfil">
         Entrar / Criar Conta
       </button>
       <button id="btnLogoutHeader" class="btn-header logout-btn" style="display: none;" title="Sair da conta atual">
         Sair
-      </button>
-      <button id="btnReportWaze" class="btn-header waze-btn" title="Registrar ocorrência de trânsito, obra ou risco na via">
-        Registrar Alerta
       </button>
       <button id="btnToggleAudio" class="btn-header" title="Ativar ou desativar avisos sonoros">
         Som: Ativo
@@ -126,15 +123,15 @@
             </button>
           </div>
 
-          <!-- BARRA DE MONITORAMENTO VIÁRIO NO TRAJETO ATUAL -->
-          <div id="routeWazeAlertsBar" class="route-waze-bar" title="Ocorrências de segurança, tráfego e obras no trajeto">
+          <!-- BARRA DE FISCALIZAÇÃO E TARIFAS NO TRAJETO ATUAL -->
+          <div id="routeWazeAlertsBar" class="route-waze-bar" title="Tarifas de pedágio e radares monitorados na rota">
             <div class="waze-bar-header">
               <div class="waze-bar-title-wrap">
                 <span class="waze-live-dot"></span>
-                <strong id="wazeRouteTitle">Monitoramento da Via:</strong>
-                <span id="wazeRouteStats">Analisando ocorrências...</span>
+                <strong id="wazeRouteTitle">Pedágios & Radares:</strong>
+                <span id="wazeRouteStats">Calculando fiscalização e tarifas...</span>
               </div>
-              <button id="btnToggleWazeList" class="btn-waze-expand" title="Exibir detalhes das ocorrências">Detalhes</button>
+              <button id="btnToggleWazeList" class="btn-waze-expand" title="Exibir lista de pontos no trajeto">Ver Detalhes</button>
             </div>
             <div id="wazeRouteDetails" class="waze-bar-details">
               <!-- Inserido dinamicamente via JS -->
@@ -147,7 +144,6 @@
             <div class="filter-chip onroute" data-category="route">Na Rota</div>
             <div class="filter-chip toll" data-category="toll">Pedágios</div>
             <div class="filter-chip radar" data-category="radar">Radares</div>
-            <div class="filter-chip waze" data-category="waze">Ocorrências</div>
             <div class="filter-chip gas" data-category="gas">Postos</div>
           </div>
         </div>
@@ -171,8 +167,8 @@
         </div>
 
         <!-- ABA RETRÁTIL NA BORDA DO MAPA PARA ABRIR / FECHAR O PAINEL -->
-        <button id="btnMapDrawerHandle" class="map-drawer-handle" type="button" title="Abrir ou fechar painel de Ocorrências e Rodízio">
-          <span id="drawerHandleLabel">Fechar Painel (Ocorrências e Rodízio)</span>
+        <button id="btnMapDrawerHandle" class="map-drawer-handle" type="button" title="Abrir ou fechar painel lateral">
+          <span id="drawerHandleLabel">Fechar Painel (Pedágios e Rodízio)</span>
         </button>
 
         <!-- HUD FLUTUANTE DO MODO SIMULAÇÃO DE VIAGEM -->
@@ -195,7 +191,7 @@
     <!-- PAINEL LATERAL RETRÁTIL (PODE SER ABERTO E FECHADO) -->
     <aside class="app-sidebar" id="appSidebar">
       <div class="sidebar-top-bar">
-        <span class="sidebar-top-title">Painel de Ocorrências, Custos e Rodízio</span>
+        <span class="sidebar-top-title">Pedágios, Radares, Custos e Rodízio</span>
         <button id="btnCloseSidebar" class="btn-close-sidebar" type="button" title="Fechar painel lateral">
           Fechar
         </button>
@@ -203,8 +199,8 @@
 
       <nav class="sidebar-tabs">
         <button class="tab-btn active" data-tab="points">
-          <span>Ocorrências</span>
-          <span class="tab-badge">Alertas e Vias</span>
+          <span>Pedágios & Radares</span>
+          <span class="tab-badge">Mapeamento SP</span>
         </button>
         <button class="tab-btn" data-tab="tips">
           <span>Rodízio e Normas</span>
@@ -218,10 +214,10 @@
 
       <div class="sidebar-content">
         
-        <!-- ABA 1: LISTAGEM DE PONTOS, RADARES, PEDÁGIOS E OCORRÊNCIAS -->
+        <!-- ABA 1: LISTAGEM DE PEDÁGIOS, RADARES E POSTOS -->
         <div id="tab-points" class="tab-pane">
           <div class="search-box">
-            <input type="text" id="searchPointsInput" placeholder="Filtrar por rodovia, km, pedágio, radar ou ocorrência...">
+            <input type="text" id="searchPointsInput" placeholder="Filtrar por rodovia, km, praça de pedágio ou limite de radar...">
           </div>
 
           <div id="pointsList" class="points-list">
@@ -371,7 +367,7 @@
       <span class="mobile-nav-label">Mapa</span>
     </button>
     <button type="button" class="mobile-nav-btn" data-mobile-target="points">
-      <span class="mobile-nav-label">Ocorrências</span>
+      <span class="mobile-nav-label">Pedágios & Radares</span>
     </button>
     <button type="button" class="mobile-nav-btn" data-mobile-target="tips">
       <span class="mobile-nav-label">Rodízio</span>

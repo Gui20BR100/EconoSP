@@ -1,4 +1,4 @@
-/**
+﻿/**
  * EconoSP - Sistema de Rotas, Pedágios e Monitoramento Rodoviário
  * Base do mapa: OpenStreetMap + Esri
  * Rotas pelas Ruas: Traçados reais conectados às avenidas e rodovias via OSRM Engine
@@ -183,884 +183,1430 @@ function lookupVehicleByPlate(rawPlate) {
 }
 
 // ================= MEGA BANCO DE DADOS: PONTOS, RADARES, PEDÁGIOS E WAZE REAL =================
+// Mega Base de Dados Atualizada do EconoSP: Pedágios Oficiais, Radares Fixos e Postos
 const POINTS_DATA = [
-  // 1. ÁREAS DE RISCO / ASSALTO (WAZE HAZARD)
+  // ================= 1. PRAÇAS DE PEDÁGIO OFICIAIS DE SÃO PAULO =================
+  // Sistema Anchieta-Imigrantes (Ecovias)
   {
-    id: "waze-hz-01",
-    name: "Área de Risco: Ponte das Bandeiras / Saída Marginal Tietê",
-    highway: "Marginal Tietê (km 0 / Acesso Dutra e Ayrton Senna)",
-    km: "km 0",
-    category: "waze_hazard",
-    lat: -23.5180,
-    lng: -46.6280,
-    wazeType: "Assalto / Quebra de Vidro",
-    desc: "Ataques com pedras e quebra de vidros em semáforos e acessos noturnos. Celular fora de vista!",
-    dangerTip: "PERIGO: Mantenha vidros totalmente fechados e não pare em acostamentos no trecho urbano.",
-    economyTip: "Evite transitar de madrugada com bolsas à mostra."
-  },
-  {
-    id: "waze-hz-02",
-    name: "Área de Risco: Semáforos Av. do Estado / Tamanduateí",
-    highway: "Av. do Estado (km 4 - Acesso Anchieta/Imigrantes)",
-    km: "km 4",
-    category: "waze_hazard",
-    lat: -23.5650,
-    lng: -46.6120,
-    wazeType: "Arrastão / Abordagem em Semáforo",
-    desc: "Histórico de abordagens rápidas por motocicletas sem placa com garupa nos cruzamentos.",
-    dangerTip: "Mantenha o veículo sempre engatado e distância de 3 metros do carro da frente.",
-    economyTip: "Use as faixas centrais de vias expressas."
-  },
-  {
-    id: "waze-hz-03",
-    name: "Área de Risco: Trecho Urbano Dutra km 222 (Guarulhos/Cumbica)",
-    highway: "BR-116 Presidente Dutra",
-    km: "km 222",
-    category: "waze_hazard",
-    lat: -23.4680,
-    lng: -46.4950,
-    wazeType: "Assalto no Acostamento Escuro",
-    desc: "Assaltos a motoristas parados com pneu furado ou falha mecânica à noite.",
-    dangerTip: "Se o pneu furar, rode devagar sobre a roda até o posto de combustível iluminado mais próximo.",
-    economyTip: "Calibre com rigor os pneus antes de pegar a Dutra."
-  },
-  {
-    id: "waze-hz-04",
-    name: "Área de Risco: Pé da Serra / Piaçaguera em Cubatão",
-    highway: "SP-055 / Conexão Anchieta-Imigrantes",
-    km: "km 58",
-    category: "waze_hazard",
-    lat: -23.8850,
-    lng: -46.4150,
-    wazeType: "Assalto na Pista Lenta",
-    desc: "Pedestres armados abordando veículos em lentidão nas alças de acesso a Cubatão e Santos.",
-    dangerTip: "Siga direto pelas pistas centrais expressas sem entrar em alças desertas.",
-    economyTip: "Faça paradas somente em postos de serviço estruturados."
-  },
-  {
-    id: "waze-hz-05",
-    name: "Área de Risco: Raposo Tavares km 14 (Butantã / Rio Pequeno)",
-    highway: "SP-270 Raposo Tavares",
-    km: "km 14",
-    category: "waze_hazard",
-    lat: -23.5780,
-    lng: -46.7450,
-    wazeType: "Furto em Semáforo",
-    desc: "Aproximação de suspeitos no trânsito lento de saída da capital.",
-    dangerTip: "Travas elétricas acionadas e bolsas obrigatoriamente no assoalho do veículo.",
-    economyTip: "Mantenha velocidade constante para fugir de paradas desnecessárias."
-  },
-  {
-    id: "waze-hz-06",
-    name: "Área de Risco: Imigrantes km 12 (Diadema / Campanário)",
-    highway: "SP-160 Imigrantes",
-    km: "km 12",
-    category: "waze_hazard",
-    lat: -23.6680,
-    lng: -46.6250,
-    wazeType: "Pedrada de Passarela / Assalto",
-    desc: "Casos de arremesso de objetos de passarelas para forçar o motorista a parar no acostamento.",
-    dangerTip: "Se atingido, NUNCA pare imediatamente! Prossiga até o Posto da Polícia Rodoviária no km 28.",
-    economyTip: "Transite pelas faixas centrais longe do acostamento."
-  },
-  {
-    id: "waze-hz-07",
-    name: "Área de Risco: Ayrton Senna km 28 (Itaquaquecetuba)",
-    highway: "SP-070 Ayrton Senna",
-    km: "km 28",
-    category: "waze_hazard",
-    lat: -23.4620,
-    lng: -46.3680,
-    wazeType: "Abordagem no Acostamento Noturno",
-    desc: "Trecho ermo após o pedágio com histórico de tentativas de abordagem a carros parados.",
-    dangerTip: "Em pane, acione imediatamente o 0800 da concessionária Ecopistas.",
-    economyTip: "Revise a bateria antes de viajar."
-  },
-  {
-    id: "waze-hz-08",
-    name: "Área de Risco: Fernão Dias km 84 (Parque Novo Mundo)",
-    highway: "BR-381 Fernão Dias",
-    km: "km 84",
-    category: "waze_hazard",
-    lat: -23.4980,
-    lng: -46.5680,
-    wazeType: "Furtos Rápidos no Trânsito",
-    desc: "Indivíduos a pé aproveitam filas matinais para quebrar vidros laterais.",
-    dangerTip: "Não utilize celular em suportes colados no para-brisa nesta região.",
-    economyTip: "Planeje a saída para antes das 06h30."
-  },
-  {
-    id: "waze-hz-09",
-    name: "Área de Risco: Rodoanel Sul km 56 (Parelheiros)",
-    highway: "SP-021 Rodoanel Mário Covas",
-    km: "km 56",
-    category: "waze_hazard",
-    lat: -23.7850,
-    lng: -46.6850,
-    wazeType: "Arremesso de Pedras Noturno",
-    desc: "Trecho sem iluminação artificial com risco no acostamento após às 21h.",
-    dangerTip: "Utilize faróis baixos com foco limpo e não desça do carro no acostamento.",
-    economyTip: "Use o Rodoanel durante a luz do dia para evitar multas de rodízio."
-  },
-  {
-    id: "waze-hz-10",
-    name: "Área de Risco: Tamoios km 18 (Trevo São José dos Campos)",
-    highway: "SP-099 Rodovia dos Tamoios",
-    km: "km 18",
-    category: "waze_hazard",
-    lat: -23.2350,
-    lng: -45.8620,
-    wazeType: "Aproximação em Semáforo",
-    desc: "Cruzamentos no trecho inicial de São José dos Campos com pedintes e abordagens.",
-    dangerTip: "Mantenha portas travadas.",
-    economyTip: "Prefira abastecer nos grandes postos da rodovia Carvalho Pinto antes."
-  },
-
-  // 2. TRÂNSITO PESADO E LENTIDÃO (WAZE JAM)
-  {
-    id: "waze-jm-01",
-    name: "Lentidão Pesada: Planalto e Descida da Imigrantes",
-    highway: "SP-160 Imigrantes",
-    km: "km 42 ao km 54",
-    category: "waze_jam",
-    lat: -23.8750,
-    lng: -46.5250,
-    delay: "+45 min",
-    delayMinutes: 45,
-    desc: "Congestionamento intenso nos finais de semana e feriados no funil de descida da serra.",
-    dangerTip: "Atenção a freadas bruscas. Mantenha 40 metros do veículo à frente.",
-    economyTip: "Descendo no freio-motor (engatado), a injeção eletrônica reduz o consumo a ZERO!"
-  },
-  {
-    id: "waze-jm-02",
-    name: "Trânsito Intenso: Serra Velha da Anchieta",
-    highway: "SP-150 Anchieta",
-    km: "km 45 ao km 52",
-    category: "waze_jam",
-    lat: -23.8550,
-    lng: -46.5050,
-    delay: "+30 min",
-    delayMinutes: 30,
-    desc: "Lentidão provocada por caminhões pesados em comboio e pista molhada nas curvas.",
-    dangerTip: "Proibido ultrapassar em curvas cegas.",
-    economyTip: "Economize abastecendo antes em São Bernardo do Campo com Etanol a R$ 3,49."
-  },
-  {
-    id: "waze-jm-03",
-    name: "Lentidão Pesada: Afunilamento de Jundiaí (Anhanguera)",
-    highway: "SP-330 Anhanguera",
-    km: "km 58",
-    category: "waze_jam",
-    lat: -23.1950,
-    lng: -46.9020,
-    delay: "+20 min",
-    delayMinutes: 20,
-    desc: "A rodovia afunila de 3 para 2 faixas no trecho urbano de Jundiaí.",
-    dangerTip: "ATENÇÃO: Radar de 80 km/h bem no afunilamento. Fique atento.",
-    economyTip: "Tire o pé do acelerador com antecedência antes da placa de 80."
-  },
-  {
-    id: "waze-jm-04",
-    name: "Congestionamento: Ayrton Senna Acesso Aeroporto Guarulhos",
-    highway: "SP-070 Ayrton Senna",
-    km: "km 21 ao km 24",
-    category: "waze_jam",
-    lat: -23.4750,
-    lng: -46.4750,
-    delay: "+25 min",
-    delayMinutes: 25,
-    desc: "Retenção diária provocada pelo fluxo para o Aeroporto Internacional e Dutra.",
-    dangerTip: "Fique atento a motos no corredor entre faixas 1 e 2.",
-    economyTip: "Evite aceleradas e freadas constantes para não gastar 30% a mais de combustível."
-  },
-  {
-    id: "waze-jm-05",
-    name: "Trânsito Parado: Dutra Entroncamento Guarulhos",
-    highway: "BR-116 Presidente Dutra",
-    km: "km 212 ao km 218",
-    category: "waze_jam",
-    lat: -23.4650,
-    lng: -46.5200,
-    delay: "+30 min",
-    delayMinutes: 30,
-    desc: "Lentidão crônica nos horários de pico comercial no cruzamento com a Fernão Dias.",
-    dangerTip: "Veículos entrando repentinamente de pistas locais.",
-    economyTip: "Pela Ayrton Senna a pista é mais plana e economiza freios."
-  },
-  {
-    id: "waze-jm-06",
-    name: "Lentidão Crítica: Trevo de Alphaville e Barueri (Castelo)",
-    highway: "SP-280 Castelo Branco",
-    km: "km 21 ao km 26",
-    category: "waze_jam",
-    lat: -23.5050,
-    lng: -46.8650,
-    delay: "+35 min",
-    delayMinutes: 35,
-    desc: "Trânsito pesado com velocidade média abaixo de 20 km/h das 16h às 20h.",
-    dangerTip: "Fila de acesso a Barueri invade a faixa da direita da pista expressa.",
-    economyTip: "A rota alternativa pela Raposo Tavares elimina R$ 20,70 em pedágios e desvia daqui!"
-  },
-  {
-    id: "waze-jm-07",
-    name: "Fila de Espera: Afunilamento de Paraibuna (Tamoios)",
-    highway: "SP-099 Rodovia dos Tamoios",
-    km: "km 62",
-    category: "waze_jam",
-    lat: -23.4150,
-    lng: -45.6850,
-    delay: "+35 min",
-    delayMinutes: 35,
-    desc: "Fila de descida antes do acesso aos novos túneis expressos da serra.",
-    dangerTip: "Velocidade rígida de 80 km/h fiscalizada por radares nos túneis.",
-    economyTip: "Rota Econômica via Mogi-Bertioga foge dos pedágios de R$ 13,20 da Tamoios!"
-  },
-  {
-    id: "waze-jm-08",
-    name: "Congestionamento: Granja Viana e Cotia (Raposo)",
-    highway: "SP-270 Raposo Tavares",
-    km: "km 24 ao km 29",
-    category: "waze_jam",
-    lat: -23.5950,
-    lng: -46.8650,
-    delay: "+40 min",
-    delayMinutes: 40,
-    desc: "Tráfego urbano intenso até ultrapassar o km 34 em Cotia.",
-    dangerTip: "Semáforos frequentes e travessia de pedestres.",
-    economyTip: "Se sair antes das 06h30, a Raposo é totalmente livre e você economiza 2 pedágios."
-  },
-  {
-    id: "waze-jm-09",
-    name: "Lentidão de Praia: Serra da Mogi-Bertioga",
-    highway: "SP-098 Rodovia Mogi-Bertioga",
-    km: "km 82",
-    category: "waze_jam",
-    lat: -23.7850,
-    lng: -46.1650,
-    delay: "+30 min",
-    delayMinutes: 30,
-    desc: "Retenção na descida de serra de pista simples nos fins de semana ensolarados.",
-    dangerTip: "Pista sinuosa. Nunca tente ultrapassar em faixa dupla contínua.",
-    economyTip: "Zero pedágio nesta serra! Economia líquida no bolso."
-  },
-  {
-    id: "waze-jm-10",
-    name: "Tráfego Urbano: Rio-Santos Trecho São Sebastião",
-    highway: "SP-055 Rodovia Rio-Santos",
-    km: "km 112",
-    category: "waze_jam",
-    lat: -23.7950,
-    lng: -45.5650,
-    delay: "+25 min",
-    delayMinutes: 25,
-    desc: "Movimentação intensa de turistas, pedestres e ciclistas na orla.",
-    dangerTip: "Radares de 40 km/h e 50 km/h em travessias urbanas.",
-    economyTip: "Dirija em velocidade constante para economizar."
-  },
-
-  // 3. OBRAS NA PISTA (WAZE WORKS)
-  {
-    id: "waze-wk-01",
-    name: "Obras de Recapeamento: Castelo Branco km 24",
-    highway: "SP-280 Castelo Branco",
-    km: "km 24",
-    category: "waze_works",
-    lat: -23.5080,
-    lng: -46.8850,
-    desc: "Obras de ampliação das pistas marginais de Barueri. Cones e homens na pista.",
-    dangerTip: "Velocidade reduzida para 60 km/h. Multa gravíssima se desrespeitar operários.",
-    economyTip: "Mude com antecedência para as faixas 1 ou 2."
-  },
-  {
-    id: "waze-wk-02",
-    name: "Obras de Contorno: Tamoios km 72 (Caraguatatuba)",
-    highway: "SP-099 / Contorno Sul",
-    km: "km 72",
-    category: "waze_works",
-    lat: -23.5850,
-    lng: -45.4650,
-    desc: "Obras de interligação dos novos contornos de Caraguá e São Sebastião. Meia pista.",
-    dangerTip: "Desvios provisórios com brita solta no asfalto. Cuidado com o para-brisa.",
-    economyTip: "Evite aceleração brusca para não projetar pedras no radiador."
-  },
-  {
-    id: "waze-wk-03",
-    name: "Obras Noturnas: Dutra km 208 (Arujá)",
-    highway: "BR-116 Presidente Dutra",
-    km: "km 208",
-    category: "waze_works",
-    lat: -23.4150,
-    lng: -46.3350,
-    desc: "Recapeamento asfáltico e fresagem pela CCR RioSP. Faixa central bloqueada.",
-    dangerTip: "Degraus na pista durante as etapas de fresagem.",
-    economyTip: "Mantenha pneus calibrados para não danificar as rodas."
-  },
-  {
-    id: "waze-wk-04",
-    name: "Obras de Encosta: Régis Bittencourt km 342 (Serra do Cafezal)",
-    highway: "BR-116 Régis Bittencourt",
-    km: "km 342",
-    category: "waze_works",
-    lat: -24.1150,
-    lng: -47.2050,
-    desc: "Contenção de encostas e drenagem de taludes. Tráfego canalizado em cones.",
-    dangerTip: "Proibida ultrapassagem em toda a extensão do canteiro de obras.",
-    economyTip: "Mantenha 3ª marcha para estabilidade."
-  },
-  {
-    id: "waze-wk-05",
-    name: "Manutenção de Viadutos: Carvalho Pinto km 92 (SJC)",
-    highway: "SP-070 Carvalho Pinto",
-    km: "km 92",
-    category: "waze_works",
-    lat: -23.2850,
-    lng: -45.8950,
-    desc: "Troca periódica de juntas de dilatação de pontes. Faixa 3 interditada.",
-    dangerTip: "Sinalização com setas luminosas intermitentes.",
-    economyTip: "Mantenha velocidade constante de 100 km/h nas faixas livres."
-  },
-  {
-    id: "waze-wk-06",
-    name: "Obras de Contenção: Mogi-Bertioga km 88",
-    highway: "SP-098 Mogi-Bertioga",
-    km: "km 88",
-    category: "waze_works",
-    lat: -23.8250,
-    lng: -46.1550,
-    desc: "Drenagem da serra com sistema de Pare e Siga operado pelo DER.",
-    dangerTip: "Aguarde o sinal verde do operador com o freio de mão acionado.",
-    economyTip: "Desligue o motor em paradas superiores a 3 minutos para poupar combustível."
-  },
-
-  // 4. POLÍCIA RODOVIÁRIA / BLITZ / COMANDOS (WAZE POLICE)
-  {
-    id: "waze-pol-01",
-    name: "Comando PMRv: Base Carvalho Pinto km 72 (Jacareí)",
-    highway: "SP-070 Carvalho Pinto",
-    km: "km 72",
-    category: "waze_police",
-    lat: -23.3120,
-    lng: -46.0250,
-    desc: "Fiscalização ostensiva da Polícia Militar Rodoviária: faróis acesos, cinto e bafômetro.",
-    dangerTip: "FARÓIS ACESOS OBRIGATÓRIOS: Multa de R$ 130,16 + 4 pontos.",
-    economyTip: "Documento digital (CRLV e CNH) baixado offline no celular evita retenção."
-  },
-  {
-    id: "waze-pol-02",
-    name: "Posto PRF Arujá: Dutra km 204",
-    highway: "BR-116 Presidente Dutra",
-    km: "km 204",
-    category: "waze_police",
-    lat: -23.3980,
-    lng: -46.3150,
-    desc: "Posto da Polícia Rodoviária Federal com fiscalização 24h e balança de pesagem.",
-    dangerTip: "Fiscalização minuciosa de conservação de pneus e películas/insulfilm.",
-    economyTip: "Pneus sem desgaste excessivo poupam vidas e evitam guincho de R$ 400."
-  },
-  {
-    id: "waze-pol-03",
-    name: "Base PMRv Imigrantes km 28 (São Bernardo)",
-    highway: "SP-160 Imigrantes",
-    km: "km 28",
-    category: "waze_police",
-    lat: -23.7950,
-    lng: -46.5550,
-    desc: "Fiscalização antes dos primeiros túneis de descida da serra.",
-    dangerTip: "Operação Lei Seca com etilômetro passivo nos finais de semana.",
-    economyTip: "Mantenha passageiros traseiros de cinto para evitar multa de R$ 195,23."
-  },
-  {
-    id: "waze-pol-04",
-    name: "Base PMRv Ayrton Senna km 34 (Itaquaquecetuba)",
-    highway: "SP-070 Ayrton Senna",
-    km: "km 34",
-    category: "waze_police",
-    lat: -23.4680,
-    lng: -46.3150,
-    desc: "Fiscalização de velocidade com radares portáteis laser do tipo TruCam.",
-    dangerTip: "O radar portátil mede velocidade a mais de 800 metros de distância!",
-    economyTip: "Mantenha o limitador do Kwid/Onix travado em 115 km/h."
-  },
-  {
-    id: "waze-pol-05",
-    name: "Base PMRv Tamoios km 58 (Paraibuna)",
-    highway: "SP-099 Rodovia dos Tamoios",
-    km: "km 58",
-    category: "waze_police",
-    lat: -23.3950,
-    lng: -45.6650,
-    desc: "Posto policial logo antes da praça de pedágio de Paraibuna.",
-    dangerTip: "Vistoria de extintor (veículos comerciais), luzes de freio e placas limpas.",
-    economyTip: "Verifique se a luz de placa traseira está funcionando."
-  },
-  {
-    id: "waze-pol-06",
-    name: "Base PMRv Castelo Branco km 41 (Santana de Parnaíba)",
-    highway: "SP-280 Castelo Branco",
-    km: "km 41",
-    category: "waze_police",
-    lat: -23.4650,
-    lng: -47.0150,
-    desc: "Comando policial estratégico no final do trecho mais veloz da rodovia.",
-    dangerTip: "Controle estrito de velocidade e ultrapassagens pelo acostamento.",
-    economyTip: "Andar pelo acostamento gera multa gravíssima de R$ 880,41."
-  },
-
-  // 5. CLIMA ADVERSO E NEBLINA (WAZE WEATHER)
-  {
-    id: "waze-wt-01",
-    name: "Neblina Densa: Serra do Mar na Imigrantes",
-    highway: "SP-160 Imigrantes",
-    km: "km 45 ao km 55",
-    category: "waze_weather",
-    lat: -23.8950,
-    lng: -46.5250,
-    desc: "Visibilidade reduzida a menos de 40 metros pela manhã e no final da tarde.",
-    dangerTip: "NUNCA ligue o pisca-alerta em movimento. Isso confunde quem vem atrás achando que você está parado.",
-    economyTip: "Acenda faróis de neblina ou baixos e dobre a distância de seguimento."
-  },
-  {
-    id: "waze-wt-02",
-    name: "Neblina Densa: Serra da Cantareira (Fernão Dias)",
-    highway: "BR-381 Fernão Dias",
-    km: "km 72 ao km 78",
-    category: "waze_weather",
-    lat: -23.3750,
-    lng: -46.5950,
-    desc: "Nevoeiro espesso de montanha com pista fria e escorregadia.",
-    dangerTip: "Farol alto reflete nas gotículas e causa efeito de parede branca cegando o motorista.",
-    economyTip: "Reduza suavemente a velocidade para 60 km/h."
-  },
-  {
-    id: "waze-wt-03",
-    name: "Nevoeiro e Chuva: Serra dos Tamoios km 68",
-    highway: "SP-099 Rodovia dos Tamoios",
-    km: "km 68",
-    category: "waze_weather",
-    lat: -23.4750,
-    lng: -45.6250,
-    desc: "Neblina forte nos trechos de transição entre viadutos e encostas.",
-    dangerTip: "Risco de aquaplanagem nas descidas. Evite movimentos bruscos no volante.",
-    economyTip: "Verifique as palhetas do limpador de para-brisa antes de descer."
-  },
-  {
-    id: "waze-wt-04",
-    name: "Cerração: Serra da Mogi-Bertioga km 80",
-    highway: "SP-098 Mogi-Bertioga",
-    km: "km 80 ao km 86",
-    category: "waze_weather",
-    lat: -23.7950,
-    lng: -46.1600,
-    desc: "Cerração repentina na descida em direção à planície litorânea.",
-    dangerTip: "Pista simples com curvas fechadas em cotovelo.",
-    economyTip: "Use 2ª marcha engatada para segurar o carro sem ferver os freios."
-  },
-
-  // 6. PEDÁGIOS REAIS DAS PRINCIPAIS RODOVIAS DE SP
-  {
-    id: "tol-01",
-    name: "Pedágio Piratininga (Imigrantes km 32)",
-    highway: "SP-160 Imigrantes",
+    id: "toll-imigrantes-piratininga",
+    name: "Pedágio Piratininga - Rod. dos Imigrantes",
+    highway: "SP-160 Rodovia dos Imigrantes",
     km: "km 32",
     category: "toll",
-    lat: -23.8210,
-    lng: -46.5410,
+    lat: -23.7710,
+    lng: -46.5620,
     price: "R$ 36,80",
     priceNum: 36.80,
-    desc: "Cobrado apenas no sentido litoral. O retorno para São Paulo é livre de pedágio.",
-    dangerTip: "Evasão de cancela automática: Multa de R$ 195,23 + 5 pontos na CNH.",
-    economyTip: "Na volta para SP não há pedágio nem na Imigrantes nem na Anchieta!"
+    concessionaire: "Ecovias",
+    desc: "Praça principal de descida para a Baixada Santista. Cobrança unidirecional sentido litoral.",
+    economyTip: "Na volta (sentido SP), o trecho não cobra pedágio. Pagamento por Sem Parar, ConectCar ou aproximação.",
+    dangerTip: "Reduza a velocidade para 40 km/h ao transitar pelas pistas de cobrança automática."
   },
   {
-    id: "tol-02",
-    name: "Pedágio Riacho Grande (Anchieta km 31)",
-    highway: "SP-150 Anchieta",
+    id: "toll-anchieta-riacho-grande",
+    name: "Pedágio Riacho Grande - Rod. Anchieta",
+    highway: "SP-150 Rodovia Anchieta",
     km: "km 31",
     category: "toll",
     lat: -23.7760,
     lng: -46.5370,
     price: "R$ 36,80",
     priceNum: 36.80,
-    desc: "Mesma tarifa integrada do Sistema Anchieta-Imigrantes na descida.",
-    dangerTip: "Pistas automáticas de Tag (Sem Parar/ConectCar) com limite de 40 km/h.",
-    economyTip: "Abasteça com Etanol em SBC no km 19 antes da praça para economizar."
+    concessionaire: "Ecovias",
+    desc: "Praça de cobrança da Via Anchieta sentido Litoral. Pista expressa com cabines manuais e automáticas.",
+    economyTip: "Cobrança apenas na descida rumo a Santos e Cubatão. Subida para a capital é isenta.",
+    dangerTip: "Neblina frequente no planalto antes da serra; redobre a atenção com caminhões."
   },
   {
-    id: "tol-03",
-    name: "Pedágio Itaquaquecetuba (Ayrton Senna km 32)",
-    highway: "SP-070 Ayrton Senna",
+    id: "toll-imigrantes-diadema",
+    name: "Pedágio Bloqueio Diadema - Imigrantes",
+    highway: "SP-160 Rodovia dos Imigrantes",
+    km: "km 16",
+    category: "toll",
+    lat: -23.6840,
+    lng: -46.6110,
+    price: "R$ 4,20",
+    priceNum: 4.20,
+    concessionaire: "Ecovias",
+    desc: "Praça de bloqueio no acesso municipal a Diadema.",
+    economyTip: "Utilize acessos urbanos pela Av. Cupecê para evitar o bloqueio em deslocamentos curtos.",
+    dangerTip: "Fique atento ao afunilamento de pista na aproximação das cabines."
+  },
+  {
+    id: "toll-imigrantes-eldorado",
+    name: "Pedágio Bloqueio Eldorado - Imigrantes",
+    highway: "SP-160 Rodovia dos Imigrantes",
+    km: "km 20",
+    category: "toll",
+    lat: -23.7120,
+    lng: -46.5920,
+    price: "R$ 4,20",
+    priceNum: 4.20,
+    concessionaire: "Ecovias",
+    desc: "Praça de bloqueio no entroncamento do bairro Eldorado.",
+    economyTip: "Cobrança pontual de acesso regional.",
+    dangerTip: "Trecho com entrada e saída rápida de veículos."
+  },
+  {
+    id: "toll-cubatao-piacaguera",
+    name: "Pedágio Santos / Piaçaguera - Guarujá",
+    highway: "SP-055 Rodovia Cônego Domênico Rangoni",
+    km: "km 250",
+    category: "toll",
+    lat: -23.8850,
+    lng: -46.4150,
+    price: "R$ 16,40",
+    priceNum: 16.40,
+    concessionaire: "Ecovias",
+    desc: "Praça de pedágio de ligação Cubatão / Santos / Guarujá.",
+    economyTip: "Para o centro histórico de Santos pela Anchieta, não se passa por esta praça.",
+    dangerTip: "Tráfego intenso de carretas de contêineres e produtos químicos."
+  },
+
+  // Sistema Ayrton Senna / Carvalho Pinto (Ecopistas)
+  {
+    id: "toll-ayrton-itaqua",
+    name: "Pedágio Itaquaquecetuba - Rod. Ayrton Senna",
+    highway: "SP-070 Rodovia Ayrton Senna",
     km: "km 32",
     category: "toll",
     lat: -23.4730,
     lng: -46.3310,
-    price: "R$ 5,60",
-    priceNum: 5.60,
-    desc: "Cobrado em ambos os sentidos da rodovia.",
-    dangerTip: "Aproxime-se com calma da cabine de cobrança manual.",
-    economyTip: "Seguindo pela Mogi-Bertioga você só paga esse pedágio até chegar no mar!"
+    price: "R$ 5,30",
+    priceNum: 5.30,
+    concessionaire: "Ecopistas",
+    desc: "Praça bidirecional da Ayrton Senna na Região Metropolitana Leste.",
+    economyTip: "Rota expressa mais segura que a Dutra, compensa pelo menor tempo e asfalto de primeira.",
+    dangerTip: "Respeite o limite de 40 km/h nas cancelas automáticas 'Sem Parar'."
   },
   {
-    id: "tol-04",
-    name: "Pedágio Guararema (Ayrton Senna km 57)",
-    highway: "SP-070 Ayrton Senna",
+    id: "toll-ayrton-guararema",
+    name: "Pedágio Guararema - Rod. Ayrton Senna / Carvalho Pinto",
+    highway: "SP-070 Rodovia Ayrton Senna",
     km: "km 57",
     category: "toll",
     lat: -23.4080,
     lng: -46.1420,
-    price: "R$ 5,20",
-    priceNum: 5.20,
-    desc: "Praça antes da transição para a Rodovia Carvalho Pinto.",
-    dangerTip: "Velocidade na aproximação da praça.",
-    economyTip: "Rota Econômica via Mogi das Cruzes desvia dessa praça e economiza R$ 5,20!"
+    price: "R$ 4,90",
+    priceNum: 4.90,
+    concessionaire: "Ecopistas",
+    desc: "Praça no entroncamento entre a Ayrton Senna e o início da Carvalho Pinto.",
+    economyTip: "Excelente fluidez para quem segue ao Vale do Paraíba, Campos do Jordão ou Litoral Norte.",
+    dangerTip: "Atenção à divisão de pistas para Mogi das Cruzes e São José dos Campos."
   },
   {
-    id: "tol-05",
-    name: "Pedágio São José dos Campos (Carvalho Pinto km 92)",
-    highway: "SP-070 Carvalho Pinto",
+    id: "toll-carvalho-cacapava",
+    name: "Pedágio Caçapava / SJC - Rod. Carvalho Pinto",
+    highway: "SP-070 Rodovia Carvalho Pinto",
     km: "km 92",
     category: "toll",
-    lat: -23.2840,
-    lng: -45.8940,
-    price: "R$ 5,10",
-    priceNum: 5.10,
-    desc: "Cobrado nos sentidos Litoral/Rio e Capital.",
-    dangerTip: "Atenção a motocicletas no acostamento perto da praça.",
-    economyTip: "Mais uma praça que você elimina ao usar a Rota Econômica pela Mogi-Bertioga."
+    lat: -23.2450,
+    lng: -45.8520,
+    price: "R$ 4,70",
+    priceNum: 4.70,
+    concessionaire: "Ecopistas",
+    desc: "Praça de pedágio no trecho de Caçapava da Carvalho Pinto.",
+    economyTip: "Pistas largas e sem semáforos, excelente rendimento de combustível.",
+    dangerTip: "Atenção ao vento lateral forte nos viadutos da região."
   },
   {
-    id: "tol-06",
-    name: "Pedágio Paraibuna (Tamoios km 59)",
-    highway: "SP-099 Rodovia dos Tamoios",
-    km: "km 59",
+    id: "toll-carvalho-taubate",
+    name: "Pedágio Taubaté - Rod. Carvalho Pinto",
+    highway: "SP-070 Rodovia Carvalho Pinto",
+    km: "km 114",
     category: "toll",
-    lat: -23.3850,
-    lng: -45.6550,
-    price: "R$ 13,20",
-    priceNum: 13.20,
-    desc: "Praça do trecho de planalto da Tamoios antes dos novos túneis.",
-    dangerTip: "Aceita dinheiro, cartões de débito/crédito por aproximação e Tags.",
-    economyTip: "Pedágio pesado! Somando ida e volta são R$ 26,40 só nesta cabine."
+    lat: -23.0550,
+    lng: -45.6120,
+    price: "R$ 4,90",
+    priceNum: 4.90,
+    concessionaire: "Ecopistas",
+    desc: "Última praça da Carvalho Pinto antes do entroncamento com a Rodovia Floriano Rodrigues Pinheiro e Dutra.",
+    economyTip: "Acesso direto para Taubaté, Tremembé e serra de Campos do Jordão.",
+    dangerTip: "Trânsito de retorno de feriados pode formar filas nas cabines manuais."
   },
+
+  // Rodovia dos Tamoios (Concessionária Tamoios)
   {
-    id: "tol-07",
-    name: "Pedágio Jambeiro (Tamoios km 28)",
+    id: "toll-tamoios-jambeiro",
+    name: "Pedágio Jambeiro - Rod. dos Tamoios",
     highway: "SP-099 Rodovia dos Tamoios",
-    km: "km 28",
+    km: "km 16",
     category: "toll",
     lat: -23.3150,
     lng: -45.7520,
-    price: "R$ 6,20",
-    priceNum: 6.20,
-    desc: "Primeira praça da rodovia no sentido Litoral Norte.",
-    dangerTip: "Reduza a velocidade na aproximação da praça.",
-    economyTip: "Juntas, as duas praças da Tamoios custam R$ 19,40 por trecho."
+    price: "R$ 10,20",
+    priceNum: 10.20,
+    concessionaire: "Concessionária Tamoios",
+    desc: "Primeira praça da Tamoios sentido Caraguatatuba e São Sebastião.",
+    economyTip: "Pista duplicada do planalto garante velocidade constante de 80 km/h sem frear.",
+    dangerTip: "Trecho com curvas abertas e fiscalização eletrônica por radares fixos."
   },
   {
-    id: "tol-08",
-    name: "Pedágio Itapevi (Castelo Branco km 33)",
-    highway: "SP-280 Castelo Branco",
-    km: "km 33",
+    id: "toll-tamoios-paraibuna",
+    name: "Pedágio Paraibuna - Rod. dos Tamoios",
+    highway: "SP-099 Rodovia dos Tamoios",
+    km: "km 59",
+    category: "toll",
+    lat: -23.4450,
+    lng: -45.6150,
+    price: "R$ 15,20",
+    priceNum: 15.20,
+    concessionaire: "Concessionária Tamoios",
+    desc: "Segunda praça da Tamoios logo antes da entrada nos novos túneis da Serra do Mar.",
+    economyTip: "A serra nova duplicada reduziu o tempo de descida em mais de 35 minutos.",
+    dangerTip: "Mantenha faróis acesos e velocidade máxima de 80 km/h nos complexos de túneis."
+  },
+
+  // Sistema Castello Branco / Raposo Tavares (CCR Viaoeste)
+  {
+    id: "toll-castello-osasco",
+    name: "Pedágio Osasco - Rod. Castello Branco",
+    highway: "SP-280 Rodovia Castello Branco",
+    km: "km 18",
+    category: "toll",
+    lat: -23.5180,
+    lng: -46.8120,
+    price: "R$ 6,20",
+    priceNum: 6.20,
+    concessionaire: "CCR Viaoeste",
+    desc: "Praça de saída da capital rumo a Barueri, Alphaville e interior oeste.",
+    economyTip: "Cobrança unidirecional interior; na volta para a capital não há cobrança nesta praça.",
+    dangerTip: "Faixas expressas centrais têm tráfego rápido; evite mudanças bruscas de faixa."
+  },
+  {
+    id: "toll-castello-barueri",
+    name: "Pedágio Barueri / Tamboré - Castello Branco",
+    highway: "SP-280 Rodovia Castello Branco",
+    km: "km 20",
+    category: "toll",
+    lat: -23.5080,
+    lng: -46.8450,
+    price: "R$ 6,20",
+    priceNum: 6.20,
+    concessionaire: "CCR Viaoeste",
+    desc: "Praça lateral de acesso às marginais de Alphaville e Tamboré.",
+    economyTip: "Se seguir direto para o interior, use as pistas centrais sem passar pelas cabines laterais.",
+    dangerTip: "Horário de pico entre 17h e 19h com retenções nas saídas para Alphaville."
+  },
+  {
+    id: "toll-castello-itapevi",
+    name: "Pedágio Itapevi - Rod. Castello Branco",
+    highway: "SP-280 Rodovia Castello Branco",
+    km: "km 32",
     category: "toll",
     lat: -23.4980,
     lng: -46.9620,
     price: "R$ 11,80",
     priceNum: 11.80,
-    desc: "Praça principal sentido Interior / Sorocaba.",
-    dangerTip: "Cobrança rápida nas pistas automáticas.",
-    economyTip: "Indo pela Raposo Tavares você não paga essa praça de R$ 11,80!"
+    concessionaire: "CCR Viaoeste",
+    desc: "Praça principal de cobrança da Castello Branco antes de São Roque e Sorocaba.",
+    economyTip: "Via expressa de altíssima qualidade; permite cruzeiro a 120 km/h economizando tempo.",
+    dangerTip: "Radares fixos de 120 km/h logo após a praça de cobrança."
   },
   {
-    id: "tol-09",
-    name: "Pedágio Itu (Castelo Branco km 74)",
-    highway: "SP-280 Castelo Branco",
-    km: "km 74",
+    id: "toll-castello-itu",
+    name: "Pedágio Itu - Rod. Senador José Ermírio de Moraes",
+    highway: "SP-075 Rod. Castelinho",
+    km: "km 15",
     category: "toll",
-    lat: -23.3850,
-    lng: -47.2850,
-    price: "R$ 15,20",
-    priceNum: 15.20,
-    desc: "Praça após o acesso a Sorocaba e Itu.",
-    dangerTip: "Fique atento ao limite de 40 km/h nas cabines automáticas.",
-    economyTip: "Tarifa altíssima! Total na Castelo chega a R$ 32,90 só de pedágio."
+    lat: -23.3650,
+    lng: -47.3450,
+    price: "R$ 8,60",
+    priceNum: 8.60,
+    concessionaire: "Rodovias das Colinas",
+    desc: "Ligação rápida entre a Castello Branco, Itu e Sorocaba Norte.",
+    economyTip: "Pista plana e com baixo fluxo de caminhões pesados.",
+    dangerTip: "Fique atento ao acesso à Rodovia do Açúcar."
   },
   {
-    id: "tol-10",
-    name: "Pedágio São Roque (Raposo Tavares km 46)",
-    highway: "SP-270 Raposo Tavares",
+    id: "toll-raposo-saoroque",
+    name: "Pedágio São Roque - Rod. Raposo Tavares",
+    highway: "SP-270 Rodovia Raposo Tavares",
     km: "km 46",
     category: "toll",
     lat: -23.5850,
     lng: -47.0510,
     price: "R$ 12,20",
     priceNum: 12.20,
-    desc: "Único pedágio no trecho da Raposo até Sorocaba.",
-    dangerTip: "Pista em aclive suave antes da praça.",
-    economyTip: "Pague apenas R$ 12,20 contra R$ 32,90 da Castelo. Economia direta de R$ 20,70!"
+    concessionaire: "CCR Viaoeste",
+    desc: "Praça da Raposo Tavares no trecho montanhoso entre Vargem Grande Paulista e São Roque.",
+    economyTip: "Rota alternativa à Castello Branco para Sorocaba com 1 pedágio a menos.",
+    dangerTip: "Trecho sinuoso com velocidade controlada a 80 km/h."
   },
   {
-    id: "tol-11",
-    name: "Pedágio Caieiras (Bandeirantes km 36)",
+    id: "toll-raposo-aluminio",
+    name: "Pedágio Alumínio - Rod. Raposo Tavares",
+    highway: "SP-270 Rodovia Raposo Tavares",
+    km: "km 79",
+    category: "toll",
+    lat: -23.5450,
+    lng: -47.2150,
+    price: "R$ 11,60",
+    priceNum: 11.60,
+    concessionaire: "CCR Viaoeste",
+    desc: "Praça de pedágio entre São Roque, Alumínio e Sorocaba.",
+    economyTip: "Alternativa econômica para o centro e zona sul de Sorocaba.",
+    dangerTip: "Cruzamento com áreas urbanas exige velocidade reduzida."
+  },
+
+  // Sistema Anhanguera / Bandeirantes (CCR AutoBAn)
+  {
+    id: "toll-bandeirantes-caieiras",
+    name: "Pedágio Caieiras - Rod. dos Bandeirantes",
     highway: "SP-348 Rodovia dos Bandeirantes",
     km: "km 36",
     category: "toll",
-    lat: -23.3250,
-    lng: -46.8350,
-    price: "R$ 12,40",
-    priceNum: 12.40,
-    desc: "Praça sentido Jundiaí e Campinas.",
-    dangerTip: "Pista expressa a 120 km/h: comece a desacelerar a 1 km da praça.",
-    economyTip: "Pela Anhanguera a distância é similar com paradas em postos de combustível mais baratos."
+    lat: -23.3500,
+    lng: -46.8500,
+    price: "R$ 11,80",
+    priceNum: 11.80,
+    concessionaire: "CCR AutoBAn",
+    desc: "Primeira praça da Bandeirantes no sentido interior.",
+    economyTip: "Rodovia com traçado perfeito e 120 km/h; mantém consumo eficiente em marcha alta.",
+    dangerTip: "Cabines automáticas exigem transitar a 40 km/h sem parar."
   },
   {
-    id: "tol-12",
-    name: "Pedágio Itupeva (Bandeirantes km 77)",
+    id: "toll-bandeirantes-itupeva",
+    name: "Pedágio Itupeva - Rod. dos Bandeirantes",
     highway: "SP-348 Rodovia dos Bandeirantes",
     km: "km 77",
     category: "toll",
-    lat: -23.1650,
-    lng: -47.0550,
-    price: "R$ 12,20",
-    priceNum: 12.20,
-    desc: "Praça antes de Campinas.",
-    dangerTip: "Radares de fiscalização logo após as cancelas.",
-    economyTip: "Rota alternativa de fuga via Rodoanel e Jundiaí."
+    lat: -23.1150,
+    lng: -47.0150,
+    price: "R$ 11,80",
+    priceNum: 11.80,
+    concessionaire: "CCR AutoBAn",
+    desc: "Segunda praça da Bandeirantes antes da entrada de Campinas.",
+    economyTip: "Ao lado dos postos Serrazul e Hopi Hari com opções completas de parada.",
+    dangerTip: "Forte movimentação de veículos aos fins de semana e feriados."
   },
   {
-    id: "tol-13",
-    name: "Pedágio Arujá (Dutra km 204)",
+    id: "toll-bandeirantes-sumare",
+    name: "Pedágio Sumaré - Rod. dos Bandeirantes",
+    highway: "SP-348 Rodovia dos Bandeirantes",
+    km: "km 115",
+    category: "toll",
+    lat: -22.8450,
+    lng: -47.2850,
+    price: "R$ 10,90",
+    priceNum: 10.90,
+    concessionaire: "CCR AutoBAn",
+    desc: "Praça de continuação rumo a Limeira, Americana e interior norte.",
+    economyTip: "Pistas triplas e asfalto de alto padrão.",
+    dangerTip: "Atenção às placas de acesso à Rodovia Anhanguera."
+  },
+  {
+    id: "toll-anhanguera-perus",
+    name: "Pedágio Perus - Rod. Anhanguera",
+    highway: "SP-330 Rodovia Anhanguera",
+    km: "km 26",
+    category: "toll",
+    lat: -23.4150,
+    lng: -46.7850,
+    price: "R$ 11,80",
+    priceNum: 11.80,
+    concessionaire: "CCR AutoBAn",
+    desc: "Primeira praça da Anhanguera saindo da capital para Jundiaí e Campinas.",
+    economyTip: "Trecho com postos de combustível com preços competitivos nas pistas marginais.",
+    dangerTip: "Tráfego intenso de caminhões e veículos comerciais na faixa da direita."
+  },
+  {
+    id: "toll-anhanguera-valinhos",
+    name: "Pedágio Valinhos - Rod. Anhanguera",
+    highway: "SP-330 Rodovia Anhanguera",
+    km: "km 82",
+    category: "toll",
+    lat: -22.9950,
+    lng: -47.0450,
+    price: "R$ 11,60",
+    priceNum: 11.60,
+    concessionaire: "CCR AutoBAn",
+    desc: "Praça da Anhanguera no acesso a Valinhos e Campinas Sul.",
+    economyTip: "Acesso rápido ao anel viário Magalhães Teixeira e à Dom Pedro I.",
+    dangerTip: "Reduza na aproximação das faixas de cobrança manual e automática."
+  },
+  {
+    id: "toll-anhanguera-novaodessa",
+    name: "Pedágio Nova Odessa - Rod. Anhanguera",
+    highway: "SP-330 Rodovia Anhanguera",
+    km: "km 118",
+    category: "toll",
+    lat: -22.7850,
+    lng: -47.3150,
+    price: "R$ 10,90",
+    priceNum: 10.90,
+    concessionaire: "CCR AutoBAn",
+    desc: "Praça entre Americana, Santa Bárbara d'Oeste e Nova Odessa.",
+    economyTip: "Trecho plano com excelente rendimento de combustível.",
+    dangerTip: "Radares de velocidade em pontos estratégicos do canteiro central."
+  },
+  {
+    id: "toll-anhanguera-limeira",
+    name: "Pedágio Limeira - Rod. Anhanguera",
+    highway: "SP-330 Rodovia Anhanguera",
+    km: "km 152",
+    category: "toll",
+    lat: -22.5850,
+    lng: -47.4250,
+    price: "R$ 8,80",
+    priceNum: 8.80,
+    concessionaire: "CCR AutoBAn",
+    desc: "Praça de transição para o interior centro-norte (Ribeirão Preto e São Carlos).",
+    economyTip: "Conexão direta com a Rodovia Washington Luís (SP-310).",
+    dangerTip: "Mantenha distância de segurança dos veículos pesados."
+  },
+
+  // Rodoanel Mário Covas (SP-021)
+  {
+    id: "toll-rodoanel-padroeira",
+    name: "Pedágio Rodoanel Oeste - Padroeira / Barueri",
+    highway: "SP-021 Rodoanel Mário Covas",
+    km: "km 13",
+    category: "toll",
+    lat: -23.5420,
+    lng: -46.8020,
+    price: "R$ 4,90",
+    priceNum: 4.90,
+    concessionaire: "CCR RodoAnel",
+    desc: "Praça do Trecho Oeste com conexão para Castello Branco e Raposo Tavares.",
+    economyTip: "Excelente via expressa para desviar do trânsito das Marginais de SP.",
+    dangerTip: "Velocidade máxima de 100 km/h rigidamente fiscalizada por radares."
+  },
+  {
+    id: "toll-rodoanel-raposo",
+    name: "Pedágio Rodoanel Oeste - Raposo Tavares",
+    highway: "SP-021 Rodoanel Mário Covas",
+    km: "km 24",
+    category: "toll",
+    lat: -23.5950,
+    lng: -46.8250,
+    price: "R$ 4,90",
+    priceNum: 4.90,
+    concessionaire: "CCR RodoAnel",
+    desc: "Praça de entroncamento do Trecho Oeste com a Rodovia Raposo Tavares.",
+    economyTip: "Permite contornar Carapicuíba e Osasco rapidamente.",
+    dangerTip: "Cuidado com retenções nas alças de acesso nos horários de pico."
+  },
+  {
+    id: "toll-rodoanel-embu",
+    name: "Pedágio Rodoanel Sul - Embu das Artes",
+    highway: "SP-021 Rodoanel Mário Covas",
+    km: "km 30",
+    category: "toll",
+    lat: -23.6650,
+    lng: -46.8350,
+    price: "R$ 4,70",
+    priceNum: 4.70,
+    concessionaire: "SPMar",
+    desc: "Início do Trecho Sul conectando a Régis Bittencourt ao sistema Anchieta/Imigrantes.",
+    economyTip: "Evita completamente as avenidas Francisco Morato e Giovanni Gronchi.",
+    dangerTip: "Pista moderna com viadutos altos sobre a represa."
+  },
+  {
+    id: "toll-rodoanel-grajau",
+    name: "Pedágio Rodoanel Sul - Grajaú / Parelheiros",
+    highway: "SP-021 Rodoanel Mário Covas",
+    km: "km 47",
+    category: "toll",
+    lat: -23.7550,
+    lng: -46.7150,
+    price: "R$ 4,70",
+    priceNum: 4.70,
+    concessionaire: "SPMar",
+    desc: "Praça central do Trecho Sul do Rodoanel sobre a Represa Billings.",
+    economyTip: "Rota expressa para o Litoral Sul e Porto de Santos vindo do interior.",
+    dangerTip: "Área sujeita a neblina densa nas primeiras horas da manhã."
+  },
+  {
+    id: "toll-rodoanel-imigrantes",
+    name: "Pedágio Rodoanel Sul - Acesso Imigrantes",
+    highway: "SP-021 Rodoanel Mário Covas",
+    km: "km 60",
+    category: "toll",
+    lat: -23.7420,
+    lng: -46.5920,
+    price: "R$ 4,70",
+    priceNum: 4.70,
+    concessionaire: "SPMar",
+    desc: "Interligação direta entre o Rodoanel Sul e as rodovias Imigrantes e Anchieta.",
+    economyTip: "Acesso sem semáforos direto para o planalto de descida da serra.",
+    dangerTip: "Atenção às placas indicativas para não errar a saída Imigrantes / Anchieta."
+  },
+  {
+    id: "toll-rodoanel-maua",
+    name: "Pedágio Rodoanel Leste - Mauá / Suzano",
+    highway: "SP-021 Rodoanel Mário Covas",
+    km: "km 86",
+    category: "toll",
+    lat: -23.6450,
+    lng: -46.4250,
+    price: "R$ 3,80",
+    priceNum: 3.80,
+    concessionaire: "SPMar",
+    desc: "Trecho Leste ligando o ABC Paulista ao Alto Tietê e Ayrton Senna.",
+    economyTip: "Tarifa reduzida e excelente conexão sem semáforos.",
+    dangerTip: "Trecho com curvas longas e limite de 100 km/h."
+  },
+  {
+    id: "toll-rodoanel-itaqua",
+    name: "Pedágio Rodoanel Leste - Itaquaquecetuba / Dutra",
+    highway: "SP-021 Rodoanel Mário Covas",
+    km: "km 115",
+    category: "toll",
+    lat: -23.4550,
+    lng: -46.3550,
+    price: "R$ 3,80",
+    priceNum: 3.80,
+    concessionaire: "SPMar",
+    desc: "Entroncamento do Trecho Leste com as rodovias Ayrton Senna e Presidente Dutra.",
+    economyTip: "Evita o trânsito da Marginal Tietê para quem cruza do Vale do Paraíba para o ABC.",
+    dangerTip: "Reduza na aproximação do entroncamento com a BR-116."
+  },
+
+  // Rodovia Presidente Dutra (CCR RioSP / ANTT)
+  {
+    id: "toll-dutra-aruja",
+    name: "Pedágio Arujá - Rod. Presidente Dutra",
     highway: "BR-116 Presidente Dutra",
     km: "km 204",
     category: "toll",
-    lat: -23.3980,
+    lat: -23.3850,
     lng: -46.3150,
     price: "R$ 4,10",
     priceNum: 4.10,
-    desc: "Primeira praça da CCR RioSP no sentido Rio de Janeiro e Vale do Paraíba.",
-    dangerTip: "Free Flow em implantação: se passar em pista sem cancela, pague pelo app em 15 dias.",
-    economyTip: "Tarifa mais barata que as rodovias estaduais concorrentes."
+    concessionaire: "CCR RioSP",
+    desc: "Primeira praça da Via Dutra saindo de SP/Guarulhos rumo ao Vale do Paraíba e Rio.",
+    economyTip: "Cobrança com desconto progressivo para quem usa TAG eletrônica frequente.",
+    dangerTip: "Tráfego intenso de veículos pesados nas saídas para Arujá e Mogi das Cruzes."
   },
   {
-    id: "tol-14",
-    name: "Pedágio Rodoanel Sul (km 67 Imigrantes)",
-    highway: "SP-021 Rodoanel Mário Covas",
-    km: "km 67",
+    id: "toll-dutra-guararema",
+    name: "Pedágio Guararema / Jacareí - Rod. Presidente Dutra",
+    highway: "BR-116 Presidente Dutra",
+    km: "km 165",
     category: "toll",
-    lat: -23.7710,
-    lng: -46.5620,
-    price: "R$ 4,30",
-    priceNum: 4.30,
-    desc: "Acesso entre o Trecho Sul do Rodoanel e o Sistema Anchieta-Imigrantes.",
-    dangerTip: "Atenção a caminhões em manobra nas alças.",
-    economyTip: "Excelente rota de fuga do Rodízio Municipal do Centro Expandido de SP!"
+    lat: -23.2850,
+    lng: -46.0150,
+    price: "R$ 7,90",
+    priceNum: 7.90,
+    concessionaire: "CCR RioSP",
+    desc: "Praça da Dutra na divisa entre Guararema e Jacareí.",
+    economyTip: "Alternativa gratuita paralela não compensa em relação à segurança da via duplicada.",
+    dangerTip: "Radares fixos nos dois sentidos antes e depois da praça."
+  },
+  {
+    id: "toll-dutra-moreiracesar",
+    name: "Pedágio Moreira César - Rod. Presidente Dutra",
+    highway: "BR-116 Presidente Dutra",
+    km: "km 88",
+    category: "toll",
+    lat: -22.9550,
+    lng: -45.3850,
+    price: "R$ 16,40",
+    priceNum: 16.40,
+    concessionaire: "CCR RioSP",
+    desc: "Praça no trecho de Pindamonhangaba / Aparecida do Norte.",
+    economyTip: "Fique atento às faixas automáticas Free Flow / Sem Parar.",
+    dangerTip: "Movimento intenso de romeiros e peregrinos no acostamento em períodos religiosos."
+  },
+  {
+    id: "toll-dutra-itatiaia",
+    name: "Pedágio Itatiaia - Rod. Presidente Dutra",
+    highway: "BR-116 Presidente Dutra",
+    km: "km 318",
+    category: "toll",
+    lat: -22.4950,
+    lng: -44.5750,
+    price: "R$ 16,40",
+    priceNum: 16.40,
+    concessionaire: "CCR RioSP",
+    desc: "Praça na divisa de SP com o Estado do Rio de Janeiro.",
+    economyTip: "Controle a velocidade antes da descida da Serra das Araras.",
+    dangerTip: "Trecho montanhoso com curvas perigosas e fiscalização por radar."
   },
 
-  // 7. RADARES CRÍTICOS COM LIMITE E DICAS ANTI-MULTA
+  // Rodovia Dom Pedro I (Rota das Bandeiras)
   {
-    id: "rad-01",
-    name: "Radar Marginal Tietê Ponte das Bandeiras",
-    highway: "Marginal Tietê (Pista Expressa km 0)",
-    km: "km 0",
+    id: "toll-dompedro-igarata",
+    name: "Pedágio Igaratá - Rod. Dom Pedro I",
+    highway: "SP-065 Rodovia Dom Pedro I",
+    km: "km 26",
+    category: "toll",
+    lat: -23.2150,
+    lng: -46.1250,
+    price: "R$ 11,70",
+    priceNum: 11.70,
+    concessionaire: "Rota das Bandeiras",
+    desc: "Praça entre a Carvalho Pinto/Dutra e Atibaia.",
+    economyTip: "Excelente ligação leste-norte entre o Vale do Paraíba e a região de Campinas.",
+    dangerTip: "Curvas em descida exigem atenção com veículos lentos."
+  },
+  {
+    id: "toll-dompedro-atibaia",
+    name: "Pedágio Atibaia - Rod. Dom Pedro I",
+    highway: "SP-065 Rodovia Dom Pedro I",
+    km: "km 79",
+    category: "toll",
+    lat: -23.1350,
+    lng: -46.6150,
+    price: "R$ 9,80",
+    priceNum: 9.80,
+    concessionaire: "Rota das Bandeiras",
+    desc: "Praça no cruzamento com a Rodovia Fernão Dias.",
+    economyTip: "Permite fácil acesso ao sul de Minas Gerais e Bragança Paulista.",
+    dangerTip: "Trecho com alto tráfego nos fins de semana turísticos."
+  },
+  {
+    id: "toll-dompedro-itatiba",
+    name: "Pedágio Itatiba - Rod. Dom Pedro I",
+    highway: "SP-065 Rodovia Dom Pedro I",
+    km: "km 110",
+    category: "toll",
+    lat: -22.9950,
+    lng: -46.8850,
+    price: "R$ 12,60",
+    priceNum: 12.60,
+    concessionaire: "Rota das Bandeiras",
+    desc: "Praça no trecho final da Dom Pedro I antes de Campinas.",
+    economyTip: "Acesso direto aos grandes shoppings e universidades de Campinas.",
+    dangerTip: "Fique atento ao afunilamento de pistas no anel viário de Campinas."
+  },
+
+  // Rodovia Fernão Dias (Arteris)
+  {
+    id: "toll-fernao-mairipora",
+    name: "Pedágio Mairiporã - Rod. Fernão Dias",
+    highway: "BR-381 Rodovia Fernão Dias",
+    km: "km 65",
+    category: "toll",
+    lat: -23.3150,
+    lng: -46.5850,
+    price: "R$ 2,90",
+    priceNum: 2.90,
+    concessionaire: "Arteris Fernão Dias",
+    desc: "Praça federal de tarifa baixa saindo de SP para o norte do estado e BH.",
+    economyTip: "Uma das tarifas mais econômicas do estado por ser concessão federal.",
+    dangerTip: "Trecho de serra da Cantareira com curvas fechadas e neblina noturna."
+  },
+  {
+    id: "toll-fernao-vargem",
+    name: "Pedágio Vargem / Bragança - Rod. Fernão Dias",
+    highway: "BR-381 Rodovia Fernão Dias",
+    km: "km 7",
+    category: "toll",
+    lat: -22.8850,
+    lng: -46.4250,
+    price: "R$ 2,90",
+    priceNum: 2.90,
+    concessionaire: "Arteris Fernão Dias",
+    desc: "Praça na divisa com Minas Gerais (próximo a Extrema).",
+    economyTip: "Excelente fluidez para turismo gastronômico na serra da Mantiqueira.",
+    dangerTip: "Tráfego de carretas pesadas subindo a serra; mantenha a esquerda se estiver em carro de passeio."
+  },
+
+  // Rodovia Régis Bittencourt (Arteris)
+  {
+    id: "toll-regis-saolourenco",
+    name: "Pedágio São Lourenço da Serra - Régis Bittencourt",
+    highway: "BR-116 Régis Bittencourt",
+    km: "km 298",
+    category: "toll",
+    lat: -23.8650,
+    lng: -46.9450,
+    price: "R$ 4,00",
+    priceNum: 4.00,
+    concessionaire: "Arteris Régis Bittencourt",
+    desc: "Primeira praça da Régis sentido Curitiba e Sul do país.",
+    economyTip: "Tarifa federal moderada com pistas totalmente duplicadas.",
+    dangerTip: "Pista com curvas e descida acentuada rumo ao Vale do Ribeira."
+  },
+  {
+    id: "toll-regis-miracatu",
+    name: "Pedágio Miracatu - Régis Bittencourt",
+    highway: "BR-116 Régis Bittencourt",
+    km: "km 370",
+    category: "toll",
+    lat: -24.2850,
+    lng: -47.4550,
+    price: "R$ 4,00",
+    priceNum: 4.00,
+    concessionaire: "Arteris Régis Bittencourt",
+    desc: "Praça no trecho central do Vale do Ribeira após a Serra do Cafezal.",
+    economyTip: "Serra do Cafezal duplicada garante descida segura e sem congestionamentos crônicos.",
+    dangerTip: "Cuidado com animais silvestres e chuva torrencial frequente."
+  },
+
+  // Rodovia Washington Luís (Ecorodovias)
+  {
+    id: "toll-washington-rioclaro",
+    name: "Pedágio Rio Claro - Rod. Washington Luís",
+    highway: "SP-310 Rodovia Washington Luís",
+    km: "km 181",
+    category: "toll",
+    lat: -22.4250,
+    lng: -47.5650,
+    price: "R$ 10,60",
+    priceNum: 10.60,
+    concessionaire: "Ecorodovias",
+    desc: "Praça de ligação entre Cordeirópolis, Rio Claro e São Carlos.",
+    economyTip: "Rodovia plana e com limite de 110 km/h, excelente rendimento de combustível.",
+    dangerTip: "Radares fixos nos dois sentidos nos trechos de passagem urbana."
+  },
+  {
+    id: "toll-washington-itirapina",
+    name: "Pedágio Itirapina - Rod. Washington Luís",
+    highway: "SP-310 Rodovia Washington Luís",
+    km: "km 217",
+    category: "toll",
+    lat: -22.2550,
+    lng: -47.8250,
+    price: "R$ 6,80",
+    priceNum: 6.80,
+    concessionaire: "Ecorodovias",
+    desc: "Praça antes da serra de São Carlos e acesso a Brotas.",
+    economyTip: "Tarifa reduzida no trecho de transição.",
+    dangerTip: "Fique atento à fiscalização eletrônica antes da serra."
+  },
+
+  // Rodovia Mogi-Dutra (SP-088)
+  {
+    id: "toll-mogidutra-aruja",
+    name: "Pedágio Mogi-Dutra - Arujá",
+    highway: "SP-088 Rodovia Pedro Eroles (Mogi-Dutra)",
+    km: "km 40",
+    category: "toll",
+    lat: -23.4150,
+    lng: -46.2850,
+    price: "R$ 4,80",
+    priceNum: 4.80,
+    concessionaire: "DER-SP",
+    desc: "Praça de ligação entre a Via Dutra e o centro de Mogi das Cruzes.",
+    economyTip: "Conexão rápida com a Mogi-Bertioga para evitar os pedágios da Carvalho Pinto.",
+    dangerTip: "Pista com tráfego urbano pesado nos horários de entrada e saída comercial."
+  },
+
+  // ================= 2. BANCO AMPLIADO DE RADARES FIXOS EM SÃO PAULO =================
+  // Marginais e Expressas da Capital SP
+  {
+    id: "rad-marg-tiete-01",
+    name: "Radar Fixo 70 km/h - Marginal Tietê (Ponte das Bandeiras)",
+    highway: "Marginal Tietê (Pista Expressa, km 12)",
+    km: "km 12",
+    category: "radar",
+    lat: -23.5175,
+    lng: -46.6275,
+    speed: "70 km/h",
+    dangerTip: "Câmera de fiscalização de velocidade instalada na estrutura da passarela.",
+    economyTip: "Mantenha velocidade constante para poupar combustível na pista expressa."
+  },
+  {
+    id: "rad-marg-tiete-02",
+    name: "Radar Fixo 50 km/h - Marginal Tietê (Pista Local / Ponte da Casa Verde)",
+    highway: "Marginal Tietê (Pista Local, km 14)",
+    km: "km 14",
+    category: "radar",
+    lat: -23.5135,
+    lng: -46.6540,
+    speed: "50 km/h",
+    dangerTip: "Fiscalização rigorosa de velocidade e faixa exclusiva de ônibus.",
+    economyTip: "Prefira a pista central ou expressa para cruzar a cidade com menos paradas."
+  },
+  {
+    id: "rad-marg-tiete-03",
+    name: "Radar Fixo 90 km/h - Marginal Tietê (Pista Central / Vila Maria)",
+    highway: "Marginal Tietê (Pista Central, km 8)",
+    km: "km 8",
     category: "radar",
     lat: -23.5180,
-    lng: -46.6280,
-    speed: "70 km/h (Expressa) / 50 km/h (Local)",
-    desc: "Fiscalização eletrônica por laços no asfalto com leitura de placas para Rodízio de SP.",
-    dangerTip: "DUPLO RISCO: Multa de excesso de velocidade + Multa de Rodízio de R$ 130,16.",
-    economyTip: "Mantenha rigorosamente 65 km/h no velocímetro do carro."
+    lng: -46.5950,
+    speed: "90 km/h",
+    dangerTip: "Câmeras de alta resolução nos dois sentidos (Castello e Ayrton Senna).",
+    economyTip: "Evite aceleradas bruscas nos acessos entre as pistas central e expressa."
   },
   {
-    id: "rad-02",
-    name: "Radar Marginal Pinheiros Ponte Cidade Jardim",
-    highway: "Marginal Pinheiros (Pista Expressa)",
+    id: "rad-marg-tiete-04",
+    name: "Radar Fixo 70 km/h - Marginal Tietê (Ponte do Piqueri / Lapa)",
+    highway: "Marginal Tietê (Pista Expressa, km 20)",
+    km: "km 20",
+    category: "radar",
+    lat: -23.5120,
+    lng: -46.7080,
+    speed: "70 km/h",
+    dangerTip: "Fiscalização antes da bifurcação para a Rodovia Castello Branco e Cebolão.",
+    economyTip: "Posicione-se com antecedência na faixa correspondente ao seu destino."
+  },
+  {
+    id: "rad-marg-pinheiros-01",
+    name: "Radar Fixo 70 km/h - Marginal Pinheiros (Ponte Eusébio Matoso)",
+    highway: "Marginal Pinheiros (Pista Expressa, km 5)",
     km: "km 5",
     category: "radar",
-    lat: -23.5850,
-    lng: -46.6950,
+    lat: -23.5685,
+    lng: -46.7020,
     speed: "70 km/h",
-    desc: "Radar sob a passarela de pedestres. Ponto campeão de infrações de trânsito em SP.",
-    dangerTip: "Multa de R$ 130 a R$ 880 se ultrapassar a velocidade permitida.",
-    economyTip: "Evite frear em cima do radar: mantenha o carro em velocidade constante."
+    dangerTip: "Câmeras suspensas em pórtico metálico sentido Interlagos.",
+    economyTip: "Controle suave de acelerador economiza até 12% na pista expressa."
   },
   {
-    id: "rad-03",
-    name: "Radar Imigrantes km 18 (Diadema)",
-    highway: "SP-160 Imigrantes",
-    km: "km 18",
+    id: "rad-marg-pinheiros-02",
+    name: "Radar Fixo 70 km/h - Marginal Pinheiros (Ponte Cidade Jardim)",
+    highway: "Marginal Pinheiros (Pista Expressa, km 7)",
+    km: "km 7",
     category: "radar",
-    lat: -23.7050,
-    lng: -46.5820,
-    speed: "90 km/h",
-    desc: "Radar instalado logo após a passarela no trecho em descida suave.",
-    dangerTip: "O carro ganha velocidade facilmente no declive: fique de olho no velocímetro.",
-    economyTip: "Use freio-motor de 5ª marcha para conter a velocidade sem gastar pastilha."
+    lat: -23.5890,
+    lng: -46.6960,
+    speed: "70 km/h",
+    dangerTip: "Fiscalização eletrônica sob a ponte nos dois sentidos.",
+    economyTip: "Cruzeiro suave sem frear bruscamente evita colisões traseiras."
   },
   {
-    id: "rad-04",
-    name: "Radar Descida de Serra da Imigrantes km 42",
-    highway: "SP-160 Imigrantes",
-    km: "km 42",
+    id: "rad-marg-pinheiros-03",
+    name: "Radar Fixo 70 km/h - Marginal Pinheiros (Ponte Estaiada / Berrini)",
+    highway: "Marginal Pinheiros (Pista Expressa, km 11)",
+    km: "km 11",
     category: "radar",
-    lat: -23.8680,
-    lng: -46.5350,
-    speed: "80 km/h",
-    desc: "Controle estrito de velocidade na transição da pista plana para a serra sinuosa.",
-    dangerTip: "Risco alto de perda de freios por superaquecimento se descer em ponto morto.",
-    economyTip: "Descer engatado poupa 100% de freio e combustível."
+    lat: -23.6120,
+    lng: -46.6980,
+    speed: "70 km/h",
+    dangerTip: "Pórtico eletrônico com leitura de placas e velocidade.",
+    economyTip: "Acesso direto à Ponte Estaiada e Av. Jornalista Roberto Marinho."
   },
   {
-    id: "rad-05",
-    name: "Radar Anchieta km 23 (São Bernardo)",
-    highway: "SP-150 Rodovia Anchieta",
-    km: "km 23",
+    id: "rad-marg-pinheiros-04",
+    name: "Radar Fixo 70 km/h - Marginal Pinheiros (Ponte João Dias)",
+    highway: "Marginal Pinheiros (Pista Expressa, km 15)",
+    km: "km 15",
     category: "radar",
-    lat: -23.7250,
-    lng: -46.5520,
-    speed: "80 km/h",
-    desc: "Radar fixo no trecho urbano de São Bernardo do Campo.",
-    dangerTip: "Pedestres e ônibus em manobra.",
-    economyTip: "Respeite os 80 km/h e aproveite para abastecer no posto próximo."
+    lat: -23.6480,
+    lng: -46.7210,
+    speed: "70 km/h",
+    dangerTip: "Fiscalização antes da chegada a Santo Amaro e Interlagos.",
+    economyTip: "Pista ampla e com sinalização clara de velocidade máxima."
   },
   {
-    id: "rad-06",
-    name: "Radar Ayrton Senna km 22 (Acesso Cumbica)",
-    highway: "SP-070 Ayrton Senna",
-    km: "km 22",
+    id: "rad-av-23maio-01",
+    name: "Radar Fixo 60 km/h - Av. 23 de Maio (Viaduto Santa Generosa)",
+    highway: "Corredor Norte-Sul (km 3)",
+    km: "km 3",
     category: "radar",
-    lat: -23.4750,
-    lng: -46.4520,
-    speed: "100 km/h",
-    desc: "A rodovia vem a 120 km/h e o limite cai para 100 km/h neste trecho urbano!",
-    dangerTip: "QUEDA ABRUPTA DE VELOCIDADE: Reduza antes de avistar o pórtico.",
-    economyTip: "Tire o pé 500 metros antes para desacelerar com inércia natural."
-  },
-  {
-    id: "rad-07",
-    name: "Radar Tamoios km 68 (Novos Túneis Expressos)",
-    highway: "SP-099 Rodovia dos Tamoios",
-    km: "km 68",
-    category: "radar",
-    lat: -23.4850,
-    lng: -45.5820,
-    speed: "80 km/h (Controle Rígido)",
-    desc: "Câmeras de controle de velocidade e monitoramento 24h dentro do maior túnel rodoviário do Brasil.",
-    dangerTip: "Proibido parar no acostamento do túnel a menos que seja emergência extrema.",
-    economyTip: "Mantenha o Kwid/Onix em 4ª marcha a 80 km/h cravados."
-  },
-  {
-    id: "rad-08",
-    name: "Radar Serra de Jundiaí km 58 (Anhanguera)",
-    highway: "SP-330 Anhanguera",
-    km: "km 58",
-    category: "radar",
-    lat: -23.1950,
-    lng: -46.9020,
-    speed: "80 km/h (ARMADILHA CLÁSSICA)",
-    desc: "A rodovia permite 110 km/h e cai repentinamente para 80 km/h na descida da serra de Jundiaí!",
-    dangerTip: "ALTA INCIDÊNCIA DE AUTUAÇÕES: Reduza imediatamente ao avistar a sinalização de 80 km/h.",
-    economyTip: "Não espere ver o radar: viu a placa de 80 km/h, reduza imediatamente."
-  },
-  {
-    id: "rad-09",
-    name: "Radar Granja Viana km 23 (Raposo Tavares)",
-    highway: "SP-270 Raposo Tavares",
-    km: "km 23",
-    category: "radar",
-    lat: -23.5910,
-    lng: -46.8520,
+    lat: -23.5780,
+    lng: -46.6430,
     speed: "60 km/h",
-    desc: "Trecho urbano movimentado com múltiplos semáforos e comércio.",
-    dangerTip: "Câmeras fiscalizam também avanço de sinal vermelho.",
-    economyTip: "Respeite os 60 km/h para não ter que frear bruscamente nos semáforos."
+    dangerTip: "Radar de velocidade e rodízio municipal instalado sob o viaduto.",
+    economyTip: "Respeite os 60 km/h contínuos para sincronizar a onda verde dos semáforos adiante."
   },
   {
-    id: "rad-10",
-    name: "Radar Descida Mogi-Bertioga km 85",
-    highway: "SP-098 Mogi-Bertioga",
-    km: "km 85",
+    id: "rad-av-23maio-02",
+    name: "Radar Fixo 60 km/h - Av. 23 de Maio (Túnel Ayrton Senna)",
+    highway: "Corredor Norte-Sul (km 5)",
+    km: "km 5",
     category: "radar",
-    lat: -23.8050,
-    lng: -46.1550,
-    speed: "40 km/h (Curva Perigosa)",
-    desc: "Radar instalado estrategicamente na curva mais fechada da descida da serra.",
-    dangerTip: "Curva com histórico de tombamento de veículos se ultrapassar 45 km/h.",
-    economyTip: "Passe em 2ª marcha com o freio-motor atuando para não queimar as pastilhas."
-  },
-  {
-    id: "rad-11",
-    name: "Radar Rio-Santos km 116 (São Sebastião)",
-    highway: "SP-055 Rodovia Rio-Santos",
-    km: "km 116",
-    category: "radar",
-    lat: -23.7850,
-    lng: -45.5250,
+    lat: -23.5860,
+    lng: -46.6540,
     speed: "60 km/h",
-    desc: "Fiscalização em travessia de pedestres de praias.",
-    dangerTip: "Atenção constante a ciclistas e banhistas na pista.",
-    economyTip: "Mantenha velocidade moderada constante."
+    dangerTip: "Fiscalização rigorosa na entrada e saída do complexo viário.",
+    economyTip: "Mantenha faróis baixos acesos no interior do túnel."
+  },
+  {
+    id: "rad-av-bandeirantes-01",
+    name: "Radar Fixo 50 km/h - Av. dos Bandeirantes (Aeroporto Congonhas)",
+    highway: "Av. dos Bandeirantes (km 6)",
+    km: "km 6",
+    category: "radar",
+    lat: -23.6080,
+    lng: -46.6690,
+    speed: "50 km/h",
+    dangerTip: "Fiscalização em ambos os sentidos com grande fluxo de táxis e transfers.",
+    economyTip: "Avenida com muitos semáforos; evite arrancadas rápidas."
+  },
+  {
+    id: "rad-av-radial-01",
+    name: "Radar Fixo 60 km/h - Radial Leste (Metrô Tatuapé)",
+    highway: "Av. Radial Leste (km 6)",
+    km: "km 6",
+    category: "radar",
+    lat: -23.5390,
+    lng: -46.5780,
+    speed: "60 km/h",
+    dangerTip: "Pórtico sobre a via expressa com fiscalização de velocidade e rodízio.",
+    economyTip: "Mantenha velocidade constante para fluidez no trajeto Leste-Centro."
+  },
+  {
+    id: "rad-av-salim-01",
+    name: "Radar Fixo 60 km/h - Av. Salim Farah Maluf",
+    highway: "Av. Salim Farah Maluf (km 4)",
+    km: "km 4",
+    category: "radar",
+    lat: -23.5580,
+    lng: -46.5740,
+    speed: "60 km/h",
+    dangerTip: "Radar fixo nos dois sentidos na ligação Anchieta-Tietê.",
+    economyTip: "Crucial conexão de quem vem da Anchieta rumo à Dutra e Ayrton Senna."
+  },
+  {
+    id: "rad-av-morato-01",
+    name: "Radar Fixo 50 km/h - Av. Prof. Francisco Morato (Caxingui)",
+    highway: "Av. Prof. Francisco Morato (km 3)",
+    km: "km 3",
+    category: "radar",
+    lat: -23.5780,
+    lng: -46.7180,
+    speed: "50 km/h",
+    dangerTip: "Radar de velocidade e corredor de ônibus à direita.",
+    economyTip: "Prefira a pista central para evitar desacelerações de ônibus."
   },
 
-  // 8. POSTOS BARATOS COM PARADAS ESTRATÉGICAS
+  // Rodovia dos Imigrantes (SP-160)
   {
-    id: "gas-01",
-    name: "Auto Posto Campeão Imigrantes (São Bernardo do Campo)",
-    highway: "SP-160 Imigrantes",
+    id: "rad-imigrantes-km16",
+    name: "Radar Fixo 100 km/h - Rod. Imigrantes (Diadema)",
+    highway: "SP-160 Rodovia dos Imigrantes",
+    km: "km 16",
+    category: "radar",
+    lat: -23.6820,
+    lng: -46.6120,
+    speed: "100 km/h",
+    dangerTip: "Radar em pórtico no trecho de transição da capital para o ABC.",
+    economyTip: "Pista com pavimento de concreto plano; excelente para pilotagem suave."
+  },
+  {
+    id: "rad-imigrantes-km21",
+    name: "Radar Fixo 110 km/h - Rod. Imigrantes (São Bernardo)",
+    highway: "SP-160 Rodovia dos Imigrantes",
+    km: "km 21",
+    category: "radar",
+    lat: -23.7180,
+    lng: -46.5820,
+    speed: "110 km/h",
+    dangerTip: "Radar fixo antes do entroncamento com o Rodoanel Sul.",
+    economyTip: "Velocidade constante em 5ª/6ª marcha gera menor gasto de etanol/gasolina."
+  },
+  {
+    id: "rad-imigrantes-km41",
+    name: "Radar Fixo 110 km/h - Rod. Imigrantes (Planalto)",
+    highway: "SP-160 Rodovia dos Imigrantes",
+    km: "km 41",
+    category: "radar",
+    lat: -23.8210,
+    lng: -46.5410,
+    speed: "110 km/h",
+    dangerTip: "Último radar do planalto antes da entrada nos túneis de descida.",
+    economyTip: "Verifique temperatura do motor e freios antes de iniciar a descida da serra."
+  },
+  {
+    id: "rad-imigrantes-km58",
+    name: "Radar Fixo 80 km/h - Rod. Imigrantes (Descida da Serra / Túnel)",
+    highway: "SP-160 Rodovia dos Imigrantes",
+    km: "km 58",
+    category: "radar",
+    lat: -23.9150,
+    lng: -46.5150,
+    speed: "80 km/h",
+    dangerTip: "Fiscalização no complexo de túneis da Serra do Mar. Limite reduzido!",
+    economyTip: "Use freio-motor engrenado em 3ª ou 4ª marcha para não superaquecer as pastilhas."
+  },
+
+  // Rodovia Anchieta (SP-150)
+  {
+    id: "rad-anchieta-km18",
+    name: "Radar Fixo 90 km/h - Rod. Anchieta (SBC Centro)",
+    highway: "SP-150 Rodovia Anchieta",
+    km: "km 18",
+    category: "radar",
+    lat: -23.6950,
+    lng: -46.5680,
+    speed: "90 km/h",
+    dangerTip: "Radar instalado no canteiro central em trecho de pista expressa.",
+    economyTip: "Ao lado de grandes polos industriais e postos com preços em conta."
+  },
+  {
+    id: "rad-anchieta-km29",
+    name: "Radar Fixo 90 km/h - Rod. Anchieta (Riacho Grande)",
+    highway: "SP-150 Rodovia Anchieta",
+    km: "km 29",
+    category: "radar",
+    lat: -23.7650,
+    lng: -46.5450,
+    speed: "90 km/h",
+    dangerTip: "Fiscalização antes da aproximação da praça de pedágio.",
+    economyTip: "Atenção à sinalização de caminhões obrigados à pista da direita."
+  },
+  {
+    id: "rad-anchieta-km43",
+    name: "Radar Fixo 60 km/h - Rod. Anchieta (Serra Antiga)",
+    highway: "SP-150 Rodovia Anchieta",
+    km: "km 43",
+    category: "radar",
+    lat: -23.8450,
+    lng: -46.5050,
+    speed: "60 km/h",
+    dangerTip: "Curvas muito sinuosas na serra antiga; limite de 60 km/h para veículos de passeio e 40 km/h pesados.",
+    economyTip: "Desça com calma mantendo distância de segurança das carretas."
+  },
+
+  // Rodovia Ayrton Senna (SP-070)
+  {
+    id: "rad-ayrton-km19",
+    name: "Radar Fixo 120 km/h - Rod. Ayrton Senna (Guarulhos / Cumbica)",
+    highway: "SP-070 Rodovia Ayrton Senna",
     km: "km 19",
+    category: "radar",
+    lat: -23.4880,
+    lng: -46.4650,
+    speed: "120 km/h",
+    dangerTip: "Pórtico eletrônico com câmeras para automóveis (120 km/h) e pesados (90 km/h).",
+    economyTip: "Pista quádrupla ampla; use a terceira faixa para cruzeiro tranquilo."
+  },
+  {
+    id: "rad-ayrton-km28",
+    name: "Radar Fixo 120 km/h - Rod. Ayrton Senna (Itaquaquecetuba)",
+    highway: "SP-070 Rodovia Ayrton Senna",
+    km: "km 28",
+    category: "radar",
+    lat: -23.4750,
+    lng: -46.3650,
+    speed: "120 km/h",
+    dangerTip: "Radar de velocidade antes da praça de pedágio de Itaquaquecetuba.",
+    economyTip: "Reduza suavemente a velocidade até o pedágio para não desperdiçar energia cinética."
+  },
+  {
+    id: "rad-ayrton-km45",
+    name: "Radar Fixo 120 km/h - Rod. Ayrton Senna (Mogi das Cruzes)",
+    highway: "SP-070 Rodovia Ayrton Senna",
+    km: "km 45",
+    category: "radar",
+    lat: -23.4450,
+    lng: -46.2250,
+    speed: "120 km/h",
+    dangerTip: "Pórtico no entroncamento com a Mogi-Dutra.",
+    economyTip: "Pista com excelente asfalto e curvas abertas."
+  },
+
+  // Rodovia Carvalho Pinto (SP-070)
+  {
+    id: "rad-carvalho-km72",
+    name: "Radar Fixo 120 km/h - Rod. Carvalho Pinto (São José dos Campos)",
+    highway: "SP-070 Rodovia Carvalho Pinto",
+    km: "km 72",
+    category: "radar",
+    lat: -23.3250,
+    lng: -45.9800,
+    speed: "120 km/h",
+    dangerTip: "Câmera no canteiro central em reta longa e com vento cruzado.",
+    economyTip: "Rota excelente com baixo consumo em velocidade de cruzeiro."
+  },
+  {
+    id: "rad-carvalho-km98",
+    name: "Radar Fixo 120 km/h - Rod. Carvalho Pinto (Caçapava)",
+    highway: "SP-070 Rodovia Carvalho Pinto",
+    km: "km 98",
+    category: "radar",
+    lat: -23.2150,
+    lng: -45.7850,
+    speed: "120 km/h",
+    dangerTip: "Fiscalização nos dois sentidos da rodovia.",
+    economyTip: "Evite passar de 120 km/h para não disparar a resistência aerodinâmica e o consumo."
+  },
+
+  // Rodovia dos Tamoios (SP-099)
+  {
+    id: "rad-tamoios-km14",
+    name: "Radar Fixo 80 km/h - Rod. dos Tamoios (Jambeiro)",
+    highway: "SP-099 Rodovia dos Tamoios",
+    km: "km 14",
+    category: "radar",
+    lat: -23.2850,
+    lng: -45.7850,
+    speed: "80 km/h",
+    dangerTip: "Radar fixo no trecho inicial duplicado antes da primeira praça de pedágio.",
+    economyTip: "Velocidade padrão de 80 km/h garante máxima segurança e economia na Tamoios."
+  },
+  {
+    id: "rad-tamoios-km28",
+    name: "Radar Fixo 80 km/h - Rod. dos Tamoios (Paraibuna)",
+    highway: "SP-099 Rodovia dos Tamoios",
+    km: "km 28",
+    category: "radar",
+    lat: -23.3650,
+    lng: -45.6850,
+    speed: "80 km/h",
+    dangerTip: "Fiscalização em descida leve próximo à represa de Paraibuna.",
+    economyTip: "Aproveite a inércia do veículo sem acelerar nas descidas suaves."
+  },
+  {
+    id: "rad-tamoios-km64",
+    name: "Radar Fixo 80 km/h - Rod. dos Tamoios (Túneis Serra Nova)",
+    highway: "SP-099 Rodovia dos Tamoios",
+    km: "km 64",
+    category: "radar",
+    lat: -23.5450,
+    lng: -45.5150,
+    speed: "80 km/h",
+    dangerTip: "Fiscalização contínua nos túneis mais longos do Brasil. Não ultrapasse 80 km/h!",
+    economyTip: "Sinal de rádio FM e ventilação inteligente ativa dentro dos túneis."
+  },
+
+  // Rodovia Castello Branco (SP-280)
+  {
+    id: "rad-castello-km15",
+    name: "Radar Fixo 100 km/h - Rod. Castello Branco (Osasco)",
+    highway: "SP-280 Rodovia Castello Branco",
+    km: "km 15",
+    category: "radar",
+    lat: -23.5250,
+    lng: -46.7750,
+    speed: "100 km/h",
+    dangerTip: "Radar de pórtico logo após a saída do Cebolão / Marginal Tietê.",
+    economyTip: "Pistas marginais têm limite menor (70 km/h); atenção às placas."
+  },
+  {
+    id: "rad-castello-km24",
+    name: "Radar Fixo 100 km/h - Rod. Castello Branco (Alphaville)",
+    highway: "SP-280 Rodovia Castello Branco",
+    km: "km 24",
+    category: "radar",
+    lat: -23.5050,
+    lng: -46.8650,
+    speed: "100 km/h",
+    dangerTip: "Câmeras de controle na saída para Barueri e Alphaville.",
+    economyTip: "Pista central é mais rápida e livre de gargalos comerciais."
+  },
+  {
+    id: "rad-castello-km45",
+    name: "Radar Fixo 120 km/h - Rod. Castello Branco (Araçariguama)",
+    highway: "SP-280 Rodovia Castello Branco",
+    km: "km 45",
+    category: "radar",
+    lat: -23.4650,
+    lng: -47.1250,
+    speed: "120 km/h",
+    dangerTip: "Fiscalização em reta com declive acentuado.",
+    economyTip: "Excelente ponto para manter velocidade em piloto automático."
+  },
+  {
+    id: "rad-castello-km68",
+    name: "Radar Fixo 120 km/h - Rod. Castello Branco (Itu / Sorocaba)",
+    highway: "SP-280 Rodovia Castello Branco",
+    km: "km 68",
+    category: "radar",
+    lat: -23.4150,
+    lng: -47.2850,
+    speed: "120 km/h",
+    dangerTip: "Pórtico antes do acesso à Castelinho (SP-075) para Sorocaba.",
+    economyTip: "Mantenha a faixa correta com antecedência para entrar na alça."
+  },
+
+  // Rodovia Raposo Tavares (SP-270)
+  {
+    id: "rad-raposo-km12",
+    name: "Radar Fixo 60 km/h - Rod. Raposo Tavares (Butantã)",
+    highway: "SP-270 Rodovia Raposo Tavares",
+    km: "km 12",
+    category: "radar",
+    lat: -23.5780,
+    lng: -46.7450,
+    speed: "60 km/h",
+    dangerTip: "Radar de velocidade e fiscalização de rodízio na saída da capital.",
+    economyTip: "Tráfego urbano pesado nos horários de pico; dirija com suavidade."
+  },
+  {
+    id: "rad-raposo-km22",
+    name: "Radar Fixo 80 km/h - Rod. Raposo Tavares (Granja Viana)",
+    highway: "SP-270 Rodovia Raposo Tavares",
+    km: "km 22",
+    category: "radar",
+    lat: -23.5950,
+    lng: -46.8520,
+    speed: "80 km/h",
+    dangerTip: "Fiscalização em trecho com travessia de pedestres e shoppings.",
+    economyTip: "Use as faixas centrais para evitar frenagens de veículos acessando comércios."
+  },
+  {
+    id: "rad-raposo-km38",
+    name: "Radar Fixo 80 km/h - Rod. Raposo Tavares (Cotia)",
+    highway: "SP-270 Rodovia Raposo Tavares",
+    km: "km 38",
+    category: "radar",
+    lat: -23.6150,
+    lng: -46.9620,
+    speed: "80 km/h",
+    dangerTip: "Radar no canteiro central antes de Vargem Grande Paulista.",
+    economyTip: "Início do trecho com menos semáforos e melhor consumo."
+  },
+
+  // Rodovia dos Bandeirantes (SP-348)
+  {
+    id: "rad-bandeirantes-km22",
+    name: "Radar Fixo 120 km/h - Rod. Bandeirantes (Rodoanel)",
+    highway: "SP-348 Rodovia dos Bandeirantes",
+    km: "km 22",
+    category: "radar",
+    lat: -23.4450,
+    lng: -46.7650,
+    speed: "120 km/h",
+    dangerTip: "Pórtico eletrônico no entroncamento com o Rodoanel Oeste.",
+    economyTip: "Pistas quádruplas e asfalto perfeito; mantenha velocidade regular."
+  },
+  {
+    id: "rad-bandeirantes-km58",
+    name: "Radar Fixo 120 km/h - Rod. Bandeirantes (Jundiaí)",
+    highway: "SP-348 Rodovia dos Bandeirantes",
+    km: "km 58",
+    category: "radar",
+    lat: -23.2350,
+    lng: -46.9250,
+    speed: "120 km/h",
+    dangerTip: "Câmera no trecho sinuoso da serra do Japi.",
+    economyTip: "Parada excelente nos postos temáticos ao lado da rodovia."
+  },
+  {
+    id: "rad-bandeirantes-km88",
+    name: "Radar Fixo 120 km/h - Rod. Bandeirantes (Campinas Sul)",
+    highway: "SP-348 Rodovia dos Bandeirantes",
+    km: "km 88",
+    category: "radar",
+    lat: -23.0150,
+    lng: -47.1250,
+    speed: "120 km/h",
+    dangerTip: "Fiscalização antes da bifurcação para o Aeroporto de Viracopos.",
+    economyTip: "Sinalização excelente para conexão rápida com a Santos Dumont."
+  },
+
+  // Rodovia Anhanguera (SP-330)
+  {
+    id: "rad-anhanguera-km14",
+    name: "Radar Fixo 100 km/h - Rod. Anhanguera (São Paulo / Lapa)",
+    highway: "SP-330 Rodovia Anhanguera",
+    km: "km 14",
+    category: "radar",
+    lat: -23.4950,
+    lng: -46.7450,
+    speed: "100 km/h",
+    dangerTip: "Pórtico logo após a saída da Marginal Tietê.",
+    economyTip: "Atenção ao limite de 100 km/h nos primeiros quilômetros urbanos."
+  },
+  {
+    id: "rad-anhanguera-km52",
+    name: "Radar Fixo 100 km/h - Rod. Anhanguera (Jundiaí)",
+    highway: "SP-330 Rodovia Anhanguera",
+    km: "km 52",
+    category: "radar",
+    lat: -23.2150,
+    lng: -46.8850,
+    speed: "100 km/h",
+    dangerTip: "Radar próximo ao Posto Graal 56.",
+    economyTip: "Excelente ponto para abastecimento e calibragem de pneus."
+  },
+  {
+    id: "rad-anhanguera-km80",
+    name: "Radar Fixo 100 km/h - Rod. Anhanguera (Vinhedo)",
+    highway: "SP-330 Rodovia Anhanguera",
+    km: "km 80",
+    category: "radar",
+    lat: -23.0250,
+    lng: -47.0150,
+    speed: "100 km/h",
+    dangerTip: "Fiscalização em trecho com aclive e entrada de caminhões.",
+    economyTip: "Mantenha a faixa central para velocidade homogênea."
+  },
+
+  // Rodovia Dom Pedro I (SP-065)
+  {
+    id: "rad-dompedro-km72",
+    name: "Radar Fixo 110 km/h - Rod. Dom Pedro I (Atibaia)",
+    highway: "SP-065 Rodovia Dom Pedro I",
+    km: "km 72",
+    category: "radar",
+    lat: -23.1250,
+    lng: -46.5750,
+    speed: "110 km/h",
+    dangerTip: "Radar de velocidade nos dois sentidos próximo ao trevo de Atibaia.",
+    economyTip: "Pista duplicada de excelente qualidade."
+  },
+  {
+    id: "rad-dompedro-km105",
+    name: "Radar Fixo 110 km/h - Rod. Dom Pedro I (Itatiba)",
+    highway: "SP-065 Rodovia Dom Pedro I",
+    km: "km 105",
+    category: "radar",
+    lat: -23.0150,
+    lng: -46.8450,
+    speed: "110 km/h",
+    dangerTip: "Fiscalização eletrônica no trecho de curvas longas.",
+    economyTip: "Mantenha marcha alta para otimizar o consumo."
+  },
+
+  // Rodoanel Mário Covas (SP-021)
+  {
+    id: "rad-rodoanel-km12",
+    name: "Radar Fixo 100 km/h - Rodoanel Oeste (Barueri)",
+    highway: "SP-021 Rodoanel Mário Covas",
+    km: "km 12",
+    category: "radar",
+    lat: -23.5350,
+    lng: -46.8150,
+    speed: "100 km/h",
+    dangerTip: "Pórtico com controle de velocidade a 100 km/h.",
+    economyTip: "Via expressa ampla com 4 faixas por sentido."
+  },
+  {
+    id: "rad-rodoanel-km48",
+    name: "Radar Fixo 100 km/h - Rodoanel Sul (Represa Billings)",
+    highway: "SP-021 Rodoanel Mário Covas",
+    km: "km 48",
+    category: "radar",
+    lat: -23.7620,
+    lng: -46.6850,
+    speed: "100 km/h",
+    dangerTip: "Fiscalização em viaduto sobre as águas da represa.",
+    economyTip: "Sem semáforos nem pedestres; padrão ideal de rodovia."
+  },
+  {
+    id: "rad-rodoanel-km75",
+    name: "Radar Fixo 100 km/h - Rodoanel Leste (Ribeirão Pires)",
+    highway: "SP-021 Rodoanel Mário Covas",
+    km: "km 75",
+    category: "radar",
+    lat: -23.6850,
+    lng: -46.4850,
+    speed: "100 km/h",
+    dangerTip: "Radar de velocidade em curva suave do trecho leste.",
+    economyTip: "Excelente ligação do litoral para o interior sem entrar na capital."
+  },
+
+  // Rodovia Presidente Dutra (BR-116)
+  {
+    id: "rad-dutra-km224",
+    name: "Radar Fixo 90 km/h - Rod. Pres. Dutra (Guarulhos / Cecap)",
+    highway: "BR-116 Presidente Dutra",
+    km: "km 224",
+    category: "radar",
+    lat: -23.4550,
+    lng: -46.4950,
+    speed: "90 km/h",
+    dangerTip: "Radar de velocidade nos dois sentidos próximo ao acesso ao aeroporto.",
+    economyTip: "Trecho com tráfego intenso; mantenha distância segura."
+  },
+  {
+    id: "rad-dutra-km175",
+    name: "Radar Fixo 110 km/h - Rod. Pres. Dutra (Jacareí)",
+    highway: "BR-116 Presidente Dutra",
+    km: "km 175",
+    category: "radar",
+    lat: -23.3150,
+    lng: -45.9850,
+    speed: "110 km/h",
+    dangerTip: "Fiscalização eletrônica no planalto do Vale do Paraíba.",
+    economyTip: "Pista reta e bem sinalizada."
+  },
+
+  // Rodovia Régis Bittencourt (BR-116)
+  {
+    id: "rad-regis-km279",
+    name: "Radar Fixo 80 km/h - Rod. Régis Bittencourt (Taboão da Serra)",
+    highway: "BR-116 Régis Bittencourt",
+    km: "km 279",
+    category: "radar",
+    lat: -23.6150,
+    lng: -46.7750,
+    speed: "80 km/h",
+    dangerTip: "Radar em trecho urbano da saída de São Paulo.",
+    economyTip: "Fique atento às paradas de transporte coletivo no acostamento."
+  },
+  {
+    id: "rad-regis-km287",
+    name: "Radar Fixo 80 km/h - Rod. Régis Bittencourt (Embu das Artes)",
+    highway: "BR-116 Régis Bittencourt",
+    km: "km 287",
+    category: "radar",
+    lat: -23.6750,
+    lng: -46.8550,
+    speed: "80 km/h",
+    dangerTip: "Câmera instalada em curva de descida.",
+    economyTip: "Trecho com postos de abastecimento expressos."
+  },
+
+  // ================= 3. POSTOS ESTRATÉGICOS COM COMBUSTÍVEL ECONÔMICO =================
+  {
+    id: "gas-graal-56",
+    name: "Posto Graal 56 - Anhanguera km 56 (Jundiaí)",
+    highway: "SP-330 Rodovia Anhanguera",
+    km: "km 56",
+    category: "gas",
+    lat: -23.2180,
+    lng: -46.8820,
+    fuelPrice: "Etanol: R$ 3,29 | Gasolina: R$ 5,39",
+    desc: "Posto tradicional com ampla infraestrutura, calibrador digital e preços de combustível competitivos.",
+    economyTip: "Etanol 7% mais barato que a média da capital. Calibre os pneus antes de subir a serra.",
+    dangerTip: "Pátio amplo e bem iluminado com vigilância 24h."
+  },
+  {
+    id: "gas-graal-anchieta",
+    name: "Posto Graal Anchieta - km 21 (São Bernardo do Campo)",
+    highway: "SP-150 Rodovia Anchieta",
+    km: "km 21",
     category: "gas",
     lat: -23.7120,
     lng: -46.5750,
-    fuelPrice: "Etanol: R$ 3,49 | Gasolina: R$ 5,39",
-    desc: "Último posto com combustível a preço de atacado antes da serra. R$ 0,70 mais barato por litro que na praia!",
-    economyTip: "Encha o tanque aqui e economize até R$ 35,00 por abastecimento antes de chegar em Santos/Litoral."
+    fuelPrice: "Etanol: R$ 3,34 | Gasolina: R$ 5,45",
+    desc: "Parada estratégica para abastecer antes de descer para Santos ou Litoral Sul.",
+    economyTip: "Economize até R$ 0,40 por litro em comparação aos postos da orla de Santos.",
+    dangerTip: "Atenção ao fluxo rápido de veículos na alça de desaceleração."
   },
   {
-    id: "gas-02",
-    name: "Auto Posto Graal 56 Anhanguera (Jundiaí)",
-    highway: "SP-330 Anhanguera",
-    km: "km 56",
+    id: "gas-posto-campeao-mogi",
+    name: "Posto Campeão - Mogi das Cruzes / Bertioga (km 58)",
+    highway: "SP-098 Rodovia Mogi-Bertioga",
+    km: "km 58",
     category: "gas",
-    lat: -23.2350,
-    lng: -46.8650,
-    fuelPrice: "Etanol: R$ 3,39 | Gasolina: R$ 5,29",
-    desc: "Combustível mais barato do corredor norte com ampla estrutura de lanchonete e banheiros limpos.",
-    economyTip: "Excelente ponto para tomar um café e abastecer com o menor preço do estado."
+    lat: -23.5350,
+    lng: -46.1850,
+    fuelPrice: "Etanol: R$ 3,25 | Gasolina: R$ 5,29",
+    desc: "Último ponto com combustível barato antes de descer a serra de Bertioga.",
+    economyTip: "Abasteça tanque cheio aqui para não pagar valores inflacionados no litoral norte.",
+    dangerTip: "Cheque água do radiador e fluido de freio antes do trecho de serra."
   },
   {
-    id: "gas-03",
-    name: "Posto Petrobras Mogi-Dutra (Mogi das Cruzes)",
-    highway: "SP-088 Mogi-Dutra",
-    km: "km 41",
-    category: "gas",
-    lat: -23.4850,
-    lng: -46.2350,
-    fuelPrice: "Etanol: R$ 3,42 | Gasolina: R$ 5,32",
-    desc: "Ponto estratégico da Rota Econômica antes da descida da serra de Mogi-Bertioga.",
-    economyTip: "No litoral norte o combustível custa mais de R$ 4,19 (Etanol). Abasteça aqui!"
-  },
-  {
-    id: "gas-04",
-    name: "Posto Ipiranga Dutra km 214 (Guarulhos)",
-    highway: "BR-116 Presidente Dutra",
-    km: "km 214",
-    category: "gas",
-    lat: -23.4620,
-    lng: -46.5120,
-    fuelPrice: "Etanol: R$ 3,45 | Gasolina: R$ 5,35",
-    desc: "Grande posto 24 horas seguro e bem iluminado com loja de conveniência completa.",
-    economyTip: "Evite paradas no acostamento escuro: faça tudo aqui com segurança."
-  },
-  {
-    id: "gas-05",
-    name: "Frango Assado Carvalho Pinto km 94 (São José dos Campos)",
-    highway: "SP-070 Carvalho Pinto",
+    id: "gas-frango-assado-carvalho",
+    name: "Frango Assado - Rod. Carvalho Pinto (km 94)",
+    highway: "SP-070 Rodovia Carvalho Pinto",
     km: "km 94",
     category: "gas",
-    lat: -23.2820,
-    lng: -45.8820,
-    fuelPrice: "Etanol: R$ 3,69 | Gasolina: R$ 5,59",
-    desc: "Parada clássica de viajantes com praça de alimentação completa e segurança privada 24h.",
-    economyTip: "Parada ideal para esticar as pernas e checar a pressão dos pneus gratuitamente."
+    lat: -23.2350,
+    lng: -45.8250,
+    fuelPrice: "Etanol: R$ 3,42 | Gasolina: R$ 5,55",
+    desc: "Complexo de conveniência com combustível aditivado e suporte mecânico de emergência.",
+    economyTip: "Ótima parada para checagem rápida de pneus e descanso de viagem.",
+    dangerTip: "Estacionamento seguro com monitoramento por câmeras."
+  },
+  {
+    id: "gas-graal-castello",
+    name: "Posto Graal Castello Branco - km 30 (Barueri / Itapevi)",
+    highway: "SP-280 Rodovia Castello Branco",
+    km: "km 30",
+    category: "gas",
+    lat: -23.5010,
+    lng: -46.9420,
+    fuelPrice: "Etanol: R$ 3,32 | Gasolina: R$ 5,42",
+    desc: "Grande posto de rodovia com combustível de distribuidora oficial e calibragem precisa.",
+    economyTip: "Preço de combustível vantajoso antes da praça de pedágio de Itapevi.",
+    dangerTip: "Fique atento aos caminhões manobrando no pátio dos fundos."
+  },
+  {
+    id: "gas-ipiranga-aracariguama",
+    name: "Posto Ipiranga Castelo - km 44 (Araçariguama)",
+    highway: "SP-280 Rodovia Castello Branco",
+    km: "km 44",
+    category: "gas",
+    lat: -23.4680,
+    lng: -47.1180,
+    fuelPrice: "Etanol: R$ 3,28 | Gasolina: R$ 5,38",
+    desc: "Ponto de apoio com preços econômicos e loja de conveniência 24h.",
+    economyTip: "Abastecimento com desconto via aplicativo de fidelidade.",
+    dangerTip: "Cuidado na entrada e saída da pista expressa."
   }
 ];
+
 
 // Base rápida de geocodificação offline para municípios e pontos de SP
 const LOCAL_GEOCODE_CACHE = {
@@ -1162,6 +1708,10 @@ const AppState = {
   originMarker: null,
   destMarker: null,
   simVehicleMarker: null,
+  userMarker: null,
+  userAccuracyCircle: null,
+  isGpsOrigin: false,
+  userLocation: null,
   
   originCoords: [-23.5505, -46.6333],
   destCoords: [-23.6229, -45.4128],
@@ -2006,12 +2556,12 @@ function getFilteredPoints() {
     else if (AppState.activeFilter === "toll") matchesCategory = (p.category === "toll");
     else if (AppState.activeFilter === "radar") matchesCategory = (p.category === "radar");
     else if (AppState.activeFilter === "gas") matchesCategory = (p.category === "gas");
-    else if (AppState.activeFilter === "waze") matchesCategory = p.category.startsWith("waze_");
 
-    const matchesSearch = AppState.searchQuery === "" || 
-      p.name.toLowerCase().includes(AppState.searchQuery.toLowerCase()) ||
-      p.highway.toLowerCase().includes(AppState.searchQuery.toLowerCase()) ||
-      p.desc.toLowerCase().includes(AppState.searchQuery.toLowerCase());
+    const q = (AppState.searchQuery || "").toLowerCase();
+    const matchesSearch = q === "" || 
+      (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.highway && p.highway.toLowerCase().includes(q)) ||
+      (p.desc && p.desc.toLowerCase().includes(q));
 
     return matchesCategory && matchesSearch;
   });
@@ -2026,7 +2576,7 @@ function renderPointsList() {
   if (points.length === 0) {
     container.innerHTML = `
       <div style="text-align:center; padding:20px; color:#94a3b8; font-size:0.8rem;">
-        Nenhum ponto ou alerta encontrado para o filtro selecionado.
+        Nenhum pedÃ¡gio, radar ou posto encontrado para o filtro selecionado.
       </div>
     `;
     return;
@@ -2038,31 +2588,16 @@ function renderPointsList() {
 
     if (p.category === "toll") {
       priceBadge = `<span class="point-price-tag toll">${p.price}</span>`;
-      tipBlock = `<div class="point-economy-tip">Economia: ${p.economyTip}</div>`;
+      tipBlock = `<div class="point-economy-tip">${p.economyTip || p.concessionaire || ''}</div>`;
     } else if (p.category === "radar") {
       priceBadge = `<span class="point-price-tag fine">Limite: ${p.speed}</span>`;
-      tipBlock = `<div class="point-danger-tip">Atenção: ${p.dangerTip}</div>`;
+      tipBlock = `<div class="point-danger-tip">${p.dangerTip || 'FiscalizaÃ§Ã£o eletrÃ´nica de velocidade.'}</div>`;
     } else if (p.category === "gas") {
-      priceBadge = `<span class="point-price-tag cheap">${p.fuelPrice.split('|')[0].trim()}</span>`;
-      tipBlock = `<div class="point-economy-tip">Abastecimento: ${p.economyTip}</div>`;
-    } else if (p.category === "waze_hazard") {
-      priceBadge = `<span class="point-price-tag waze">Segurança / Risco</span>`;
-      tipBlock = `<div class="point-waze-tip">${p.dangerTip || p.desc}</div>`;
-    } else if (p.category === "waze_jam") {
-      priceBadge = `<span class="point-price-tag waze" style="color:#fdba74;">Retenção ${p.delay || ''}</span>`;
-      tipBlock = `<div class="point-waze-tip" style="border-color:rgba(249,115,22,0.4);">${p.desc}</div>`;
-    } else if (p.category === "waze_works") {
-      priceBadge = `<span class="point-price-tag waze" style="color:#fde047;">Obras na Via</span>`;
-      tipBlock = `<div class="point-waze-tip" style="border-color:rgba(234,179,8,0.4);">${p.dangerTip || p.desc}</div>`;
-    } else if (p.category === "waze_police") {
-      priceBadge = `<span class="point-price-tag waze" style="color:#93c5fd;">Polícia Rodoviária</span>`;
-      tipBlock = `<div class="point-waze-tip" style="border-color:rgba(59,130,246,0.4);">${p.dangerTip || p.desc}</div>`;
-    } else if (p.category === "waze_weather") {
-      priceBadge = `<span class="point-price-tag waze" style="color:#a5f3fc;">Neblina / Clima</span>`;
-      tipBlock = `<div class="point-waze-tip" style="border-color:rgba(6,182,212,0.4);">${p.dangerTip || p.desc}</div>`;
+      priceBadge = `<span class="point-price-tag cheap">${(p.fuelPrice || '').split('|')[0].trim()}</span>`;
+      tipBlock = `<div class="point-economy-tip">${p.economyTip || ''}</div>`;
     }
 
-    const routeTag = p.isOnActiveRoute ? `<span style="font-size:0.65rem; background:rgba(37,99,235,0.22); color:#93c5fd; padding:2px 6px; border-radius:3px; margin-left:6px;">Na Rota</span>` : "";
+    const routeTag = p.isOnActiveRoute ? `<span style="font-size:0.65rem; background:rgba(37,99,235,0.12); color:#2563eb; padding:2px 6px; border-radius:3px; margin-left:6px; font-weight:600;">Na Rota</span>` : "";
 
     return `
       <div class="point-card cat-${p.category}" onclick="focusOnPoint('${p.id}')">
@@ -2087,11 +2622,6 @@ function getCategoryIcon(cat) {
   if (cat === "toll") return "PED";
   if (cat === "radar") return "RAD";
   if (cat === "gas") return "POS";
-  if (cat === "waze_hazard") return "SEG";
-  if (cat === "waze_jam") return "RET";
-  if (cat === "waze_works") return "OBR";
-  if (cat === "waze_police") return "POL";
-  if (cat === "waze_weather") return "CLI";
   return "PTO";
 }
 
@@ -2110,13 +2640,15 @@ function focusOnPoint(id) {
   }
 
   AppState.map.setView([point.lat, point.lng], 14, { animate: true });
-  AppState.markersLayer.eachLayer(layer => {
-    if (layer.getLatLng && 
-        Math.abs(layer.getLatLng().lat - point.lat) < 0.0001 && 
-        Math.abs(layer.getLatLng().lng - point.lng) < 0.0001) {
-      layer.openPopup();
-    }
-  });
+  if (AppState.markersLayer) {
+    AppState.markersLayer.eachLayer(layer => {
+      if (layer.getLatLng && 
+          Math.abs(layer.getLatLng().lat - point.lat) < 0.0001 && 
+          Math.abs(layer.getLatLng().lng - point.lng) < 0.0001) {
+        layer.openPopup();
+      }
+    });
+  }
 
   playNotificationBeep(520, 0.08);
 }
@@ -2124,18 +2656,18 @@ function focusOnPoint(id) {
 function updateQuickStatsBar() {
   const tollsCount = POINTS_DATA.filter(p => p.category === "toll").length;
   const radarsCount = POINTS_DATA.filter(p => p.category === "radar").length;
-  const wazeCount = POINTS_DATA.filter(p => p.category.startsWith("waze_")).length;
+  const gasCount = POINTS_DATA.filter(p => p.category === "gas").length;
 
   const tEl = document.getElementById("statTollsCount");
   const rEl = document.getElementById("statRadarsCount");
-  const wEl = document.getElementById("statWazeCount");
+  const gEl = document.getElementById("statGasCount");
 
-  if (tEl) tEl.textContent = `${tollsCount} Pedágios`;
+  if (tEl) tEl.textContent = `${tollsCount} PedÃ¡gios`;
   if (rEl) rEl.textContent = `${radarsCount} Radares`;
-  if (wEl) wEl.textContent = `${wazeCount} Ocorrências`;
+  if (gEl) gEl.textContent = `${gasCount} Postos`;
 }
 
-// ================= SIMULAÇÃO DE VIAGEM PELAS RUAS =================
+// ================= SIMULAÃ‡ÃƒO DE VIAGEM PELAS RUAS =================
 function startSimulation() {
   if (AppState.simulationRunning) {
     stopSimulation();
@@ -2214,60 +2746,31 @@ function updateHudDisplay(nearby) {
 
   if (!alertEl || !descEl) return;
 
-  const wazeHazard = nearby.find(p => p.category === "waze_hazard");
-  const wazeJam = nearby.find(p => p.category === "waze_jam");
-  const wazeWorks = nearby.find(p => p.category === "waze_works");
-  const wazePolice = nearby.find(p => p.category === "waze_police");
-  const wazeWeather = nearby.find(p => p.category === "waze_weather");
   const radar = nearby.find(p => p.category === "radar");
   const toll = nearby.find(p => p.category === "toll");
+  const gas = nearby.find(p => p.category === "gas");
 
-  if (wazeHazard) {
-    alertEl.className = "hud-next-alert waze";
-    alertEl.innerHTML = `ATENÇÃO: ÁREA DE RISCO VIÁRIO`;
-    descEl.textContent = `${wazeHazard.name}. ${wazeHazard.dangerTip}`;
-    if (speedEl) speedEl.textContent = "75";
-    playNotificationBeep(850, 0.25);
-  } else if (wazeJam) {
-    alertEl.className = "hud-next-alert waze";
-    alertEl.innerHTML = `RETENÇÃO NA VIA (${wazeJam.delay || '+25 min'})`;
-    descEl.textContent = `${wazeJam.name}. Reduza a velocidade e mantenha distância.`;
-    if (speedEl) speedEl.textContent = "25";
-    playNotificationBeep(650, 0.15);
-  } else if (wazeWorks) {
-    alertEl.className = "hud-next-alert waze";
-    alertEl.innerHTML = `OBRAS NA PISTA`;
-    descEl.textContent = `${wazeWorks.name}. Faixa estreitada e operários na via.`;
-    if (speedEl) speedEl.textContent = "50";
-    playNotificationBeep(600, 0.15);
-  } else if (wazePolice) {
-    alertEl.className = "hud-next-alert waze";
-    alertEl.innerHTML = `FISCALIZAÇÃO POLICIAL RODOVIÁRIA`;
-    descEl.textContent = `${wazePolice.name}. ${wazePolice.dangerTip}`;
-    if (speedEl) speedEl.textContent = "80";
-    playNotificationBeep(700, 0.15);
-  } else if (wazeWeather) {
-    alertEl.className = "hud-next-alert waze";
-    alertEl.innerHTML = `NEBLINA DENSA NO TRECHO`;
-    descEl.textContent = `${wazeWeather.name}. Mantenha farol baixo aceso.`;
-    if (speedEl) speedEl.textContent = "45";
-    playNotificationBeep(550, 0.15);
-  } else if (radar) {
+  if (radar) {
     alertEl.className = "hud-next-alert radar";
     alertEl.innerHTML = `RADAR FIXO: LIMITE ${radar.speed}`;
-    descEl.textContent = `${radar.name}. Controle a velocidade.`;
+    descEl.textContent = `${radar.name}. Mantenha a velocidade regulamentada na via.`;
     if (speedEl) speedEl.textContent = radar.speed.replace(/[^0-9]/g, "") || "80";
     playNotificationBeep(880, 0.25);
   } else if (toll) {
     alertEl.className = "hud-next-alert toll";
-    alertEl.innerHTML = `PRAÇA DE PEDÁGIO: ${toll.price}`;
-    descEl.textContent = `${toll.name}. Reduza para 40 km/h na cabine automática.`;
+    alertEl.innerHTML = `PRAÃ‡A DE PEDÃGIO: ${toll.price}`;
+    descEl.textContent = `${toll.name}. Reduza para 40 km/h nas cabines de cobranÃ§a automÃ¡tica.`;
     if (speedEl) speedEl.textContent = "40";
     playNotificationBeep(330, 0.2);
+  } else if (gas) {
+    alertEl.className = "hud-next-alert good";
+    alertEl.innerHTML = `POSTO DE SERVIÃ‡O PRÃ“XIMO`;
+    descEl.textContent = `${gas.name} â€¢ ${gas.fuelPrice}`;
+    if (speedEl) speedEl.textContent = "80";
   } else {
     alertEl.className = "hud-next-alert good";
-    alertEl.innerHTML = `Trecho Livre (${AppState.selectedStrategy === 'economy' ? 'Rota Econômica' : 'Rota Expressa'})`;
-    descEl.textContent = `Tráfego fluindo normalmente pelo corredor rodoviário.`;
+    alertEl.innerHTML = `Trecho Livre (${AppState.selectedStrategy === 'economy' ? 'Rota EconÃ´mica' : 'Rota Expressa'})`;
+    descEl.textContent = `TrÃ¡fego fluindo pelas rodovias monitoradas.`;
     if (speedEl) speedEl.textContent = "90";
   }
 }
@@ -2292,77 +2795,7 @@ function stopSimulation() {
     AppState.simVehicleMarker = null;
   }
 }
-
-// ================= REGISTRAR OCORRÊNCIA (SUPABASE + MAPA) =================
-async function reportWazeAlert() {
-  const type = prompt("Selecione o tipo de ocorrência:\n1 - Área de Risco / Segurança\n2 - Retenção / Congestionamento\n3 - Obras na Pista\n4 - Fiscalização Policial\n5 - Neblina / Chuva Intensa", "1");
-  if (!type) return;
-
-  const desc = prompt("Informe a rodovia, km e descrição da ocorrência:", "Retenção na faixa da direita");
-  if (!desc) return;
-
-  let cat = "waze_hazard";
-  if (type === "2") cat = "waze_jam";
-  else if (type === "3") cat = "waze_works";
-  else if (type === "4") cat = "waze_police";
-  else if (type === "5") cat = "waze_weather";
-
-  const lat = AppState.originCoords[0] + (Math.random() - 0.5) * 0.04;
-  const lng = AppState.originCoords[1] + (Math.random() - 0.5) * 0.04;
-
-  const newPoint = {
-    id: "waze-user-" + Date.now(),
-    name: "Ocorrência Registrada: " + desc,
-    highway: "Trecho Informado",
-    km: "Recente",
-    category: cat,
-    lat: lat,
-    lng: lng,
-    desc: desc,
-    dangerTip: "Ocorrência registrada por condutor no sistema EconoSP.",
-    isOnActiveRoute: true
-  };
-
-  if (supabaseClient) {
-    try {
-      const validUserId = (AppState.currentUser && AppState.currentUser.id && !String(AppState.currentUser.id).startsWith("usr_"))
-        ? AppState.currentUser.id
-        : null;
-
-      const { data, error } = await supabaseClient
-        .from("road_points")
-        .insert({
-          category: cat,
-          name: newPoint.name,
-          highway: newPoint.highway,
-          km_label: newPoint.km,
-          lat: lat,
-          lng: lng,
-          description: desc,
-          danger_tip: newPoint.dangerTip,
-          is_official: false,
-          created_by: validUserId
-        })
-        .select()
-        .single();
-
-      if (!error && data) {
-        newPoint.id = data.id;
-      }
-    } catch (err) {
-      console.warn("Aviso ao salvar ocorrência no Supabase:", err);
-    }
-  }
-
-  POINTS_DATA.unshift(newPoint);
-  renderMapMarkers();
-  renderPointsList();
-  updateQuickStatsBar();
-  focusOnPoint(newPoint.id);
-  alert("Ocorrência registrada e adicionada ao mapa.");
-}
-
-// ================= ÁUDIO BEEP NATIVO =================
+// ================= ÃUDIO BEEP NATIVO =================
 function playNotificationBeep(frequency = 440, duration = 0.15) {
   if (!AppState.audioEnabled) return;
   try {
@@ -2381,44 +2814,127 @@ function playNotificationBeep(frequency = 440, duration = 0.15) {
     osc.start();
     osc.stop(AppState.audioContext.currentTime + duration);
   } catch (e) {
-    console.warn("Áudio indisponível", e);
+    console.warn("Ãudio indisponÃ­vel", e);
   }
 }
 
-// ================= GEOLOCALIZAÇÃO =================
+// ================= GEOLOCALIZAÃ‡ÃƒO COM NOME DA RUA E MARCADOR PULSANTE =================
+async function reverseGeocodeStreet(lat, lng) {
+  try {
+    const url = "https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat.toFixed(6) + "&lon=" + lng.toFixed(6) + "&zoom=18&addressdetails=1";
+    const res = await fetch(url, { headers: { "Accept-Language": "pt-BR" } });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.address) {
+        const a = data.address;
+        const street = a.road || a.street || a.pedestrian || a.footway || a.avenue || a.square || a.suburb || "";
+        const num = a.house_number ? (", " + a.house_number) : "";
+        const b = a.suburb || a.neighbourhood || a.city_district || "";
+        const c = a.city || a.town || a.municipality || "SÃ£o Paulo";
+        if (street) {
+          let s = street + num;
+          if (b && !street.includes(b)) s += " - " + b;
+          s += ", " + c;
+          return s;
+        } else if (data.display_name) {
+          return data.display_name.split(",").slice(0, 3).join(", ").trim();
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("Reverse geocode falhou:", e);
+  }
+  return "Minha LocalizaÃ§Ã£o (" + lat.toFixed(4) + ", " + lng.toFixed(4) + ")";
+}
+
+function showUserCurrentPosition(lat, lng, accuracy, streetName) {
+  if (!AppState.map || typeof L === "undefined") return;
+
+  if (AppState.userMarker) {
+    AppState.map.removeLayer(AppState.userMarker);
+    AppState.userMarker = null;
+  }
+  if (AppState.userAccuracyCircle) {
+    AppState.map.removeLayer(AppState.userAccuracyCircle);
+    AppState.userAccuracyCircle = null;
+  }
+
+  // CÃ­rculo de precisÃ£o do GPS (halo suave)
+  AppState.userAccuracyCircle = L.circle([lat, lng], {
+    radius: Math.min(Math.max(accuracy || 30, 20), 200),
+    color: "#2563eb",
+    fillColor: "#3b82f6",
+    fillOpacity: 0.16,
+    weight: 1.5,
+    dashArray: "4, 4"
+  }).addTo(AppState.map);
+
+  // Marcador pulsante no estilo moderno
+  const pulseIcon = L.divIcon({
+    className: "user-gps-pulse-icon",
+    html: '<div class="user-gps-dot"></div><div class="user-gps-pulse"></div>',
+    iconSize: [24, 24],
+    iconAnchor: [12, 12]
+  });
+
+  AppState.userMarker = L.marker([lat, lng], { icon: pulseIcon, zIndexOffset: 1000 }).addTo(AppState.map);
+
+  AppState.userMarker.bindPopup(
+    '<div style="font-size:0.82rem; font-family:sans-serif; min-width:180px;">' +
+      '<strong style="color:#2563eb;">ðŸ“ VocÃª estÃ¡ aqui</strong>' +
+      '<div style="color:#1e293b; margin-top:4px; font-weight:600;">' + streetName + '</div>' +
+      '<div style="font-size:0.72rem; color:#64748b; margin-top:2px;">PrecisÃ£o GPS: ~' + Math.round(accuracy || 20) + 'm</div>' +
+    '</div>'
+  ).openPopup();
+
+  AppState.map.setView([lat, lng], 16, { animate: true });
+}
+
 function requestUserGeolocation(userTriggered = true) {
   const btnLocate = document.getElementById("btnLocateMe");
   const originInput = document.getElementById("originInput");
 
   if (!navigator.geolocation) {
-    if (userTriggered) alert("Geolocalização não é suportada pelo seu navegador.");
+    if (userTriggered) alert("GeolocalizaÃ§Ã£o nÃ£o Ã© suportada pelo seu navegador.");
     return;
   }
 
-  if (btnLocate) btnLocate.textContent = "Buscando...";
+  if (btnLocate) btnLocate.textContent = "Obtendo rua...";
 
   navigator.geolocation.getCurrentPosition(
-    (position) => {
+    async (position) => {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
+      const accuracy = position.coords.accuracy || 25;
+
       AppState.originCoords = [lat, lng];
-      AppState.originText = "Minha Localização Atual";
+      AppState.isGpsOrigin = true;
 
-      if (originInput) originInput.value = "Minha Localização Atual";
-      if (btnLocate) btnLocate.textContent = "Usar GPS";
+      // ObtÃ©m o nome da rua exata
+      const streetFormatted = await reverseGeocodeStreet(lat, lng);
+      AppState.originText = streetFormatted;
 
-      calculateContextualRoutes();
+      if (originInput) originInput.value = streetFormatted;
+      if (btnLocate) btnLocate.textContent = "GPS Conectado";
+
+      // Mostra o marcador com pulso e centraliza o mapa
+      showUserCurrentPosition(lat, lng, accuracy, streetFormatted);
+
+      // TraÃ§a rotas iniciando diretamente da rua do usuÃ¡rio
+      await calculateContextualRoutes();
       playNotificationBeep(650, 0.1);
     },
     (error) => {
       if (btnLocate) btnLocate.textContent = "Usar GPS";
-      if (userTriggered) alert("Não foi possível acessar seu GPS. Digite o local de origem manualmente.");
+      if (userTriggered) {
+        alert("NÃ£o foi possÃ­vel acessar seu GPS. Verifique a permissÃ£o de localizaÃ§Ã£o do navegador ou digite a rua manualmente.");
+      }
     },
-    { enableHighAccuracy: true, timeout: 8000 }
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
   );
 }
 
-// ================= CONFIGURAÇÃO DE EVENTOS =================
+// ================= CONFIGURAÃ‡ÃƒO DE EVENTOS =================
 function initDriverAndCarInputs() {
   const nameInput = document.getElementById("driverNameInput");
   const plateInput = document.getElementById("licensePlateInput");
@@ -2647,8 +3163,7 @@ function setupEventListeners() {
   const btnHudStop = document.getElementById("btnHudStop");
   if (btnHudStop) btnHudStop.addEventListener("click", stopSimulation);
 
-  const btnReportWaze = document.getElementById("btnReportWaze");
-  if (btnReportWaze) btnReportWaze.addEventListener("click", reportWazeAlert);
+  // Waze reporting removido conforme solicitaÃ§Ã£o
 
   const btnOpenManual = document.getElementById("btnOpenManual");
   const modalManual = document.getElementById("modalManual");
