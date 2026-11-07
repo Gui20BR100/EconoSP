@@ -342,6 +342,16 @@
                 <!-- Informações comparativas inseridas via JS -->
               </div>
 
+              <!-- SALVAR E LISTAR ROTAS NO SUPABASE -->
+              <button id="btnSaveCurrentRoute" type="button" class="btn-save-route">
+                Salvar Rota na Minha Conta
+              </button>
+
+              <div id="savedRoutesContainer" class="saved-routes-box" style="display: none;">
+                <div class="saved-routes-title">Minhas Rotas Salvas (Supabase)</div>
+                <div id="savedRoutesList" class="saved-routes-list"></div>
+              </div>
+
               <!-- BOTÃO ABRIR NO GOOGLE MAPS -->
               <a id="btnOpenGmapsExternal" href="#" target="_blank" class="btn-open-gmaps">
                 Abrir Trajeto no Google Maps
@@ -444,6 +454,7 @@
 
   <!-- Scripts -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
 </body>
 </html>

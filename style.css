@@ -1192,6 +1192,86 @@ body {
   color: var(--text-secondary);
 }
 
+.btn-save-route {
+  width: 100%;
+  background-color: var(--primary);
+  color: #ffffff;
+  border: 1px solid var(--primary);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.btn-save-route:hover {
+  background-color: var(--primary-hover);
+}
+
+.saved-routes-box {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+}
+
+.saved-routes-title {
+  font-size: 0.73rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.saved-routes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.saved-route-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+}
+
+.saved-route-info {
+  cursor: pointer;
+  flex: 1;
+}
+
+.saved-route-info strong {
+  color: var(--text-main);
+  display: block;
+}
+
+.saved-route-info span {
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+}
+
+.btn-delete-route {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--danger-text);
+  font-size: 0.68rem;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.btn-delete-route:hover {
+  background-color: var(--danger);
+  border-color: var(--danger);
+  color: #ffffff;
+}
+
 .btn-open-gmaps {
   display: block;
   text-align: center;
