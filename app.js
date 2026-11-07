@@ -1,10 +1,10 @@
 /**
- * FugaDoGasto SP v7.0
- * Base do mapa: OpenStreetMap + Esri (100% gratuito, sem chave de API, termos abertos)
- * Rotas 100% pelas Ruas: Traçados reais conectados às avenidas e rodovias via OSRM Engine
- * Alertas Waze Reais e Precisos: Áreas de assalto/arrastão, lentidões pesadas com atraso, obras na pista, blitz policial e neblina
- * Análise de Rota Inteligente: Detecta incidentes Waze e pedágios no trajeto exato do usuário
- * Puxador de Placas LGPD: Decodifica modelo, ano, motor e consumo SEM expor dados críticos (chassi/renavam protegidos)
+ * EconoSP - Sistema de Rotas, Pedágios e Monitoramento Rodoviário
+ * Base do mapa: OpenStreetMap + Esri
+ * Rotas pelas Ruas: Traçados reais conectados às avenidas e rodovias via OSRM Engine
+ * Monitoramento Viário: Ocorrências de risco, lentidões com atraso, obras na pista, fiscalização e clima
+ * Análise de Rota: Detecta ocorrências e pedágios no trajeto exato do usuário
+ * Consulta de Placas LGPD: Decodifica modelo, ano, motor e consumo sem expor dados críticos
  */
 
 // ================= CAMADAS DE MAPA (OpenStreetMap + Esri — sem chave de API) =================
@@ -195,7 +195,7 @@ const POINTS_DATA = [
     lng: -46.6280,
     wazeType: "Assalto / Quebra de Vidro",
     desc: "Ataques com pedras e quebra de vidros em semáforos e acessos noturnos. Celular fora de vista!",
-    dangerTip: "🚨 PERIGO: Mantenha vidros totalmente fechados e não pare em acostamentos no trecho urbano.",
+    dangerTip: "PERIGO: Mantenha vidros totalmente fechados e não pare em acostamentos no trecho urbano.",
     economyTip: "Evite transitar de madrugada com bolsas à mostra."
   },
   {
@@ -221,7 +221,7 @@ const POINTS_DATA = [
     lng: -46.4950,
     wazeType: "Assalto no Acostamento Escuro",
     desc: "Assaltos a motoristas parados com pneu furado ou falha mecânica à noite.",
-    dangerTip: "🚨 Se o pneu furar, rode devagar sobre a roda até o posto de combustível iluminado mais próximo!",
+    dangerTip: "Se o pneu furar, rode devagar sobre a roda até o posto de combustível iluminado mais próximo.",
     economyTip: "Calibre com rigor os pneus antes de pegar a Dutra."
   },
   {
@@ -356,7 +356,7 @@ const POINTS_DATA = [
     delay: "+20 min",
     delayMinutes: 20,
     desc: "A rodovia afunila de 3 para 2 faixas no trecho urbano de Jundiaí.",
-    dangerTip: "🚨 ARMADILHA: Radar de 80 km/h bem no afunilamento! Fique atento.",
+    dangerTip: "ATENÇÃO: Radar de 80 km/h bem no afunilamento. Fique atento.",
     economyTip: "Tire o pé do acelerador com antecedência antes da placa de 80."
   },
   {
@@ -542,7 +542,7 @@ const POINTS_DATA = [
     lat: -23.3120,
     lng: -46.0250,
     desc: "Fiscalização ostensiva da Polícia Militar Rodoviária: faróis acesos, cinto e bafômetro.",
-    dangerTip: "🚨 FARÓIS ACESOS OBRIGATÓRIOS: Multa de R$ 130,16 + 4 pontos.",
+    dangerTip: "FARÓIS ACESOS OBRIGATÓRIOS: Multa de R$ 130,16 + 4 pontos.",
     economyTip: "Documento digital (CRLV e CNH) baixado offline no celular evita retenção."
   },
   {
@@ -616,7 +616,7 @@ const POINTS_DATA = [
     lat: -23.8950,
     lng: -46.5250,
     desc: "Visibilidade reduzida a menos de 40 metros pela manhã e no final da tarde.",
-    dangerTip: "🚨 NUNCA ligue o pisca-alerta em movimento! Isso confunde quem vem atrás achando que você está parado.",
+    dangerTip: "NUNCA ligue o pisca-alerta em movimento. Isso confunde quem vem atrás achando que você está parado.",
     economyTip: "Acenda faróis de neblina ou baixos e dobre a distância de seguimento."
   },
   {
@@ -865,7 +865,7 @@ const POINTS_DATA = [
     lng: -46.6280,
     speed: "70 km/h (Expressa) / 50 km/h (Local)",
     desc: "Fiscalização eletrônica por laços no asfalto com leitura de placas para Rodízio de SP.",
-    dangerTip: "🚨 DUPLO RISCO: Multa de excesso de velocidade + Multa de Rodízio de R$ 130,16!",
+    dangerTip: "DUPLO RISCO: Multa de excesso de velocidade + Multa de Rodízio de R$ 130,16.",
     economyTip: "Mantenha rigorosamente 65 km/h no velocímetro do carro."
   },
   {
@@ -930,7 +930,7 @@ const POINTS_DATA = [
     lng: -46.4520,
     speed: "100 km/h",
     desc: "A rodovia vem a 120 km/h e o limite cai para 100 km/h neste trecho urbano!",
-    dangerTip: "🚨 QUEDA ABRUPTA DE VELOCIDADE: Reduza antes de avistar o pórtico.",
+    dangerTip: "QUEDA ABRUPTA DE VELOCIDADE: Reduza antes de avistar o pórtico.",
     economyTip: "Tire o pé 500 metros antes para desacelerar com inércia natural."
   },
   {
@@ -956,7 +956,7 @@ const POINTS_DATA = [
     lng: -46.9020,
     speed: "80 km/h (ARMADILHA CLÁSSICA)",
     desc: "A rodovia permite 110 km/h e cai repentinamente para 80 km/h na descida da serra de Jundiaí!",
-    dangerTip: "🚨 UMA DAS MAIORES FONTES DE MULTAS DO ESTADO DE SP! Milhares de condutores caem aqui.",
+    dangerTip: "ALTA INCIDÊNCIA DE AUTUAÇÕES: Reduza imediatamente ao avistar a sinalização de 80 km/h.",
     economyTip: "Não espere ver o radar: viu a placa de 80 km/h, reduza imediatamente."
   },
   {
@@ -1178,7 +1178,8 @@ const AppState = {
   routeDistanceKm: 168,
   routeDurationMin: 155,
   
-  driverName: "Viajante",
+  driverName: "Condutor",
+  currentUser: null,
   vehicleData: null,
   licensePlate: "BRA2E19",
   licensePlateEnd: "9",
@@ -1198,12 +1199,11 @@ const AppState = {
 document.addEventListener("DOMContentLoaded", () => {
   initMapWithGoogleLayers();
   initDriverAndCarInputs();
+  initAuthSystem();
   renderPointsList();
   setupEventListeners();
   updateQuickStatsBar();
-
-  // Executa consulta inicial da placa padrão BRA2E19
-  processPlateLookup("BRA2E19");
+  evaluateRodizioStatus();
 
   // Traçado inicial das rotas contextuais com ruas do mapa
   calculateContextualRoutes();
@@ -1331,8 +1331,7 @@ function processPlateLookup(rawPlate) {
         </div>
       </div>
       <div class="lgpd-security-badge">
-        <span>🔒</span>
-        <span><strong>Consulta Segura:</strong> Chassi, Renavam e CPF não exibidos conforme a LGPD.</span>
+        <span><strong>Consulta Segura:</strong> Chassi, Renavam e CPF protegidos conforme diretrizes da LGPD.</span>
       </div>
     `;
   }
@@ -1345,8 +1344,9 @@ function processPlateLookup(rawPlate) {
 
 function updateDriverPillDisplay() {
   const pill = document.getElementById("headerDriverPill");
-  if (pill && AppState.vehicleData) {
-    pill.innerHTML = `👤 <strong>${AppState.driverName}</strong> • ${AppState.vehicleData.brand} ${AppState.vehicleData.model} (${AppState.vehicleData.plate})`;
+  if (pill) {
+    const label = AppState.currentUser ? AppState.driverName : "Visitante";
+    pill.innerHTML = `Condutor: <strong>${label}</strong>`;
   }
 }
 
@@ -1485,7 +1485,7 @@ async function calculateContextualRoutes() {
   AppState.destText = destText || "Caraguatatuba";
 
   const btnCalc = document.getElementById("btnCalcRoute");
-  if (btnCalc) btnCalc.innerHTML = `<span>⏳</span> Traçando pelas ruas do Maps...`;
+  if (btnCalc) btnCalc.textContent = "Calculando rota rodoviária...";
 
   try {
     const origCoords = await geocodeAddress(AppState.originText);
@@ -1505,7 +1505,7 @@ async function calculateContextualRoutes() {
   } catch (err) {
     console.error("Erro rota:", err);
   } finally {
-    if (btnCalc) btnCalc.innerHTML = `<span>🛣️</span> Traçar Rotas pelas Ruas`;
+    if (btnCalc) btnCalc.textContent = "Calcular Rota Rodoviária";
   }
 }
 
@@ -1711,14 +1711,14 @@ function updateRouteWazeAlertsBar(route) {
 
   if (wazeTotal === 0 && a.totalJamDelayMin === 0) {
     bar.className = "route-waze-bar safe";
-    statsEl.innerHTML = `🟢 Trajeto livre de arrastões e lentidões críticas!`;
+    statsEl.innerHTML = `Trajeto livre de ocorrências críticas`;
     if (detailsEl) {
-      detailsEl.innerHTML = `<span style="color:#86efac;">Nenhum alerta de alto risco detectado nas ruas desta rota.</span>`;
+      detailsEl.innerHTML = `<span style="color:#86efac;">Nenhuma ocorrência de risco ou retenção detectada nesta rota.</span>`;
     }
   } else {
     bar.className = "route-waze-bar";
-    const delayTxt = a.totalJamDelayMin > 0 ? ` • 🛑 +${a.totalJamDelayMin}m Trânsito` : "";
-    statsEl.innerHTML = `<strong>${a.hazardCount}</strong> Assalto • <strong>${a.jamCount}</strong> Lentidão${delayTxt} • <strong>${a.worksCount}</strong> Obras • <strong>${a.policeCount}</strong> Blitz`;
+    const delayTxt = a.totalJamDelayMin > 0 ? ` • +${a.totalJamDelayMin} min retenção` : "";
+    statsEl.innerHTML = `<strong>${a.hazardCount}</strong> Risco • <strong>${a.jamCount}</strong> Lentidão${delayTxt} • <strong>${a.worksCount}</strong> Obras • <strong>${a.policeCount}</strong> Fiscalização`;
 
     if (detailsEl) {
       const pills = pointsOnRoute
@@ -1731,16 +1731,16 @@ function updateRouteWazeAlertsBar(route) {
           else if (p.category === "waze_weather") catClass = "weather";
 
           return `
-            <span class="waze-alert-pill ${catClass}" onclick="focusOnPoint('${p.id}')" style="cursor:pointer;" title="Clique para ver no mapa">
-              ${getCategoryIcon(p.category)} ${p.name.split(':')[0]} (${p.km || p.delay || 'Alerta'})
+            <span class="waze-alert-pill ${catClass}" onclick="focusOnPoint('${p.id}')" style="cursor:pointer;" title="Clique para centralizar no mapa">
+              [${getCategoryIcon(p.category)}] ${p.name.split(':')[0]} (${p.km || p.delay || 'Trecho'})
             </span>
           `;
         })
         .join("");
 
       detailsEl.innerHTML = `
-        <div style="margin-bottom:6px;"><strong>Alertas comunitários Waze no seu caminho:</strong></div>
-        <div>${pills || 'Nenhum alerta crítico restante.'}</div>
+        <div style="margin-bottom:6px;"><strong>Ocorrências mapeadas no trajeto:</strong></div>
+        <div>${pills || 'Nenhuma ocorrência crítica ativa.'}</div>
       `;
     }
   }
@@ -1774,20 +1774,20 @@ function updateOriginDestMarkers(origCoords, destCoords) {
 
   const origIcon = L.divIcon({
     className: "orig-marker-icon",
-    html: `<div style="background:#4285f4; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; border:3px solid #fff; box-shadow:0 3px 10px rgba(0,0,0,0.5);">📍</div>`,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16]
+    html: `<div class="map-badge-marker" style="background:#2563eb;">O</div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14]
   });
 
   const destIcon = L.divIcon({
     className: "dest-marker-icon",
-    html: `<div style="background:#10b981; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; border:3px solid #fff; box-shadow:0 3px 10px rgba(0,0,0,0.5);">🏁</div>`,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16]
+    html: `<div class="map-badge-marker" style="background:#16a34a;">D</div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14]
   });
 
   AppState.originMarker = L.marker(origCoords, { icon: origIcon }).addTo(AppState.map)
-    .bindPopup(`<strong>Partida (Ruas reais de SP):</strong><br>${AppState.originText}`);
+    .bindPopup(`<strong>Origem:</strong><br>${AppState.originText}`);
 
   AppState.destMarker = L.marker(destCoords, { icon: destIcon }).addTo(AppState.map)
     .bindPopup(`<strong>Destino:</strong><br>${AppState.destText}`);
@@ -1829,9 +1829,9 @@ function recalculateRoutePlan() {
   const carbonEl = document.getElementById("carbonFootprintValue");
   if (carbonEl) {
     if (fuelType === "ethanol") {
-      carbonEl.innerHTML = `<strong>${totalCo2Kg.toFixed(1)} kg CO2</strong> <span style="font-size:0.75rem; color:#86efac;">🍃 Etanol (-${savedCo2VsGasoline.toFixed(1)} kg fóssil)</span>`;
+      carbonEl.innerHTML = `<strong>${totalCo2Kg.toFixed(1)} kg CO2</strong> <span style="font-size:0.75rem; color:#86efac;">Etanol (-${savedCo2VsGasoline.toFixed(1)} kg vs gasolina)</span>`;
     } else {
-      carbonEl.innerHTML = `<strong>${totalCo2Kg.toFixed(1)} kg CO2</strong> <span style="font-size:0.75rem; color:#fde68a;">⚠️ Gasolina Fóssil</span>`;
+      carbonEl.innerHTML = `<strong>${totalCo2Kg.toFixed(1)} kg CO2</strong> <span style="font-size:0.75rem; color:#fde68a;">Gasolina Comum</span>`;
     }
   }
 
@@ -1841,20 +1841,17 @@ function recalculateRoutePlan() {
     const a = currentRoute.analysis || { hazardCount: 0, jamCount: 0, worksCount: 0, policeCount: 0 };
 
     tipsEl.innerHTML = `
-      <strong>💡 Detalhes da ${AppState.selectedStrategy === 'economy' ? 'Rota Econômica' : (AppState.selectedStrategy === 'fast' ? 'Rota Expressa' : 'Rota Eco-Carbono')}:</strong><br>
+      <strong>Resumo da ${AppState.selectedStrategy === 'economy' ? 'Rota Econômica' : (AppState.selectedStrategy === 'fast' ? 'Rota Expressa' : 'Rota Eficiente')}:</strong><br>
       ${currentRoute.description}<br>
-      ${diffToll > 0 ? `<div style="margin-top:6px; color:#86efac; font-weight:800;">💰 Economia de Pedágio: Você economiza R$ ${diffToll.toFixed(2)} comparado à Expressa!</div>` : ""}
-      <div style="margin-top:6px; font-size:0.75rem; color:#f43f5e;">
-        ⚠️ <strong>Impacto Waze no seu caminho:</strong> ${a.hazardCount} áreas de risco de assalto | ${a.jamCount} lentidões pesadas | ${a.worksCount} trechos em obra | ${a.policeCount} comandos da polícia.
-      </div>
-      <div style="margin-top:6px; font-size:0.75rem; color:#94a3b8;">
-        Veículo Consultado: <strong>${v.brand} ${v.model}</strong> (${v.year || "2023"}) • Placa <strong>${AppState.licensePlate}</strong>
+      ${diffToll > 0 ? `<div style="margin-top:6px; color:#86efac; font-weight:700;">Redução de Tarifa: Economia de R$ ${diffToll.toFixed(2)} em pedágios comparada à Expressa.</div>` : ""}
+      <div style="margin-top:6px; font-size:0.74rem; color:#cbd5e1;">
+        <strong>Ocorrências no trajeto:</strong> ${a.hazardCount} pontos de atenção | ${a.jamCount} retenções | ${a.worksCount} obras | ${a.policeCount} bases policiais.
       </div>
     `;
   }
 }
 
-// ================= RODÍZIO MUNICIPAL DE SÃO PAULO =================
+// ================= RODÍZIO MUNICIPAL DE SÃO PAULO (GERAL DO DIA) =================
 function evaluateRodizioStatus() {
   const now = new Date();
   const dayOfWeek = now.getDay();
@@ -1862,20 +1859,19 @@ function evaluateRodizioStatus() {
   const minutes = now.getMinutes();
   const currentTimeDec = hours + minutes / 60;
 
-  const plate = AppState.licensePlateEnd;
-  let isRestrictedDay = false;
+  let dayLabel = "";
   let restrictedPlates = [];
 
   switch (dayOfWeek) {
-    case 1: restrictedPlates = ["1", "2"]; break;
-    case 2: restrictedPlates = ["3", "4"]; break;
-    case 3: restrictedPlates = ["5", "6"]; break;
-    case 4: restrictedPlates = ["7", "8"]; break;
-    case 5: restrictedPlates = ["9", "0"]; break;
-    default: restrictedPlates = []; break;
+    case 1: dayLabel = "Segunda-feira"; restrictedPlates = ["1", "2"]; break;
+    case 2: dayLabel = "Terça-feira"; restrictedPlates = ["3", "4"]; break;
+    case 3: dayLabel = "Quarta-feira"; restrictedPlates = ["5", "6"]; break;
+    case 4: dayLabel = "Quinta-feira"; restrictedPlates = ["7", "8"]; break;
+    case 5: dayLabel = "Sexta-feira"; restrictedPlates = ["9", "0"]; break;
+    default: dayLabel = "Fim de Semana"; restrictedPlates = []; break;
   }
 
-  isRestrictedDay = restrictedPlates.includes(plate);
+  const isWeekday = restrictedPlates.length > 0;
   const isMorningPeak = (currentTimeDec >= 7 && currentTimeDec <= 10);
   const isEveningPeak = (currentTimeDec >= 17 && currentTimeDec <= 20);
   const isInRestrictedHours = (isMorningPeak || isEveningPeak);
@@ -1883,60 +1879,61 @@ function evaluateRodizioStatus() {
   const headerPill = document.getElementById("headerRodizioPill");
   const cardResult = document.getElementById("rodizioResultBox");
 
-  if (!isRestrictedDay) {
+  if (!isWeekday) {
     if (headerPill) {
       headerPill.className = "rodizio-status-pill free";
-      headerPill.innerHTML = `<span>🟢</span> Rodízio Livre (Placa final ${plate})`;
+      headerPill.innerHTML = `Rodízio SP: Liberado (${dayLabel})`;
     }
     if (cardResult) {
       cardResult.className = "rodizio-checker-result free";
-      cardResult.innerHTML = `<strong>🟢 LIVRE DE RODÍZIO HOJE:</strong> Sua placa termina em <strong>${plate}</strong>. Circulação permitida no Centro Expandido de SP sem risco de multa de R$ 130,16.`;
+      cardResult.innerHTML = `<strong>RODÍZIO SUSPENSO HOJE (${dayLabel.toUpperCase()}):</strong> Circulação livre para todos os veículos no Centro Expandido de São Paulo.`;
     }
   } else {
+    const finalsStr = `${restrictedPlates[0]} e ${restrictedPlates[1]}`;
     if (isInRestrictedHours) {
       if (headerPill) {
         headerPill.className = "rodizio-status-pill danger";
-        headerPill.innerHTML = `<span>🔴</span> NO RODÍZIO AGORA (Final ${plate})! Evite o Centro Expandido`;
+        headerPill.innerHTML = `Rodízio Ativo Agora (${dayLabel}: Finais ${finalsStr})`;
       }
       if (cardResult) {
         cardResult.className = "rodizio-checker-result danger";
-        cardResult.innerHTML = `<strong>🚨 HORÁRIO DE RODÍZIO ATIVO AGORA:</strong> Carros com final ${plate} NÃO podem rodar no Centro Expandido entre 07h-10h e 17h-20h! Multa de R$ 130,16 e 4 pontos. Use rotas externas pelo Rodoanel.`;
+        cardResult.innerHTML = `<strong>RESTRIÇÃO ATIVA AGORA (${dayLabel.toUpperCase()}):</strong> Veículos com placas de final <strong>${finalsStr}</strong> estão restritos no Centro Expandido das 07h às 10h e das 17h às 20h.`;
       }
     } else {
       if (headerPill) {
         headerPill.className = "rodizio-status-pill restricted";
-        headerPill.innerHTML = `<span>⚠️</span> Rodízio Hoje (Final ${plate}) - Livre fora dos picos (07h-10h / 17h-20h)`;
+        headerPill.innerHTML = `Rodízio Hoje (${dayLabel}): Finais ${finalsStr} nos horários de pico`;
       }
       if (cardResult) {
         cardResult.className = "rodizio-checker-result restricted";
-        cardResult.innerHTML = `<strong>⚠️ ATENÇÃO AO HORÁRIO:</strong> Hoje é dia de Rodízio para final ${plate}. Não circule entre 07h-10h e 17h-20h no Centro Expandido.`;
+        cardResult.innerHTML = `<strong>RODÍZIO DE HOJE (${dayLabel.toUpperCase()}):</strong> Restrição para finais <strong>${finalsStr}</strong> das 07h00 às 10h00 e das 17h00 às 20h00 no Centro Expandido.`;
       }
     }
   }
 }
 
-// ================= MARCADORES LEAFLET NO MAPA GOOGLE =================
+// ================= MARCADORES LEAFLET NO MAPA =================
 function createMarkerIcon(category, extra) {
   if (typeof L === "undefined") return null;
 
-  let bg = "#10b981";
-  let symbol = "⛽";
+  let bg = "#16a34a";
+  let symbol = "C";
 
-  if (category === "toll") { bg = "#ef4444"; symbol = "💸"; }
-  else if (category === "radar") { bg = "#f59e0b"; symbol = "🚨"; }
-  else if (category === "gas") { bg = "#10b981"; symbol = "⛽"; }
-  else if (category === "waze_hazard") { bg = "#e11d48"; symbol = "⚠️"; }
-  else if (category === "waze_jam") { bg = "#f97316"; symbol = "🛑"; }
-  else if (category === "waze_works") { bg = "#eab308"; symbol = "🚧"; }
-  else if (category === "waze_police") { bg = "#3b82f6"; symbol = "👮"; }
-  else if (category === "waze_weather") { bg = "#06b6d4"; symbol = "🌫️"; }
+  if (category === "toll") { bg = "#dc2626"; symbol = "P"; }
+  else if (category === "radar") { bg = "#d97706"; symbol = "R"; }
+  else if (category === "gas") { bg = "#16a34a"; symbol = "C"; }
+  else if (category === "waze_hazard") { bg = "#be123c"; symbol = "!"; }
+  else if (category === "waze_jam") { bg = "#ea580c"; symbol = "T"; }
+  else if (category === "waze_works") { bg = "#ca8a04"; symbol = "O"; }
+  else if (category === "waze_police") { bg = "#2563eb"; symbol = "F"; }
+  else if (category === "waze_weather") { bg = "#0891b2"; symbol = "N"; }
 
   return L.divIcon({
     className: "custom-div-icon",
-    html: `<div style="background:${bg}; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; border:2px solid #ffffff; box-shadow:0 4px 10px rgba(0,0,0,0.5); cursor:pointer;">${symbol}</div>`,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-    popupAnchor: [0, -18]
+    html: `<div class="map-badge-marker" style="background:${bg}; cursor:pointer;">${symbol}</div>`,
+    iconSize: [26, 26],
+    iconAnchor: [13, 13],
+    popupAnchor: [0, -14]
   });
 }
 
@@ -1960,39 +1957,39 @@ function buildPopupHtml(p) {
   let priceOrAlert = "";
 
   if (p.category === "toll") {
-    categoryLabel = "Pedágio Oficial";
-    priceOrAlert = `<div class="popup-highlight" style="color:#f87171;">Tarifa: ${p.price}</div>`;
+    categoryLabel = "Praça de Pedágio";
+    priceOrAlert = `<div class="popup-highlight" style="color:#dc2626;">Tarifa: ${p.price}</div>`;
   } else if (p.category === "radar") {
-    categoryLabel = `Radar: Limite ${p.speed}`;
-    priceOrAlert = `<div class="popup-highlight" style="color:#fbbf24;">⚠️ Multas de R$ 130 a R$ 880</div>`;
+    categoryLabel = `Radar Fixo: ${p.speed}`;
+    priceOrAlert = `<div class="popup-highlight" style="color:#d97706;">Fiscalização Eletrônica</div>`;
   } else if (p.category === "gas") {
-    categoryLabel = "Combustível Barato";
-    priceOrAlert = `<div class="popup-highlight" style="color:#34d399;">⛽ ${p.fuelPrice}</div>`;
+    categoryLabel = "Posto de Abastecimento";
+    priceOrAlert = `<div class="popup-highlight" style="color:#16a34a;">${p.fuelPrice}</div>`;
   } else if (p.category === "waze_hazard") {
-    categoryLabel = "Alerta Waze: Área de Risco / Assalto";
-    priceOrAlert = `<div class="popup-highlight" style="color:#f43f5e;">🚨 ${p.wazeType || 'Risco de Assalto'}</div>`;
+    categoryLabel = "Ocorrência: Atenção / Segurança";
+    priceOrAlert = `<div class="popup-highlight" style="color:#be123c;">${p.wazeType || 'Área de Atenção'}</div>`;
   } else if (p.category === "waze_jam") {
-    categoryLabel = "Alerta Waze: Lentidão Pesada";
-    priceOrAlert = `<div class="popup-highlight" style="color:#fb923c;">🛑 Atraso estimado: ${p.delay || '+25 min'}</div>`;
+    categoryLabel = "Ocorrência: Retenção Viária";
+    priceOrAlert = `<div class="popup-highlight" style="color:#ea580c;">Atraso estimado: ${p.delay || '+25 min'}</div>`;
   } else if (p.category === "waze_works") {
-    categoryLabel = "Alerta Waze: Obras na Pista";
-    priceOrAlert = `<div class="popup-highlight" style="color:#facc15;">🚧 Homens e Cones na Pista</div>`;
+    categoryLabel = "Ocorrência: Obras na Via";
+    priceOrAlert = `<div class="popup-highlight" style="color:#ca8a04;">Redução de Faixa / Operários</div>`;
   } else if (p.category === "waze_police") {
-    categoryLabel = "Alerta Waze: Polícia Rodoviária";
-    priceOrAlert = `<div class="popup-highlight" style="color:#60a5fa;">👮 Fiscalização Ativa</div>`;
+    categoryLabel = "Polícia Rodoviária";
+    priceOrAlert = `<div class="popup-highlight" style="color:#2563eb;">Base de Fiscalização</div>`;
   } else if (p.category === "waze_weather") {
-    categoryLabel = "Alerta Waze: Clima Adverso / Neblina";
-    priceOrAlert = `<div class="popup-highlight" style="color:#38bdf8;">🌫️ Visibilidade Reduzida</div>`;
+    categoryLabel = "Condição Climática / Neblina";
+    priceOrAlert = `<div class="popup-highlight" style="color:#0891b2;">Baixa Visibilidade</div>`;
   }
 
-  const tip = p.dangerTip ? `<div style="font-size:0.75rem; color:#fca5a5; margin-top:6px;">${p.dangerTip}</div>` : "";
-  const econTip = p.economyTip ? `<div style="font-size:0.75rem; color:#a7f3d0; margin-top:4px;">💡 ${p.economyTip}</div>` : "";
+  const tip = p.dangerTip ? `<div style="font-size:0.74rem; color:#991b1b; margin-top:6px;">${p.dangerTip}</div>` : "";
+  const econTip = p.economyTip ? `<div style="font-size:0.74rem; color:#166534; margin-top:4px;">Nota: ${p.economyTip}</div>` : "";
 
   return `
     <div class="popup-custom-card">
       <span class="popup-tag ${tagClass}">${categoryLabel}</span>
       <h3>${p.name}</h3>
-      <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:6px;">📍 ${p.highway} (${p.km})</div>
+      <div style="font-size:0.74rem; color:#475569; margin-bottom:6px;">${p.highway} (${p.km})</div>
       ${priceOrAlert}
       <p class="popup-body">${p.desc}</p>
       ${tip}
@@ -2041,42 +2038,42 @@ function renderPointsList() {
 
     if (p.category === "toll") {
       priceBadge = `<span class="point-price-tag toll">${p.price}</span>`;
-      tipBlock = `<div class="point-economy-tip">💡 ${p.economyTip}</div>`;
+      tipBlock = `<div class="point-economy-tip">Economia: ${p.economyTip}</div>`;
     } else if (p.category === "radar") {
       priceBadge = `<span class="point-price-tag fine">Limite: ${p.speed}</span>`;
-      tipBlock = `<div class="point-danger-tip">🚨 ${p.dangerTip}</div>`;
+      tipBlock = `<div class="point-danger-tip">Atenção: ${p.dangerTip}</div>`;
     } else if (p.category === "gas") {
       priceBadge = `<span class="point-price-tag cheap">${p.fuelPrice.split('|')[0].trim()}</span>`;
-      tipBlock = `<div class="point-economy-tip">⛽ ${p.economyTip}</div>`;
+      tipBlock = `<div class="point-economy-tip">Abastecimento: ${p.economyTip}</div>`;
     } else if (p.category === "waze_hazard") {
-      priceBadge = `<span class="point-price-tag waze">⚠️ Assalto / Perigo</span>`;
+      priceBadge = `<span class="point-price-tag waze">Segurança / Risco</span>`;
       tipBlock = `<div class="point-waze-tip">${p.dangerTip || p.desc}</div>`;
     } else if (p.category === "waze_jam") {
-      priceBadge = `<span class="point-price-tag waze" style="color:#fdba74;">🛑 ${p.delay || 'Lentidão'}</span>`;
+      priceBadge = `<span class="point-price-tag waze" style="color:#fdba74;">Retenção ${p.delay || ''}</span>`;
       tipBlock = `<div class="point-waze-tip" style="border-color:rgba(249,115,22,0.4);">${p.desc}</div>`;
     } else if (p.category === "waze_works") {
-      priceBadge = `<span class="point-price-tag waze" style="color:#fde047;">🚧 Obras</span>`;
+      priceBadge = `<span class="point-price-tag waze" style="color:#fde047;">Obras na Via</span>`;
       tipBlock = `<div class="point-waze-tip" style="border-color:rgba(234,179,8,0.4);">${p.dangerTip || p.desc}</div>`;
     } else if (p.category === "waze_police") {
-      priceBadge = `<span class="point-price-tag waze" style="color:#93c5fd;">👮 Polícia Rodoviária</span>`;
+      priceBadge = `<span class="point-price-tag waze" style="color:#93c5fd;">Polícia Rodoviária</span>`;
       tipBlock = `<div class="point-waze-tip" style="border-color:rgba(59,130,246,0.4);">${p.dangerTip || p.desc}</div>`;
     } else if (p.category === "waze_weather") {
-      priceBadge = `<span class="point-price-tag waze" style="color:#a5f3fc;">🌫️ Neblina</span>`;
+      priceBadge = `<span class="point-price-tag waze" style="color:#a5f3fc;">Neblina / Clima</span>`;
       tipBlock = `<div class="point-waze-tip" style="border-color:rgba(6,182,212,0.4);">${p.dangerTip || p.desc}</div>`;
     }
 
-    const routeTag = p.isOnActiveRoute ? `<span style="font-size:0.65rem; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 6px; border-radius:4px; margin-left:6px;">🛣️ No seu trajeto</span>` : "";
+    const routeTag = p.isOnActiveRoute ? `<span style="font-size:0.65rem; background:rgba(37,99,235,0.22); color:#93c5fd; padding:2px 6px; border-radius:3px; margin-left:6px;">Na Rota</span>` : "";
 
     return `
       <div class="point-card cat-${p.category}" onclick="focusOnPoint('${p.id}')">
         <div class="point-card-header">
           <div class="point-title">
-            ${getCategoryIcon(p.category)} ${p.name} ${routeTag}
+            [${getCategoryIcon(p.category)}] ${p.name} ${routeTag}
           </div>
           <span class="point-highway">${p.highway}</span>
         </div>
         <div class="point-meta">
-          <span>📍 ${p.km}</span>
+          <span>Trecho: ${p.km}</span>
           ${priceBadge}
         </div>
         <div class="point-desc">${p.desc}</div>
@@ -2087,15 +2084,15 @@ function renderPointsList() {
 }
 
 function getCategoryIcon(cat) {
-  if (cat === "toll") return "💸";
-  if (cat === "radar") return "🚨";
-  if (cat === "gas") return "⛽";
-  if (cat === "waze_hazard") return "⚠️";
-  if (cat === "waze_jam") return "🛑";
-  if (cat === "waze_works") return "🚧";
-  if (cat === "waze_police") return "👮";
-  if (cat === "waze_weather") return "🌫️";
-  return "📍";
+  if (cat === "toll") return "PED";
+  if (cat === "radar") return "RAD";
+  if (cat === "gas") return "POS";
+  if (cat === "waze_hazard") return "SEG";
+  if (cat === "waze_jam") return "RET";
+  if (cat === "waze_works") return "OBR";
+  if (cat === "waze_police") return "POL";
+  if (cat === "waze_weather") return "CLI";
+  return "PTO";
 }
 
 function focusOnPoint(id) {
@@ -2135,10 +2132,10 @@ function updateQuickStatsBar() {
 
   if (tEl) tEl.textContent = `${tollsCount} Pedágios`;
   if (rEl) rEl.textContent = `${radarsCount} Radares`;
-  if (wEl) wEl.textContent = `${wazeCount} Alertas Waze`;
+  if (wEl) wEl.textContent = `${wazeCount} Ocorrências`;
 }
 
-// ================= SIMULAÇÃO DE VIAGEM PELAS RUAS COM ALERTAS WAZE =================
+// ================= SIMULAÇÃO DE VIAGEM PELAS RUAS =================
 function startSimulation() {
   if (AppState.simulationRunning) {
     stopSimulation();
@@ -2146,7 +2143,7 @@ function startSimulation() {
   }
 
   if (!AppState.currentWaypoints || AppState.currentWaypoints.length < 2) {
-    alert("Trace uma rota pelas ruas antes de simular a viagem.");
+    alert("Calcule uma rota antes de iniciar a simulação.");
     return;
   }
 
@@ -2157,7 +2154,7 @@ function startSimulation() {
   const simToggleBtn = document.getElementById("btnToggleSim");
   if (hudCard) hudCard.classList.add("active");
   if (simToggleBtn) {
-    simToggleBtn.textContent = "🛑 Parar Simulação";
+    simToggleBtn.textContent = "Parar Simulação";
     simToggleBtn.classList.add("active");
   }
 
@@ -2168,9 +2165,9 @@ function startSimulation() {
   if (AppState.map && typeof L !== "undefined") {
     const carIcon = L.divIcon({
       className: "sim-car-icon",
-      html: `<div style="background:#10b981; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; border:3px solid #fff; box-shadow:0 0 16px rgba(16,185,129,0.9);">🚗</div>`,
-      iconSize: [34, 34],
-      iconAnchor: [17, 17]
+      html: `<div class="map-badge-marker" style="background:#2563eb; width:30px; height:30px;">V</div>`,
+      iconSize: [30, 30],
+      iconAnchor: [15, 15]
     });
 
     AppState.simVehicleMarker = L.marker(AppState.currentWaypoints[0], { icon: carIcon }).addTo(AppState.map);
@@ -2184,7 +2181,7 @@ function startSimulation() {
   AppState.simulationInterval = setInterval(() => {
     if (AppState.simStepIndex >= totalWaypoints) {
       stopSimulation();
-      alert(`🏁 Chegada em ${AppState.destText}! Boa viagem, ${AppState.driverName}! Zero multas e sem surpresas com a rota Google Maps & Waze!`);
+      alert(`Simulação concluída: chegada em ${AppState.destText}.`);
       return;
     }
 
@@ -2227,50 +2224,50 @@ function updateHudDisplay(nearby) {
 
   if (wazeHazard) {
     alertEl.className = "hud-next-alert waze";
-    alertEl.innerHTML = `🚨 WAZE: RISCO DE ASSALTO / ARRASTÃO!`;
+    alertEl.innerHTML = `ATENÇÃO: ÁREA DE RISCO VIÁRIO`;
     descEl.textContent = `${wazeHazard.name}. ${wazeHazard.dangerTip}`;
     if (speedEl) speedEl.textContent = "75";
     playNotificationBeep(850, 0.25);
   } else if (wazeJam) {
     alertEl.className = "hud-next-alert waze";
-    alertEl.innerHTML = `🛑 WAZE: LENTIDÃO PESADA (${wazeJam.delay || '+25 min'})!`;
-    descEl.textContent = `${wazeJam.name}. Trânsito lento no asfalto. Mantenha distância de segurança.`;
-    if (speedEl) speedEl.textContent = "20";
+    alertEl.innerHTML = `RETENÇÃO NA VIA (${wazeJam.delay || '+25 min'})`;
+    descEl.textContent = `${wazeJam.name}. Reduza a velocidade e mantenha distância.`;
+    if (speedEl) speedEl.textContent = "25";
     playNotificationBeep(650, 0.15);
   } else if (wazeWorks) {
     alertEl.className = "hud-next-alert waze";
-    alertEl.innerHTML = `🚧 WAZE: OBRAS NA PISTA!`;
-    descEl.textContent = `${wazeWorks.name}. Cones e operários. Velocidade reduzida.`;
+    alertEl.innerHTML = `OBRAS NA PISTA`;
+    descEl.textContent = `${wazeWorks.name}. Faixa estreitada e operários na via.`;
     if (speedEl) speedEl.textContent = "50";
     playNotificationBeep(600, 0.15);
   } else if (wazePolice) {
     alertEl.className = "hud-next-alert waze";
-    alertEl.innerHTML = `👮 WAZE: POLÍCIA RODOVIÁRIA / PRF!`;
+    alertEl.innerHTML = `FISCALIZAÇÃO POLICIAL RODOVIÁRIA`;
     descEl.textContent = `${wazePolice.name}. ${wazePolice.dangerTip}`;
     if (speedEl) speedEl.textContent = "80";
     playNotificationBeep(700, 0.15);
   } else if (wazeWeather) {
     alertEl.className = "hud-next-alert waze";
-    alertEl.innerHTML = `🌫️ WAZE: NEBLINA DENSA NA SERRA!`;
-    descEl.textContent = `${wazeWeather.name}. Faróis baixos acessos e nunca ligue o pisca-alerta em movimento.`;
+    alertEl.innerHTML = `NEBLINA DENSA NO TRECHO`;
+    descEl.textContent = `${wazeWeather.name}. Mantenha farol baixo aceso.`;
     if (speedEl) speedEl.textContent = "45";
     playNotificationBeep(550, 0.15);
   } else if (radar) {
     alertEl.className = "hud-next-alert radar";
-    alertEl.innerHTML = `🚨 RADAR ${radar.speed} À FRENTE!`;
-    descEl.textContent = `${radar.name}. Reduza para evitar multa!`;
+    alertEl.innerHTML = `RADAR FIXO: LIMITE ${radar.speed}`;
+    descEl.textContent = `${radar.name}. Controle a velocidade.`;
     if (speedEl) speedEl.textContent = radar.speed.replace(/[^0-9]/g, "") || "80";
     playNotificationBeep(880, 0.25);
   } else if (toll) {
     alertEl.className = "hud-next-alert toll";
-    alertEl.innerHTML = `💸 PEDÁGIO: ${toll.price}`;
-    descEl.textContent = `${toll.name}. Prepare o pagamento ou acesse a pista de Tag a 40 km/h.`;
+    alertEl.innerHTML = `PRAÇA DE PEDÁGIO: ${toll.price}`;
+    descEl.textContent = `${toll.name}. Reduza para 40 km/h na cabine automática.`;
     if (speedEl) speedEl.textContent = "40";
     playNotificationBeep(330, 0.2);
   } else {
     alertEl.className = "hud-next-alert good";
-    alertEl.innerHTML = `🛣️ Ruas do Maps Seguras (${AppState.selectedStrategy === 'economy' ? 'Rota Econômica' : 'Rota Expressa'})`;
-    descEl.textContent = `Rodando em velocidade de cruzeiro no asfalto com monitoramento Waze ativo.`;
+    alertEl.innerHTML = `Trecho Livre (${AppState.selectedStrategy === 'economy' ? 'Rota Econômica' : 'Rota Expressa'})`;
+    descEl.textContent = `Tráfego fluindo normalmente pelo corredor rodoviário.`;
     if (speedEl) speedEl.textContent = "90";
   }
 }
@@ -2286,7 +2283,7 @@ function stopSimulation() {
   const simToggleBtn = document.getElementById("btnToggleSim");
   if (hudCard) hudCard.classList.remove("active");
   if (simToggleBtn) {
-    simToggleBtn.textContent = "🚗 Simular Viagem";
+    simToggleBtn.textContent = "Simular Trajeto";
     simToggleBtn.classList.remove("active");
   }
 
@@ -2296,12 +2293,12 @@ function stopSimulation() {
   }
 }
 
-// ================= REPORTAR NO WAZE =================
+// ================= REGISTRAR OCORRÊNCIA =================
 function reportWazeAlert() {
-  const type = prompt("Qual alerta estilo Waze você quer reportar?\n1 - Área de Assalto/Perigo\n2 - Trânsito Pesado / Congestionamento\n3 - Obras na Pista\n4 - Polícia Rodoviária\n5 - Neblina/Chuva", "1");
+  const type = prompt("Selecione o tipo de ocorrência:\n1 - Área de Risco / Segurança\n2 - Retenção / Congestionamento\n3 - Obras na Pista\n4 - Fiscalização Policial\n5 - Neblina / Chuva Intensa", "1");
   if (!type) return;
 
-  const desc = prompt("Descreva o local e a situação:", "Trecho com lentidão e obras");
+  const desc = prompt("Informe a rodovia, km e descrição da ocorrência:", "Retenção na faixa da direita");
   if (!desc) return;
 
   let cat = "waze_hazard";
@@ -2312,14 +2309,14 @@ function reportWazeAlert() {
 
   const newPoint = {
     id: "waze-user-" + Date.now(),
-    name: "Alerta de Usuário: " + desc,
-    highway: "Sua Região",
+    name: "Ocorrência Registrada: " + desc,
+    highway: "Trecho Informado",
     km: "Recente",
     category: cat,
     lat: AppState.originCoords[0] + (Math.random() - 0.5) * 0.05,
     lng: AppState.originCoords[1] + (Math.random() - 0.5) * 0.05,
     desc: desc,
-    dangerTip: "Reportado por motorista da comunidade agora mesmo.",
+    dangerTip: "Ocorrência registrada por condutor no sistema EconoSP.",
     isOnActiveRoute: true
   };
 
@@ -2328,7 +2325,7 @@ function reportWazeAlert() {
   renderPointsList();
   updateQuickStatsBar();
   focusOnPoint(newPoint.id);
-  alert("✅ Alerta Waze reportado com sucesso e compartilhado no mapa!");
+  alert("Ocorrência registrada e adicionada ao mapa.");
 }
 
 // ================= ÁUDIO BEEP NATIVO =================
@@ -2374,13 +2371,13 @@ function requestUserGeolocation(userTriggered = true) {
       AppState.originText = "Minha Localização Atual";
 
       if (originInput) originInput.value = "Minha Localização Atual";
-      if (btnLocate) btnLocate.textContent = "📍 Meu GPS";
+      if (btnLocate) btnLocate.textContent = "Usar GPS";
 
       calculateContextualRoutes();
       playNotificationBeep(650, 0.1);
     },
     (error) => {
-      if (btnLocate) btnLocate.textContent = "📍 Meu GPS";
+      if (btnLocate) btnLocate.textContent = "Usar GPS";
       if (userTriggered) alert("Não foi possível acessar seu GPS. Digite o local de origem manualmente.");
     },
     { enableHighAccuracy: true, timeout: 8000 }
@@ -2396,7 +2393,7 @@ function initDriverAndCarInputs() {
   if (nameInput) {
     nameInput.value = AppState.driverName;
     nameInput.addEventListener("input", (e) => {
-      AppState.driverName = e.target.value || "Viajante";
+      AppState.driverName = e.target.value || "Condutor";
       updateDriverPillDisplay();
       recalculateRoutePlan();
     });
@@ -2479,7 +2476,7 @@ function setupEventListeners() {
       const details = document.getElementById("wazeRouteDetails");
       if (details) {
         details.classList.toggle("active");
-        btnToggleWaze.textContent = details.classList.contains("active") ? "Ocultar" : "Ver Alertas";
+        btnToggleWaze.textContent = details.classList.contains("active") ? "Ocultar" : "Detalhes";
       }
     });
   }
@@ -2494,8 +2491,43 @@ function setupEventListeners() {
 
   const tabBtns = document.querySelectorAll(".tab-btn");
   const mobileNavBtns = document.querySelectorAll(".mobile-nav-btn");
+  const sidebarEl = document.getElementById("appSidebar");
+  const btnToggleDrawer = document.getElementById("btnToggleDrawer");
+  const btnMapDrawerHandle = document.getElementById("btnMapDrawerHandle");
+  const btnCloseSidebar = document.getElementById("btnCloseSidebar");
+  const drawerHandleLabel = document.getElementById("drawerHandleLabel");
+
+  function setSidebarOpen(isOpen) {
+    if (!sidebarEl) return;
+    sidebarEl.classList.toggle("collapsed", !isOpen);
+    if (drawerHandleLabel) {
+      drawerHandleLabel.textContent = isOpen
+        ? "Fechar Painel (Ocorrências e Rodízio)"
+        : "Abrir Painel (Ocorrências e Rodízio)";
+    }
+    if (btnToggleDrawer) {
+      btnToggleDrawer.textContent = isOpen
+        ? "Fechar Ocorrências / Rodízio"
+        : "Abrir Ocorrências / Rodízio";
+    }
+    setTimeout(() => {
+      if (AppState.map) AppState.map.invalidateSize();
+    }, 240);
+  }
+
+  function toggleSidebarDrawer() {
+    if (!sidebarEl) return;
+    const currentlyCollapsed = sidebarEl.classList.contains("collapsed");
+    setSidebarOpen(currentlyCollapsed);
+    playNotificationBeep(500, 0.04);
+  }
+
+  if (btnToggleDrawer) btnToggleDrawer.addEventListener("click", toggleSidebarDrawer);
+  if (btnMapDrawerHandle) btnMapDrawerHandle.addEventListener("click", toggleSidebarDrawer);
+  if (btnCloseSidebar) btnCloseSidebar.addEventListener("click", () => setSidebarOpen(false));
 
   function activateSidebarTab(targetTab) {
+    setSidebarOpen(true);
     tabBtns.forEach(b => b.classList.toggle("active", b.getAttribute("data-tab") === targetTab));
     document.querySelectorAll(".tab-pane").forEach(pane => pane.style.display = "none");
     const activePane = document.getElementById(`tab-${targetTab}`);
@@ -2518,11 +2550,11 @@ function setupEventListeners() {
       btn.classList.add("active");
 
       if (target === "map") {
+        setSidebarOpen(false);
         const mapSection = document.getElementById("mapSection");
         if (mapSection) mapSection.scrollIntoView({ behavior: "smooth", block: "start" });
       } else {
         activateSidebarTab(target);
-        const sidebarEl = document.getElementById("appSidebar");
         if (sidebarEl) sidebarEl.scrollIntoView({ behavior: "smooth", block: "start" });
       }
       playNotificationBeep(500, 0.04);
@@ -2534,7 +2566,7 @@ function setupEventListeners() {
   if (btnTogglePlanner && plannerInputs) {
     btnTogglePlanner.addEventListener("click", () => {
       const isCollapsed = plannerInputs.classList.toggle("collapsed");
-      btnTogglePlanner.innerHTML = isCollapsed ? "🔽 Editar Rota" : "🔼 Recolher";
+      btnTogglePlanner.textContent = isCollapsed ? "Expandir" : "Recolher";
       setTimeout(() => {
         if (AppState.map) AppState.map.invalidateSize();
       }, 200);
@@ -2567,7 +2599,7 @@ function setupEventListeners() {
   if (btnToggleAudio) {
     btnToggleAudio.addEventListener("click", () => {
       AppState.audioEnabled = !AppState.audioEnabled;
-      btnToggleAudio.textContent = AppState.audioEnabled ? "🔊 Som: Ativo" : "🔇 Som: Mudo";
+      btnToggleAudio.textContent = AppState.audioEnabled ? "Som: Ativo" : "Som: Mudo";
       if (AppState.audioEnabled) playNotificationBeep(550, 0.1);
     });
   }
@@ -2590,5 +2622,210 @@ function setupEventListeners() {
   }
   if (btnCloseModal && modalManual) {
     btnCloseModal.addEventListener("click", () => modalManual.classList.remove("active"));
+  }
+}
+
+// ================= SISTEMA DE CONTAS (LOGIN E CADASTRO RÁPIDO) =================
+const AUTH_STORAGE_USERS_KEY = "econosp_users_v1";
+const AUTH_STORAGE_SESSION_KEY = "econosp_session_v1";
+
+function getStoredUsers() {
+  try {
+    const raw = localStorage.getItem(AUTH_STORAGE_USERS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveStoredUsers(users) {
+  try {
+    localStorage.setItem(AUTH_STORAGE_USERS_KEY, JSON.stringify(users));
+  } catch (e) {
+    console.warn("Não foi possível salvar usuários:", e);
+  }
+}
+
+function getActiveSessionUser() {
+  try {
+    const raw = localStorage.getItem(AUTH_STORAGE_SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function setActiveSessionUser(user) {
+  try {
+    if (user) {
+      localStorage.setItem(AUTH_STORAGE_SESSION_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(AUTH_STORAGE_SESSION_KEY);
+    }
+  } catch (e) {
+    console.warn("Erro ao salvar sessão:", e);
+  }
+}
+
+function applyLoggedUserState(user) {
+  const btnOpenAuth = document.getElementById("btnOpenAuth");
+  const btnLogoutHeader = document.getElementById("btnLogoutHeader");
+
+  if (user) {
+    AppState.currentUser = user;
+    AppState.driverName = user.name || "Condutor";
+    updateDriverPillDisplay();
+
+    if (btnOpenAuth) {
+      btnOpenAuth.textContent = `Conta: ${user.name.split(" ")[0]}`;
+    }
+    if (btnLogoutHeader) {
+      btnLogoutHeader.style.display = "inline-block";
+    }
+  } else {
+    AppState.currentUser = null;
+    AppState.driverName = "Visitante";
+    if (btnOpenAuth) {
+      btnOpenAuth.textContent = "Entrar / Criar Conta";
+    }
+    if (btnLogoutHeader) {
+      btnLogoutHeader.style.display = "none";
+    }
+    updateDriverPillDisplay();
+  }
+}
+
+function showAuthFeedback(msg, type = "error") {
+  const box = document.getElementById("authFeedbackMsg");
+  if (!box) return;
+  if (!msg) {
+    box.style.display = "none";
+    box.textContent = "";
+    return;
+  }
+  box.textContent = msg;
+  box.className = `auth-feedback ${type}`;
+  box.style.display = "block";
+}
+
+function initAuthSystem() {
+  const modalAuth = document.getElementById("modalAuth");
+  const btnOpenAuth = document.getElementById("btnOpenAuth");
+  const btnCloseAuthModal = document.getElementById("btnCloseAuthModal");
+  const btnLogoutHeader = document.getElementById("btnLogoutHeader");
+  const authTabs = document.querySelectorAll(".auth-tab-btn");
+  const formLogin = document.getElementById("formAuthLogin");
+  const formRegister = document.getElementById("formAuthRegister");
+
+  // Restaura sessão se existir
+  const savedSession = getActiveSessionUser();
+  if (savedSession) {
+    applyLoggedUserState(savedSession);
+  }
+
+  function switchAuthTab(mode) {
+    showAuthFeedback("");
+    authTabs.forEach(t => t.classList.toggle("active", t.getAttribute("data-auth-tab") === mode));
+    if (formLogin) formLogin.style.display = mode === "login" ? "flex" : "none";
+    if (formRegister) formRegister.style.display = mode === "register" ? "flex" : "none";
+  }
+
+  authTabs.forEach(btn => {
+    btn.addEventListener("click", () => {
+      switchAuthTab(btn.getAttribute("data-auth-tab"));
+    });
+  });
+
+  if (btnOpenAuth && modalAuth) {
+    btnOpenAuth.addEventListener("click", () => {
+      showAuthFeedback("");
+      modalAuth.classList.add("active");
+    });
+  }
+
+  if (btnCloseAuthModal && modalAuth) {
+    btnCloseAuthModal.addEventListener("click", () => {
+      modalAuth.classList.remove("active");
+    });
+  }
+
+  if (modalAuth) {
+    modalAuth.addEventListener("click", (e) => {
+      if (e.target === modalAuth) modalAuth.classList.remove("active");
+    });
+  }
+
+  if (btnLogoutHeader) {
+    btnLogoutHeader.addEventListener("click", () => {
+      setActiveSessionUser(null);
+      applyLoggedUserState(null);
+    });
+  }
+
+  if (formRegister) {
+    formRegister.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = (document.getElementById("regName")?.value || "").trim();
+      const email = (document.getElementById("regEmail")?.value || "").trim().toLowerCase();
+      const password = document.getElementById("regPassword")?.value || "";
+      const plate = (document.getElementById("regPlate")?.value || "").replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+
+      if (!name || !email || password.length < 4) {
+        showAuthFeedback("Preencha nome, e-mail válido e senha com no mínimo 4 caracteres.", "error");
+        return;
+      }
+
+      const users = getStoredUsers();
+      if (users.some(u => u.email === email)) {
+        showAuthFeedback("Já existe uma conta cadastrada com este e-mail. Use a aba Entrar.", "error");
+        return;
+      }
+
+      const newUser = {
+        id: "usr_" + Date.now(),
+        name,
+        email,
+        password
+      };
+
+      users.push(newUser);
+      saveStoredUsers(users);
+
+      const sessionUser = { id: newUser.id, name: newUser.name, email: newUser.email };
+      setActiveSessionUser(sessionUser);
+      applyLoggedUserState(sessionUser);
+
+      showAuthFeedback("Conta criada com sucesso. Redirecionando...", "success");
+      formRegister.reset();
+      setTimeout(() => {
+        if (modalAuth) modalAuth.classList.remove("active");
+      }, 600);
+    });
+  }
+
+  if (formLogin) {
+    formLogin.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const email = (document.getElementById("loginEmail")?.value || "").trim().toLowerCase();
+      const password = document.getElementById("loginPassword")?.value || "";
+
+      const users = getStoredUsers();
+      const found = users.find(u => u.email === email && u.password === password);
+
+      if (!found) {
+        showAuthFeedback("E-mail ou senha incorretos. Caso ainda não tenha cadastro, clique em Criar Conta.", "error");
+        return;
+      }
+
+      const sessionUser = { id: found.id, name: found.name, email: found.email };
+      setActiveSessionUser(sessionUser);
+      applyLoggedUserState(sessionUser);
+
+      showAuthFeedback("Acesso realizado com sucesso.", "success");
+      formLogin.reset();
+      setTimeout(() => {
+        if (modalAuth) modalAuth.classList.remove("active");
+      }, 500);
+    });
   }
 }
