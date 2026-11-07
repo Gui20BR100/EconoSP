@@ -1,8 +1,8 @@
-# 🗺️ FugaDoGasto SP
+# 🗺️ EconoSP
 
 > **Aplicativo web para viajantes econômicos saindo de São Paulo** — encontre as rotas mais baratas, evite pedágios e radares, monitore alertas de assalto, trânsito e obras em tempo real.
 
-![FugaDoGasto SP Banner](https://img.shields.io/badge/FugaDoGasto-SP%20v7.0-10b981?style=for-the-badge&logo=leaflet)
+![EconoSP Banner](https://img.shields.io/badge/FugaDoGasto-SP%20v7.0-10b981?style=for-the-badge&logo=leaflet)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-blue?style=flat-square)
 ![HTML/CSS/JS](https://img.shields.io/badge/Stack-HTML%20%7C%20CSS%20%7C%20JS%20puro-f97316?style=flat-square)
 ![Sem dependências de backend](https://img.shields.io/badge/Backend-Nenhum%20(client--side)-22c55e?style=flat-square)
