@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EconoSP - Sistema de Rotas, Pedágios e Monitoramento Rodoviário</title>
+  <title>EconoSP - Sistema Rodoviário de Rotas, Pedágios e Monitoramento SP</title>
   
   <!-- Estilos Leaflet Map -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
@@ -13,136 +13,106 @@
 </head>
 <body>
 
-  <!-- ================= CABEÇALHO SUPERIOR ================= -->
-  <header class="app-header">
-    <div class="brand-wrapper">
-      <div class="brand-icon">SP</div>
-      <div class="brand-title">
-        <h1>EconoSP <span class="badge-sp">Rodoviário</span></h1>
-        <div class="brand-subtitle">Planejamento de rotas, cálculo de pedágios e monitoramento viário do Estado de São Paulo</div>
+  <!-- ================= SHELL DO APLICATIVO (DASHBOARD SPLIT-VIEW) ================= -->
+  <div class="app-layout">
+
+    <!-- CONSOLE DE COMANDO LATERAL INTEGRADO -->
+    <aside class="console-sidebar" id="appSidebar">
+
+      <!-- CABEÇALHO DO CONSOLE -->
+      <div class="console-header">
+        <div class="console-brand">
+          <div class="brand-badge">SP</div>
+          <div class="brand-text">
+            <h1 class="brand-title">EconoSP <span class="badge-tag">Rodoviário</span></h1>
+            <div class="brand-desc">Rotas, Pedágios e Monitoramento</div>
+          </div>
+        </div>
+
+        <div class="console-header-actions">
+          <!-- Botão de Personalização de Tema / Aparência -->
+          <button id="btnOpenThemeModal" class="btn-icon-action theme-action" type="button" title="Aparência e Cores da Interface">
+            <span class="theme-accent-indicator" id="headerAccentDot"></span>
+            <span>Tema</span>
+          </button>
+
+          <!-- Perfil / Autenticação -->
+          <button id="btnOpenAuth" class="btn-icon-action auth-action" type="button" title="Entrar na sua conta ou criar cadastro">
+            Entrar
+          </button>
+
+          <!-- Status do Condutor / Perfil Ativo -->
+          <div id="headerDriverPill" class="console-driver-pill" style="display: none;" title="Perfil conectado">
+            Condutor: <strong>Visitante</strong>
+          </div>
+
+          <!-- Botão Sair (Logout) -->
+          <button id="btnLogoutHeader" class="btn-icon-action logout-action" type="button" style="display: none;" title="Sair da conta">
+            Sair
+          </button>
+        </div>
       </div>
-    </div>
 
-    <!-- Perfil Dinâmico do Usuário no Header -->
-    <div id="headerDriverPill" class="driver-profile-pill" title="Usuário ativo">
-      Condutor: <strong>Visitante</strong>
-    </div>
-
-    <!-- Indicador Geral de Rodízio de SP -->
-    <div id="headerRodizioPill" class="rodizio-status-pill free" title="Horários do Rodízio Municipal no Centro Expandido de SP">
-      Verificando Rodízio SP...
-    </div>
-
-    <!-- Métricas rápidas no header -->
-    <div class="quick-stats-bar">
-      <div class="stat-item danger">
-        <strong id="statTollsCount">... Pedágios</strong>
-      </div>
-      <div class="stat-item radar">
-        <strong id="statRadarsCount">... Radares</strong>
-      </div>
-      <div class="stat-item gas-stat">
-        <strong id="statGasCount">... Postos</strong>
-      </div>
-    </div>
-
-    <!-- Botões de Ação do Header -->
-    <div class="header-actions">
-      <button id="btnToggleDrawer" class="btn-header drawer-toggle-btn" title="Abrir ou fechar painel de Pedágios, Radares, Custos e Rodízio">
-        Painel Rodoviário
-      </button>
-      <button id="btnOpenThemeModal" class="btn-header theme-btn" title="Personalizar tema visual e cores da interface">
-        <span class="theme-accent-indicator" id="headerAccentDot"></span>
-        Aparência
-      </button>
-      <button id="btnOpenAuth" class="btn-header auth-btn" title="Entrar na sua conta ou cadastrar novo perfil">
-        Entrar / Criar Conta
-      </button>
-      <button id="btnLogoutHeader" class="btn-header logout-btn" style="display: none;" title="Sair da conta atual">
-        Sair
-      </button>
-      <button id="btnToggleAudio" class="btn-header" title="Ativar ou desativar avisos sonoros">
-        Som: Ativo
-      </button>
-      <button id="btnToggleSim" class="btn-header primary" title="Iniciar simulação do trajeto">
-        Simular Trajeto
-      </button>
-      <button id="btnOpenManual" class="btn-header" title="Consultar orientações de rodovias e normas">
-        Guia Rodoviário
-      </button>
-    </div>
-  </header>
-
-  <!-- ================= CORPO PRINCIPAL ================= -->
-  <main class="main-content">
-    
-    <!-- ÁREA DO MAPA INTERATIVO -->
-    <section class="map-container" id="mapSection">
-
-      <!-- PAINEL DE PLANEJAMENTO DE ROTA -->
-      <div class="map-floating-panel" id="mapFloatingPanel">
-        <div class="route-planner-card">
-          <div class="planner-title">
-            <span>Planejamento de Trajeto</span>
-            <button id="btnTogglePlanner" class="btn-toggle-planner" type="button" title="Minimizar ou expandir campos de endereço">
-              Recolher
+      <!-- PLANEJADOR DE VIAGEM (HERO DO CONSOLE) -->
+      <div class="console-planner-section">
+        <div class="planner-box">
+          
+          <!-- Ponto de Partida -->
+          <div class="route-field origin-field">
+            <span class="field-label-pill">Partida</span>
+            <input type="text" id="originInput" value="São Paulo, SP" placeholder="Local de partida ou rua...">
+            <button id="btnLocateMe" class="btn-gps-locate" type="button" title="Usar localização GPS atual da minha rua">
+              GPS
             </button>
           </div>
 
-          <div id="plannerInputsCollapse" class="inputs-route-group">
-            <!-- Origem digitada livremente pelo usuário -->
-            <div class="input-with-action">
-              <span class="input-icon-prefix">Origem</span>
-              <input type="text" id="originInput" value="São Paulo, SP" placeholder="Informe o local de partida (ex: Av. Paulista)...">
-              <button id="btnLocateMe" class="btn-locate" title="Usar localização GPS atual">
-                Usar GPS
-              </button>
-            </div>
-
-            <!-- Destino digitado livremente pelo usuário -->
-            <div class="input-with-action">
-              <span class="input-icon-prefix">Destino</span>
-              <input type="text" id="destInput" value="Caraguatatuba, SP" placeholder="Informe o município ou endereço de destino...">
-            </div>
-
-            <!-- Botão de Traçar Rota pelas Ruas -->
-            <button id="btnCalcRoute" class="btn-calc-route">
-              Calcular Rota Rodoviária
-            </button>
+          <!-- Ponto de Destino -->
+          <div class="route-field dest-field">
+            <span class="field-label-pill">Destino</span>
+            <input type="text" id="destInput" value="Caraguatatuba, SP" placeholder="Destino (município ou endereço)...">
           </div>
 
-          <!-- Seleção de 3 Estratégias de Rotas -->
+          <!-- Botão Principal: Calcular Rota -->
+          <button id="btnCalcRoute" class="btn-primary-action" type="button">
+            Calcular Rota Rodoviária
+          </button>
+
+          <!-- Stubs compatíveis com handlers anteriores (ocultos) -->
+          <div id="plannerInputsCollapse" style="display:none;"></div>
+          <button id="btnTogglePlanner" style="display:none;" type="button"></button>
+
+          <!-- Seleção de 3 Estratégias de Rota -->
           <div class="route-strategies-selector">
-            <button class="strategy-btn active" data-strategy="economy" title="Menor custo de pedágio e abastecimento">
+            <button class="strategy-btn active" data-strategy="economy" type="button" title="Menor custo de pedágio e abastecimento">
               <span class="strategy-label">Econômica</span>
               <span class="strategy-sub">Menor Tarifa</span>
             </button>
-            <button class="strategy-btn fast" data-strategy="fast" title="Autoestradas expressas com pedágio">
+            <button class="strategy-btn fast" data-strategy="fast" type="button" title="Autoestradas expressas com pedágio">
               <span class="strategy-label">Expressa</span>
               <span class="strategy-sub">Menor Tempo</span>
             </button>
-            <button class="strategy-btn eco" data-strategy="eco" title="Velocidade constante e menor consumo">
+            <button class="strategy-btn eco" data-strategy="eco" type="button" title="Velocidade constante e menor consumo">
               <span class="strategy-label">Eficiente</span>
               <span class="strategy-sub">Menor Consumo</span>
             </button>
           </div>
 
-          <!-- BARRA DE FISCALIZAÇÃO E TARIFAS NO TRAJETO ATUAL -->
-          <div id="routeWazeAlertsBar" class="route-waze-bar" title="Tarifas de pedágio e radares monitorados na rota">
+          <!-- Faixa de Ocorrências e Alertas da Rota Ativa -->
+          <div id="routeWazeAlertsBar" class="route-waze-bar" title="Tarifas de pedágio e radares na rota calculada">
             <div class="waze-bar-header">
               <div class="waze-bar-title-wrap">
                 <span class="waze-live-dot"></span>
                 <strong id="wazeRouteTitle">Pedágios & Radares:</strong>
                 <span id="wazeRouteStats">Calculando fiscalização e tarifas...</span>
               </div>
-              <button id="btnToggleWazeList" class="btn-waze-expand" title="Exibir lista de pontos no trajeto">Ver Detalhes</button>
+              <button id="btnToggleWazeList" class="btn-waze-expand" type="button" title="Exibir detalhes de fiscalização">Detalhes</button>
             </div>
             <div id="wazeRouteDetails" class="waze-bar-details">
-              <!-- Inserido dinamicamente via JS -->
+              <!-- Gerado dinamicamente via JS -->
             </div>
           </div>
 
-          <!-- Filtros de categoria por chips -->
+          <!-- Filtros de Categoria por Chips -->
           <div class="category-filter-chips">
             <div class="filter-chip active" data-category="all">Todos</div>
             <div class="filter-chip onroute" data-category="route">Na Rota</div>
@@ -153,29 +123,223 @@
         </div>
       </div>
 
-      <!-- ÁREA DO CANVAS DO MAPA E CONTROLES DE CAMADA / HUD -->
+      <!-- NAVEGAÇÃO EM ABAS (FEATURE HUB) -->
+      <div class="console-tabs-bar">
+        <nav class="sidebar-tabs">
+          <button class="tab-btn active" data-tab="calc" type="button">
+            <span>Custos & Veículo</span>
+          </button>
+          <button class="tab-btn" data-tab="points" type="button">
+            <span>Pedágios & Radares</span>
+          </button>
+          <button class="tab-btn" data-tab="tips" type="button">
+            <span>Rodízio SP</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- CORPO COM ROLAGEM INTERNA DO CONSOLE -->
+      <div class="console-body sidebar-content">
+
+        <!-- ABA 1: CUSTOS & VEÍCULO (calc) -->
+        <div id="tab-calc" class="tab-pane">
+          <!-- Métricas Rápidas do Estado -->
+          <div class="quick-stats-strip">
+            <div class="stat-badge toll-badge">
+              <span id="statTollsCount">... Pedágios</span>
+            </div>
+            <div class="stat-badge radar-badge">
+              <span id="statRadarsCount">... Radares</span>
+            </div>
+            <div class="stat-badge gas-badge">
+              <span id="statGasCount">... Postos</span>
+            </div>
+          </div>
+
+          <div class="calc-card">
+            <div class="card-section-title">Parâmetros do Veículo</div>
+
+            <div class="form-group">
+              <label class="form-label" for="calcFuelType">Combustível de Referência:</label>
+              <select id="calcFuelType" class="form-control">
+                <option value="ethanol" selected>Etanol Hidratado</option>
+                <option value="gasoline">Gasolina Comum</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group" style="flex:1;">
+                <label class="form-label" for="calcEfficiency">Consumo Médio (km/L):</label>
+                <input type="number" id="calcEfficiency" class="form-control" value="11.0" step="0.1" min="4" max="50">
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label class="form-label" for="calcFuelPrice">Preço por Litro (R$):</label>
+                <input type="number" id="calcFuelPrice" class="form-control" value="3.49" step="0.05" min="2" max="10">
+              </div>
+            </div>
+
+            <div class="card-section-title" style="margin-top:18px;">Estimativa Financeira do Trajeto</div>
+
+            <!-- Pegada de Carbono -->
+            <div class="carbon-badge-row">
+              <span>Emissão Estimada de CO2:</span>
+              <div id="carbonFootprintValue"><strong>0.0 kg CO2</strong></div>
+            </div>
+
+            <!-- Grade de Resumo Financeiro -->
+            <div class="calc-summary-grid">
+              <div class="calc-summary-item">
+                <div class="calc-summary-label">Distância & Tempo</div>
+                <div id="calcDistanceDisplay" class="calc-summary-val gold">165 km (155 min)</div>
+              </div>
+              <div class="calc-summary-item">
+                <div class="calc-summary-label">Combustível</div>
+                <div id="calcFuelCostDisplay" class="calc-summary-val success">R$ 53,30</div>
+              </div>
+              <div class="calc-summary-item">
+                <div class="calc-summary-label">Pedágios na Rota</div>
+                <div id="calcTollsDisplay" class="calc-summary-val danger">R$ 5,60</div>
+              </div>
+              <div class="calc-summary-item highlight">
+                <div class="calc-summary-label">Custo Total</div>
+                <div id="calcTotalDisplay" class="calc-summary-val primary-val">R$ 58,90</div>
+              </div>
+            </div>
+
+            <div id="calcEconomyTips" class="route-comparison-box">
+              <!-- Comparações inseridas via JS -->
+            </div>
+
+            <!-- Salvar rota na conta do usuário no Supabase -->
+            <button id="btnSaveCurrentRoute" type="button" class="btn-save-route">
+              Salvar Rota na Minha Conta
+            </button>
+
+            <!-- Container de Rotas Salvas na Nuvem -->
+            <div id="savedRoutesContainer" class="saved-routes-box" style="display: none;">
+              <div class="saved-routes-title">Minhas Rotas Salvas (Supabase)</div>
+              <div id="savedRoutesList" class="saved-routes-list"></div>
+            </div>
+
+            <a id="btnOpenGmapsExternal" href="#" target="_blank" class="btn-open-gmaps">
+              Abrir Trajeto no Google Maps
+            </a>
+          </div>
+        </div>
+
+        <!-- ABA 2: LISTAGEM DE PEDÁGIOS, RADARES E POSTOS (points) -->
+        <div id="tab-points" class="tab-pane" style="display: none;">
+          <div class="search-box">
+            <input type="text" id="searchPointsInput" placeholder="Filtrar por rodovia, km, praça de pedágio ou limite...">
+          </div>
+
+          <div id="pointsList" class="points-list">
+            <!-- Gerado dinamicamente via JS -->
+          </div>
+        </div>
+
+        <!-- ABA 3: RODÍZIO SP & NORMAS RODOVIÁRIAS (tips) -->
+        <div id="tab-tips" class="tab-pane" style="display: none;">
+          <div class="tips-container">
+
+            <div class="rodizio-checker-box">
+              <div class="rodizio-checker-header">
+                <span class="rodizio-checker-title">Rodízio Municipal de São Paulo</span>
+                <div id="headerRodizioPill" class="rodizio-status-pill free">Hoje</div>
+              </div>
+              <div id="rodizioResultBox" class="rodizio-checker-result free">
+                <!-- Diagnóstico de rodízio do dia -->
+              </div>
+              <div class="rodizio-schedule-table">
+                <div class="rodizio-schedule-row"><span>Segunda-feira</span><strong>Finais 1 e 2</strong></div>
+                <div class="rodizio-schedule-row"><span>Terça-feira</span><strong>Finais 3 e 4</strong></div>
+                <div class="rodizio-schedule-row"><span>Quarta-feira</span><strong>Finais 5 e 6</strong></div>
+                <div class="rodizio-schedule-row"><span>Quinta-feira</span><strong>Finais 7 e 8</strong></div>
+                <div class="rodizio-schedule-row"><span>Sexta-feira</span><strong>Finais 9 e 0</strong></div>
+                <div class="rodizio-schedule-note">Centro Expandido: 07h00 às 10h00 e 17h00 às 20h00 (dias úteis).</div>
+              </div>
+            </div>
+
+            <!-- Consulta de Placa e Condutor -->
+            <div class="plate-search-box">
+              <div class="card-section-title">Consultar Restrição de Placa</div>
+              <div class="form-row">
+                <input type="text" id="licensePlateInput" class="form-control" placeholder="Placa (ex: BRA2E19)" maxlength="8">
+                <button id="btnSearchPlate" class="btn-plate-check" type="button">Consultar</button>
+              </div>
+              <div id="mercosulPlateNumber" class="mercosul-plate-badge" style="display:none;"></div>
+              <input type="text" id="driverNameInput" class="form-control" style="margin-top:8px;" placeholder="Nome do condutor...">
+              <input type="hidden" id="carBrandInput">
+              <input type="hidden" id="carModelInput">
+              <div id="vehicleConsultResult" style="margin-top:8px;"></div>
+            </div>
+
+            <!-- Orientações Rodoviárias -->
+            <div class="guide-step-card">
+              <div class="guide-step-title">1. Acessos Urbanos e Marginais</div>
+              <p class="guide-step-text">Interseções de saída das Marginais e acessos rodoviários urbanos exigem atenção redobrada à noite. Mantenha os vidros fechados e evite paradas desnecessárias no acostamento.</p>
+            </div>
+
+            <div class="guide-step-card">
+              <div class="guide-step-title">2. Redução de Custos com Tarifas</div>
+              <p class="guide-step-text">A modalidade <strong>Econômica</strong> prioriza rodovias estaduais com menor cobrança tarifária por eixo (ex: Raposo Tavares em substituição à Castello Branco), economizando no valor final.</p>
+            </div>
+
+            <div class="guide-step-card">
+              <div class="guide-step-title">3. Fiscalização e Uso de Faróis</div>
+              <p class="guide-step-text">Respeite a velocidade regulamentada nas praças e pórticos. Em rodovias de pista simples, utilize luz baixa mesmo durante o dia.</p>
+            </div>
+
+            <div class="guide-step-card">
+              <div class="guide-step-title">4. Condução sob Neblina na Serra</div>
+              <p class="guide-step-text">Em trechos de serra (Imigrantes, Anchieta e Tamoios), reduza a velocidade e aumente a distância de seguimento. Nunca acione o pisca-alerta em tráfego contínuo.</p>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- BARRA DE UTILITÁRIOS INFERIOR DO CONSOLE -->
+      <div class="console-bottom-bar">
+        <button id="btnToggleSim" class="btn-console-tool primary" type="button" title="Iniciar simulação visual do trajeto">
+          Simular Trajeto
+        </button>
+        <button id="btnToggleAudio" class="btn-console-tool" type="button" title="Ativar ou desativar avisos sonoros">
+          Som: Ativo
+        </button>
+        <button id="btnOpenManual" class="btn-console-tool" type="button" title="Consultar orientações e normas">
+          Guia Rodoviário
+        </button>
+      </div>
+
+      <!-- Elementos ocultos para garantir total compatibilidade com event listeners anteriores -->
+      <div style="display:none;" aria-hidden="true">
+        <button id="btnToggleDrawer" type="button"></button>
+        <button id="btnMapDrawerHandle" type="button"><span id="drawerHandleLabel"></span></button>
+        <button id="btnCloseSidebar" type="button"></button>
+      </div>
+    </aside>
+
+    <!-- ÁREA EXPANSIVA DO MAPA (VIEWPORT TOTAL) -->
+    <main class="map-viewport" id="mapSection">
       <div class="map-canvas-wrapper" id="mapCanvasWrapper">
         <div id="map"></div>
 
-        <!-- SELETOR DE CAMADAS DO MAPA -->
+        <!-- SELETOR DE CAMADAS FLUTUANTE (CANTO SUPERIOR DIREITO) -->
         <div class="map-layers-switch">
-          <button class="layer-switch-btn active" data-layer="roadmap" title="Mapa viário padrão">
-            Mapa Viário
+          <button class="layer-switch-btn active" data-layer="roadmap" type="button" title="Mapa viário padrão">
+            Ruas
           </button>
-          <button class="layer-switch-btn" data-layer="hybrid" title="Imagem de satélite">
+          <button class="layer-switch-btn" data-layer="hybrid" type="button" title="Imagem de satélite com vias">
             Satélite
           </button>
-          <button class="layer-switch-btn" data-layer="terrain" title="Mapa topográfico">
+          <button class="layer-switch-btn" data-layer="terrain" type="button" title="Mapa com relevo topográfico">
             Topografia
           </button>
         </div>
 
-        <!-- ABA RETRÁTIL NA BORDA DO MAPA PARA ABRIR / FECHAR O PAINEL -->
-        <button id="btnMapDrawerHandle" class="map-drawer-handle" type="button" title="Abrir ou fechar painel lateral">
-          <span id="drawerHandleLabel">Fechar Painel (Pedágios e Rodízio)</span>
-        </button>
-
-        <!-- HUD FLUTUANTE DO MODO SIMULAÇÃO DE VIAGEM -->
+        <!-- HUD FLUTUANTE DO MODO SIMULAÇÃO (CENTRO SUPERIOR) -->
         <div id="hudSimulationCard" class="hud-simulation-card">
           <div class="hud-speedometer">
             <div id="hudSpeedValue" class="speed-value">90</div>
@@ -186,198 +350,27 @@
             <div id="hudDescText" class="hud-desc">Acompanhando o traçado rodoviário em tempo real.</div>
           </div>
           <div class="hud-controls">
-            <button id="btnHudStop" class="btn-hud" title="Encerrar simulação">Encerrar</button>
+            <button id="btnHudStop" class="btn-hud" type="button" title="Encerrar simulação">Encerrar</button>
           </div>
         </div>
       </div>
-    </section>
+    </main>
 
-    <!-- PAINEL LATERAL RETRÁTIL (PODE SER ABERTO E FECHADO) -->
-    <aside class="app-sidebar" id="appSidebar">
-      <div class="sidebar-top-bar">
-        <span class="sidebar-top-title">Pedágios, Radares, Custos e Rodízio</span>
-        <button id="btnCloseSidebar" class="btn-close-sidebar" type="button" title="Fechar painel lateral">
-          Fechar
-        </button>
-      </div>
+  </div>
 
-      <nav class="sidebar-tabs">
-        <button class="tab-btn active" data-tab="points">
-          <span>Pedágios & Radares</span>
-          <span class="tab-badge">Mapeamento SP</span>
-        </button>
-        <button class="tab-btn" data-tab="tips">
-          <span>Rodízio e Normas</span>
-          <span class="tab-badge">Regras SP</span>
-        </button>
-        <button class="tab-btn" data-tab="calc">
-          <span>Custos da Rota</span>
-          <span class="tab-badge">Resumo</span>
-        </button>
-      </nav>
-
-      <div class="sidebar-content">
-        
-        <!-- ABA 1: LISTAGEM DE PEDÁGIOS, RADARES E POSTOS -->
-        <div id="tab-points" class="tab-pane">
-          <div class="search-box">
-            <input type="text" id="searchPointsInput" placeholder="Filtrar por rodovia, km, praça de pedágio ou limite de radar...">
-          </div>
-
-          <div id="pointsList" class="points-list">
-            <!-- Gerado dinamicamente via JS -->
-          </div>
-        </div>
-
-        <!-- ABA 2: RODÍZIO MUNICIPAL SP E ORIENTAÇÕES RODOVIÁRIAS -->
-        <div id="tab-tips" class="tab-pane" style="display: none;">
-          <div class="tips-container">
-
-            <div class="rodizio-checker-box">
-              <div class="rodizio-checker-header">
-                <span class="rodizio-checker-title">Status Atual do Rodízio Municipal (SP)</span>
-              </div>
-              <div id="rodizioResultBox" class="rodizio-checker-result free">
-                <!-- Diagnóstico de rodízio do dia em tempo real -->
-              </div>
-              <div class="rodizio-schedule-table">
-                <div class="rodizio-schedule-row"><span>Segunda-feira</span><strong>Finais 1 e 2</strong></div>
-                <div class="rodizio-schedule-row"><span>Terça-feira</span><strong>Finais 3 e 4</strong></div>
-                <div class="rodizio-schedule-row"><span>Quarta-feira</span><strong>Finais 5 e 6</strong></div>
-                <div class="rodizio-schedule-row"><span>Quinta-feira</span><strong>Finais 7 e 8</strong></div>
-                <div class="rodizio-schedule-row"><span>Sexta-feira</span><strong>Finais 9 e 0</strong></div>
-                <div class="rodizio-schedule-note">Horários restritos no Centro Expandido: 07h00 às 10h00 e 17h00 às 20h00 (exceto feriados e fins de semana).</div>
-              </div>
-            </div>
-            
-            <div class="tip-banner">
-              <h4>Normas de Circulação e Segurança Rodoviária</h4>
-              <p>Orientações técnicas para redução de custos operacionais e prevenção de infrações nas rodovias estaduais e federais de São Paulo.</p>
-            </div>
-
-            <div class="guide-step-card">
-              <div class="guide-step-title">1. Prevenção em Acessos Urbanos e Marginais</div>
-              <p class="guide-step-text">
-                Interseções de saída das Marginais e acessos rodoviários urbanos apresentam maior índice de ocorrências noturnas. Mantenha os vidros fechados, objetos pessoais fora do campo de visão e evite paradas não emergenciais no acostamento.
-              </p>
-            </div>
-
-            <div class="guide-step-card">
-              <div class="guide-step-title">2. Otimização de Custos com Pedágios</div>
-              <p class="guide-step-text">
-                A modalidade <strong>Econômica</strong> prioriza rodovias estaduais alternativas (como SP-270 Raposo Tavares em substituição à SP-280 Castelo Branco, ou SP-098 Mogi-Bertioga em direção ao litoral), reduzindo significativamente o custo tarifário por eixo.
-              </p>
-            </div>
-
-            <div class="guide-step-card">
-              <div class="guide-step-title">3. Fiscalização Rodoviária e Uso de Faróis</div>
-              <p class="guide-step-text">
-                Nas bases da Polícia Militar Rodoviária e PRF (Carvalho Pinto km 72, Dutra km 204, Imigrantes km 28), exige-se o uso de <strong>luz baixa durante o dia</strong> em rodovias de pista simples, além da verificação do estado da banda de rodagem dos pneus.
-              </p>
-            </div>
-
-            <div class="guide-step-card">
-              <div class="guide-step-title">4. Condução sob Neblina na Serra do Mar e Cantareira</div>
-              <p class="guide-step-text">
-                Em condições de baixa visibilidade, <strong>não acione o pisca-alerta com o veículo em movimento</strong>. Utilize farol baixo e farol de neblina, mantendo distância de segurança ampliada em relação ao veículo à frente.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- ABA 3: CUSTOS DA ROTA E COMBUSTÍVEL (SEM PLACA E SEM DADOS DE CARRO) -->
-        <div id="tab-calc" class="tab-pane" style="display: none;">
-          <div class="calc-card">
-            <h3 class="calc-title">Estimativa de Custos da Viagem</h3>
-
-            <!-- PARÂMETROS DE COMBUSTÍVEL -->
-            <div class="form-group">
-              <label class="form-label">Combustível de Referência:</label>
-              <select id="calcFuelType" class="form-control">
-                <option value="ethanol" selected>Etanol Hidratado</option>
-                <option value="gasoline">Gasolina Comum</option>
-              </select>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group" style="flex:1;">
-                <label class="form-label">Consumo Médio (km/L):</label>
-                <input type="number" id="calcEfficiency" class="form-control" value="11.0" step="0.1" min="4" max="50">
-              </div>
-              <div class="form-group" style="flex:1;">
-                <label class="form-label">Preço por Litro (R$):</label>
-                <input type="number" id="calcFuelPrice" class="form-control" value="3.49" step="0.05" min="2" max="10">
-              </div>
-            </div>
-
-            <!-- RESULTADOS DETALHADOS -->
-            <div class="calc-results">
-              
-              <!-- INDICADOR DE EMISSÃO DE CARBONO -->
-              <div class="carbon-badge-row">
-                <span>Emissão Estimada de CO2:</span>
-                <div id="carbonFootprintValue"><strong>0.0 kg CO2</strong></div>
-              </div>
-
-              <div class="calc-summary-grid">
-                <div class="calc-summary-item">
-                  <div class="calc-summary-label">Distância e Tempo</div>
-                  <div id="calcDistanceDisplay" class="calc-summary-val gold">165 km (155 min)</div>
-                </div>
-                <div class="calc-summary-item">
-                  <div class="calc-summary-label">Combustível</div>
-                  <div id="calcFuelCostDisplay" class="calc-summary-val success">R$ 53,30</div>
-                </div>
-                <div class="calc-summary-item">
-                  <div class="calc-summary-label">Pedágios na Rota</div>
-                  <div id="calcTollsDisplay" class="calc-summary-val danger">R$ 5,60</div>
-                </div>
-                <div class="calc-summary-item">
-                  <div class="calc-summary-label">Custo Total (Trecho)</div>
-                  <div id="calcTotalDisplay" class="calc-summary-val primary-val">R$ 58,90</div>
-                </div>
-              </div>
-
-              <div id="calcEconomyTips" class="route-comparison-box">
-                <!-- Informações comparativas inseridas via JS -->
-              </div>
-
-              <!-- SALVAR E LISTAR ROTAS NO SUPABASE -->
-              <button id="btnSaveCurrentRoute" type="button" class="btn-save-route">
-                Salvar Rota na Minha Conta
-              </button>
-
-              <div id="savedRoutesContainer" class="saved-routes-box" style="display: none;">
-                <div class="saved-routes-title">Minhas Rotas Salvas (Supabase)</div>
-                <div id="savedRoutesList" class="saved-routes-list"></div>
-              </div>
-
-              <!-- BOTÃO ABRIR NO GOOGLE MAPS -->
-              <a id="btnOpenGmapsExternal" href="#" target="_blank" class="btn-open-gmaps">
-                Abrir Trajeto no Google Maps
-              </a>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </aside>
-
-  </main>
-
-  <!-- ================= BARRA DE NAVEGAÇÃO INFERIOR PARA CELULAR ================= -->
+  <!-- ================= BARRA DE NAVEGAÇÃO INFERIOR PARA CELULARES ================= -->
   <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Navegação Mobile">
     <button type="button" class="mobile-nav-btn active" data-mobile-target="map">
       <span class="mobile-nav-label">Mapa</span>
     </button>
+    <button type="button" class="mobile-nav-btn" data-mobile-target="calc">
+      <span class="mobile-nav-label">Custos</span>
+    </button>
     <button type="button" class="mobile-nav-btn" data-mobile-target="points">
-      <span class="mobile-nav-label">Pedágios & Radares</span>
+      <span class="mobile-nav-label">Pedágios</span>
     </button>
     <button type="button" class="mobile-nav-btn" data-mobile-target="tips">
       <span class="mobile-nav-label">Rodízio</span>
-    </button>
-    <button type="button" class="mobile-nav-btn" data-mobile-target="calc">
-      <span class="mobile-nav-label">Custos</span>
     </button>
   </nav>
 
@@ -409,7 +402,7 @@
           <button type="submit" id="btnSubmitLogin" class="btn-auth-submit">Entrar na Conta</button>
         </form>
 
-        <!-- FORMULÁRIO DE CADASTRO (SEM PLACA) -->
+        <!-- FORMULÁRIO DE CADASTRO -->
         <form id="formAuthRegister" class="auth-form" style="display: none;">
           <div class="form-group">
             <label class="form-label" for="regName">Nome Completo:</label>
@@ -422,7 +415,7 @@
           <div class="form-group">
             <label class="form-label" for="regPassword">Senha:</label>
             <input type="password" id="regPassword" class="form-control" required minlength="6" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
-            <small style="font-size:0.72rem; color:#64748b; margin-top:3px; display:block;">A senha deve ter no mínimo 6 caracteres para segurança no Supabase.</small>
+            <small style="font-size:0.72rem; color:var(--text-muted); margin-top:3px; display:block;">A senha deve ter no mínimo 6 caracteres para segurança no Supabase.</small>
           </div>
           <button type="submit" id="btnSubmitRegister" class="btn-auth-submit">Criar Conta e Acessar</button>
         </form>

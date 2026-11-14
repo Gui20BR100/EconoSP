@@ -2130,9 +2130,6 @@ function processPlateLookup(rawPlate) {
   updateDriverPillDisplay();
   evaluateRodizioStatus();
   recalculateRoutePlan();
-      if (data.theme_settings) {
-        ThemeManager.applyFromCloud(data.theme_settings);
-      }
   playNotificationBeep(620, 0.1);
 }
 
@@ -2486,9 +2483,6 @@ function applySelectedStrategy(strategyKey) {
 
   // Recalcula custos e emissões de carbono
   recalculateRoutePlan();
-      if (data.theme_settings) {
-        ThemeManager.applyFromCloud(data.theme_settings);
-      }
 
   // Atualiza marcadores e lista se o filtro for no trajeto
   renderMapMarkers();
@@ -2823,7 +2817,7 @@ function renderPointsList() {
   if (points.length === 0) {
     container.innerHTML = `
       <div style="text-align:center; padding:20px; color:#94a3b8; font-size:0.8rem;">
-        Nenhum pedÃ¡gio, radar ou posto encontrado para o filtro selecionado.
+        Nenhum pedágio, radar ou posto encontrado para o filtro selecionado.
       </div>
     `;
     return;
@@ -2838,7 +2832,7 @@ function renderPointsList() {
       tipBlock = `<div class="point-economy-tip">${p.economyTip || p.concessionaire || ''}</div>`;
     } else if (p.category === "radar") {
       priceBadge = `<span class="point-price-tag fine">Limite: ${p.speed}</span>`;
-      tipBlock = `<div class="point-danger-tip">${p.dangerTip || 'FiscalizaÃ§Ã£o eletrÃ´nica de velocidade.'}</div>`;
+      tipBlock = `<div class="point-danger-tip">${p.dangerTip || 'Fiscalização eletrônica de velocidade.'}</div>`;
     } else if (p.category === "gas") {
       priceBadge = `<span class="point-price-tag cheap">${(p.fuelPrice || '').split('|')[0].trim()}</span>`;
       tipBlock = `<div class="point-economy-tip">${p.economyTip || ''}</div>`;
@@ -2909,7 +2903,7 @@ function updateQuickStatsBar() {
   const rEl = document.getElementById("statRadarsCount");
   const gEl = document.getElementById("statGasCount");
 
-  if (tEl) tEl.textContent = `${tollsCount} PedÃ¡gios`;
+  if (tEl) tEl.textContent = `${tollsCount} Pedágios`;
   if (rEl) rEl.textContent = `${radarsCount} Radares`;
   if (gEl) gEl.textContent = `${gasCount} Postos`;
 }
@@ -3005,19 +2999,19 @@ function updateHudDisplay(nearby) {
     playNotificationBeep(880, 0.25);
   } else if (toll) {
     alertEl.className = "hud-next-alert toll";
-    alertEl.innerHTML = `PRAÃ‡A DE PEDÃGIO: ${toll.price}`;
-    descEl.textContent = `${toll.name}. Reduza para 40 km/h nas cabines de cobranÃ§a automÃ¡tica.`;
+    alertEl.innerHTML = `PRAÇA DE PEDÁGIO: ${toll.price}`;
+    descEl.textContent = `${toll.name}. Reduza para 40 km/h nas cabines de cobrança automática.`;
     if (speedEl) speedEl.textContent = "40";
     playNotificationBeep(330, 0.2);
   } else if (gas) {
     alertEl.className = "hud-next-alert good";
-    alertEl.innerHTML = `POSTO DE SERVIÃ‡O PRÃ“XIMO`;
-    descEl.textContent = `${gas.name} â€¢ ${gas.fuelPrice}`;
+    alertEl.innerHTML = `POSTO DE SERVIÇO PRÓXIMO`;
+    descEl.textContent = `${gas.name} • ${gas.fuelPrice}`;
     if (speedEl) speedEl.textContent = "80";
   } else {
     alertEl.className = "hud-next-alert good";
-    alertEl.innerHTML = `Trecho Livre (${AppState.selectedStrategy === 'economy' ? 'Rota EconÃ´mica' : 'Rota Expressa'})`;
-    descEl.textContent = `TrÃ¡fego fluindo pelas rodovias monitoradas.`;
+    alertEl.innerHTML = `Trecho Livre (${AppState.selectedStrategy === 'economy' ? 'Rota Econômica' : 'Rota Expressa'})`;
+    descEl.textContent = `Tráfego fluindo pelas rodovias monitoradas.`;
     if (speedEl) speedEl.textContent = "90";
   }
 }
@@ -3061,7 +3055,7 @@ function playNotificationBeep(frequency = 440, duration = 0.15) {
     osc.start();
     osc.stop(AppState.audioContext.currentTime + duration);
   } catch (e) {
-    console.warn("Ãudio indisponÃ­vel", e);
+    console.warn("Ãudio indisponível", e);
   }
 }
 
@@ -3077,7 +3071,7 @@ async function reverseGeocodeStreet(lat, lng) {
         const street = a.road || a.street || a.pedestrian || a.footway || a.avenue || a.square || a.suburb || "";
         const num = a.house_number ? (", " + a.house_number) : "";
         const b = a.suburb || a.neighbourhood || a.city_district || "";
-        const c = a.city || a.town || a.municipality || "SÃ£o Paulo";
+        const c = a.city || a.town || a.municipality || "São Paulo";
         if (street) {
           let s = street + num;
           if (b && !street.includes(b)) s += " - " + b;
@@ -3091,7 +3085,7 @@ async function reverseGeocodeStreet(lat, lng) {
   } catch (e) {
     console.warn("Reverse geocode falhou:", e);
   }
-  return "Minha LocalizaÃ§Ã£o (" + lat.toFixed(4) + ", " + lng.toFixed(4) + ")";
+  return "Minha Localização (" + lat.toFixed(4) + ", " + lng.toFixed(4) + ")";
 }
 
 function showUserCurrentPosition(lat, lng, accuracy, streetName) {
@@ -3106,7 +3100,7 @@ function showUserCurrentPosition(lat, lng, accuracy, streetName) {
     AppState.userAccuracyCircle = null;
   }
 
-  // CÃ­rculo de precisÃ£o do GPS (halo suave)
+  // Círculo de precisão do GPS (halo suave)
   AppState.userAccuracyCircle = L.circle([lat, lng], {
     radius: Math.min(Math.max(accuracy || 30, 20), 200),
     color: "#2563eb",
@@ -3128,9 +3122,9 @@ function showUserCurrentPosition(lat, lng, accuracy, streetName) {
 
   AppState.userMarker.bindPopup(
     '<div style="font-size:0.82rem; font-family:sans-serif; min-width:180px;">' +
-      '<strong style="color:#2563eb;">ðŸ“ VocÃª estÃ¡ aqui</strong>' +
+      '<strong style="color:var(--primary, #2563eb); font-weight:700;">Você está aqui</strong>' +
       '<div style="color:#1e293b; margin-top:4px; font-weight:600;">' + streetName + '</div>' +
-      '<div style="font-size:0.72rem; color:#64748b; margin-top:2px;">PrecisÃ£o GPS: ~' + Math.round(accuracy || 20) + 'm</div>' +
+      '<div style="font-size:0.72rem; color:#64748b; margin-top:2px;">Precisão GPS: ~' + Math.round(accuracy || 20) + 'm</div>' +
     '</div>'
   ).openPopup();
 
@@ -3142,7 +3136,7 @@ function requestUserGeolocation(userTriggered = true) {
   const originInput = document.getElementById("originInput");
 
   if (!navigator.geolocation) {
-    if (userTriggered) alert("GeolocalizaÃ§Ã£o nÃ£o Ã© suportada pelo seu navegador.");
+    if (userTriggered) alert("Geolocalização não é suportada pelo seu navegador.");
     return;
   }
 
@@ -3157,7 +3151,7 @@ function requestUserGeolocation(userTriggered = true) {
       AppState.originCoords = [lat, lng];
       AppState.isGpsOrigin = true;
 
-      // ObtÃ©m o nome da rua exata
+      // Obtém o nome da rua exata
       const streetFormatted = await reverseGeocodeStreet(lat, lng);
       AppState.originText = streetFormatted;
 
@@ -3167,14 +3161,14 @@ function requestUserGeolocation(userTriggered = true) {
       // Mostra o marcador com pulso e centraliza o mapa
       showUserCurrentPosition(lat, lng, accuracy, streetFormatted);
 
-      // TraÃ§a rotas iniciando diretamente da rua do usuÃ¡rio
+      // Traça rotas iniciando diretamente da rua do usuário
       await calculateContextualRoutes();
       playNotificationBeep(650, 0.1);
     },
     (error) => {
       if (btnLocate) btnLocate.textContent = "Usar GPS";
       if (userTriggered) {
-        alert("NÃ£o foi possÃ­vel acessar seu GPS. Verifique a permissÃ£o de localizaÃ§Ã£o do navegador ou digite a rua manualmente.");
+        alert("Não foi possível acessar seu GPS. Verifique a permissão de localização do navegador ou digite a rua manualmente.");
       }
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
@@ -3193,9 +3187,6 @@ function initDriverAndCarInputs() {
       AppState.driverName = e.target.value || "Condutor";
       updateDriverPillDisplay();
       recalculateRoutePlan();
-      if (data.theme_settings) {
-        ThemeManager.applyFromCloud(data.theme_settings);
-      }
     });
   }
 
@@ -3378,9 +3369,6 @@ function setupEventListeners() {
     fuelTypeSelect.addEventListener("change", (e) => {
       AppState.fuelType = e.target.value;
       recalculateRoutePlan();
-      if (data.theme_settings) {
-        ThemeManager.applyFromCloud(data.theme_settings);
-      }
       syncUserPreferencesToSupabase();
     });
   }
@@ -3391,9 +3379,6 @@ function setupEventListeners() {
       el.addEventListener("input", recalculateRoutePlan);
       el.addEventListener("change", () => {
         recalculateRoutePlan();
-      if (data.theme_settings) {
-        ThemeManager.applyFromCloud(data.theme_settings);
-      }
         syncUserPreferencesToSupabase();
       });
     }
@@ -3419,7 +3404,7 @@ function setupEventListeners() {
   const btnHudStop = document.getElementById("btnHudStop");
   if (btnHudStop) btnHudStop.addEventListener("click", stopSimulation);
 
-  // Waze reporting removido conforme solicitaÃ§Ã£o
+  // Waze reporting removido conforme solicitação
 
   const btnOpenManual = document.getElementById("btnOpenManual");
   const modalManual = document.getElementById("modalManual");
