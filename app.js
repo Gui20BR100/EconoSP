@@ -1893,7 +1893,8 @@ const ThemeManager = {
     } catch (e) {}
   },
 
-  resetDefault() {
+  resetDefault(saveToCloud = true) {
+    clearTimeout(this.syncTimer);
     this.current = {
       theme: "dark_obsidian",
       accent: "#2563eb",
@@ -1901,7 +1902,12 @@ const ThemeManager = {
     };
     this.applyCSSVariables();
     this.updateUI();
-    this.save();
+    try {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.current));
+    } catch (e) {}
+    if (saveToCloud) {
+      this.save();
+    }
   },
 
   applyEarlyTheme() {
@@ -3531,9 +3537,16 @@ async function loadUserProfileFromSupabase(userId) {
         priceInput.value = data.default_fuel_price;
       }
       recalculateRoutePlan();
-      if (data.theme_settings) {
+
+      // Carrega o tema exclusivo do usuário atual salvo na nuvem
+      if (data.theme_settings && typeof data.theme_settings === "object" && data.theme_settings.theme) {
         ThemeManager.applyFromCloud(data.theme_settings);
+      } else {
+        // Se a conta não tiver tema personalizado, aplica o tema padrão (nunca do user anterior)
+        ThemeManager.resetDefault(false);
       }
+    } else {
+      ThemeManager.resetDefault(false);
     }
   } catch (err) {
     console.warn("Erro ao carregar perfil:", err);
@@ -3598,6 +3611,8 @@ async function loadSavedRoutesFromSupabase() {
     `).join("");
   } catch (err) {
     console.warn("Erro ao listar rotas salvas:", err);
+    container.style.display = "none";
+    listEl.innerHTML = "";
   }
 }
 
@@ -3678,6 +3693,12 @@ async function saveCurrentRouteToSupabase() {
 function applyLoggedUserState(user) {
   const btnOpenAuth = document.getElementById("btnOpenAuth");
   const btnLogoutHeader = document.getElementById("btnLogoutHeader");
+  const savedRoutesContainer = document.getElementById("savedRoutesContainer");
+  const savedRoutesList = document.getElementById("savedRoutesList");
+
+  // Sempre esvazia imediatamente qualquer resquício de rotas de contas anteriores
+  if (savedRoutesList) savedRoutesList.innerHTML = "";
+  if (savedRoutesContainer) savedRoutesContainer.style.display = "none";
 
   if (user && user.id) {
     AppState.currentUser = user;
@@ -3691,7 +3712,9 @@ function applyLoggedUserState(user) {
       btnOpenAuth.title = `Conectado como ${user.email}. Clique para gerenciar.`;
     }
     if (btnLogoutHeader) {
-      btnLogoutHeader.style.display = "inline-block";
+      btnLogoutHeader.style.display = "inline-flex";
+      btnLogoutHeader.textContent = "Sair";
+      btnLogoutHeader.disabled = false;
     }
     ThemeManager.updateSyncBadge();
     loadUserProfileFromSupabase(user.id);
@@ -3701,8 +3724,31 @@ function applyLoggedUserState(user) {
     AppState.driverName = "Visitante";
     updateDriverPillDisplay();
 
+    // Limpa timers pendentes e remove o tema do usuário do localStorage
+    clearTimeout(ThemeManager.syncTimer);
+    localStorage.removeItem(ThemeManager.STORAGE_KEY);
+    ThemeManager.resetDefault(false);
+
+    // Reseta parâmetros de combustível e campos de consulta
+    const fuelSelect = document.getElementById("calcFuelType");
+    const effInput = document.getElementById("calcEfficiency");
+    const priceInput = document.getElementById("calcFuelPrice");
+    const nameInput = document.getElementById("driverNameInput");
+    const plateInput = document.getElementById("licensePlateInput");
+    const vehicleResult = document.getElementById("vehicleConsultResult");
+
+    if (fuelSelect) fuelSelect.value = "ethanol";
+    if (effInput) effInput.value = "11.0";
+    if (priceInput) priceInput.value = "3.49";
+    if (nameInput) nameInput.value = "";
+    if (plateInput) plateInput.value = "";
+    if (vehicleResult) vehicleResult.innerHTML = "";
+
+    AppState.fuelType = "ethanol";
+    recalculateRoutePlan();
+
     if (btnOpenAuth) {
-      btnOpenAuth.textContent = "Entrar / Criar Conta";
+      btnOpenAuth.textContent = "Entrar";
       btnOpenAuth.classList.remove("logged-in");
       btnOpenAuth.title = "Entrar na sua conta ou cadastrar novo perfil";
     }
@@ -3710,7 +3756,6 @@ function applyLoggedUserState(user) {
       btnLogoutHeader.style.display = "none";
     }
     ThemeManager.updateSyncBadge();
-    loadSavedRoutesFromSupabase();
   }
 }
 
@@ -3815,12 +3860,25 @@ function initAuthSystem() {
 
   if (btnLogoutHeader) {
     btnLogoutHeader.addEventListener("click", async () => {
-      if (supabaseClient) {
-        const { error } = await supabaseClient.auth.signOut();
-        if (error) console.warn("Aviso ao encerrar sessão:", error);
-      }
+      btnLogoutHeader.textContent = "Saindo...";
+      btnLogoutHeader.disabled = true;
+
+      // 1. Limpa timers e dados locais do usuário imediatamente
+      clearTimeout(ThemeManager.syncTimer);
+      localStorage.removeItem(ThemeManager.STORAGE_KEY);
       applyLoggedUserState(null);
-      showAuthFeedback("Você saiu da sua conta.", "success");
+
+      // 2. Encerra a sessão no Supabase Auth
+      if (supabaseClient) {
+        try {
+          await supabaseClient.auth.signOut();
+        } catch (err) {
+          console.warn("Aviso ao encerrar sessão:", err);
+        }
+      }
+
+      // 3. Recarrega a página completamente para garantir limpeza total
+      window.location.reload();
     });
   }
 
@@ -3887,12 +3945,18 @@ function initAuthSystem() {
             email: email
           };
           applyLoggedUserState(sessionUser);
-          showAuthFeedback("Conta criada e autenticada com sucesso!", "success");
+          showAuthFeedback("Conta criada e autenticada! Atualizando ambiente...", "success");
+
+          // Limpa qualquer tema do usuário anterior em cache local antes do reload
+          clearTimeout(ThemeManager.syncTimer);
+          localStorage.removeItem(ThemeManager.STORAGE_KEY);
+
           formRegister.reset();
 
           setTimeout(() => {
             if (modalAuth) modalAuth.classList.remove("active");
-          }, 800);
+            window.location.reload();
+          }, 450);
         }
       } catch (err) {
         showAuthFeedback(formatSupabaseAuthError(err), "error");
@@ -3950,12 +4014,18 @@ function initAuthSystem() {
             email: data.user.email
           };
           applyLoggedUserState(sessionUser);
-          showAuthFeedback("Acesso realizado com sucesso!", "success");
+          showAuthFeedback("Acesso realizado! Atualizando ambiente da sua conta...", "success");
+
+          // Limpa o tema do usuário anterior em localStorage antes do reload
+          clearTimeout(ThemeManager.syncTimer);
+          localStorage.removeItem(ThemeManager.STORAGE_KEY);
+
           formLogin.reset();
 
           setTimeout(() => {
             if (modalAuth) modalAuth.classList.remove("active");
-          }, 600);
+            window.location.reload();
+          }, 450);
         }
       } catch (err) {
         showAuthFeedback(formatSupabaseAuthError(err), "error");
