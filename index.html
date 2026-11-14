@@ -51,6 +51,10 @@
       <button id="btnToggleDrawer" class="btn-header drawer-toggle-btn" title="Abrir ou fechar painel de Pedágios, Radares, Custos e Rodízio">
         Painel Rodoviário
       </button>
+      <button id="btnOpenThemeModal" class="btn-header theme-btn" title="Personalizar tema visual e cores da interface">
+        <span class="theme-accent-indicator" id="headerAccentDot"></span>
+        Aparência
+      </button>
       <button id="btnOpenAuth" class="btn-header auth-btn" title="Entrar na sua conta ou cadastrar novo perfil">
         Entrar / Criar Conta
       </button>
@@ -422,6 +426,129 @@
           </div>
           <button type="submit" id="btnSubmitRegister" class="btn-auth-submit">Criar Conta e Acessar</button>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL DE APARÊNCIA E TEMAS ================= -->
+  <div id="modalThemeSettings" class="modal-overlay">
+    <div class="modal-dialog theme-dialog">
+      <div class="modal-header">
+        <div class="theme-header-title">
+          <h3>Aparência e Personalização</h3>
+          <span class="theme-header-subtitle">Escolha um tema pré-definido e personalize a cor de destaque</span>
+        </div>
+        <button id="btnCloseThemeModal" class="btn-modal-close" type="button" title="Fechar">&times;</button>
+      </div>
+
+      <div class="modal-body theme-modal-body">
+        
+        <!-- SEÇÃO 1: TEMAS DE BASE -->
+        <div class="theme-section">
+          <label class="theme-section-label">Temas Pré-definidos</label>
+          <div class="theme-grid">
+            <button type="button" class="theme-preset-card active" data-theme-id="dark_obsidian">
+              <div class="theme-card-preview dark-obsidian">
+                <span class="preview-bar"></span>
+                <span class="preview-dot"></span>
+              </div>
+              <div class="theme-card-info">
+                <strong>Obsidian Dark</strong>
+                <span>Ardósia escura & alta nitidez</span>
+              </div>
+            </button>
+
+            <button type="button" class="theme-preset-card" data-theme-id="light_minimal">
+              <div class="theme-card-preview light-minimal">
+                <span class="preview-bar"></span>
+                <span class="preview-dot"></span>
+              </div>
+              <div class="theme-card-info">
+                <strong>Claro Minimalista</strong>
+                <span>Porcelana limpa & alto contraste</span>
+              </div>
+            </button>
+
+            <button type="button" class="theme-preset-card" data-theme-id="midnight_cyber">
+              <div class="theme-card-preview midnight-cyber">
+                <span class="preview-bar"></span>
+                <span class="preview-dot"></span>
+              </div>
+              <div class="theme-card-info">
+                <strong>Meia-Noite Cyber</strong>
+                <span>Preto AMOLED & marinho profundo</span>
+              </div>
+            </button>
+
+            <button type="button" class="theme-preset-card" data-theme-id="eco_highway">
+              <div class="theme-card-preview eco-highway">
+                <span class="preview-bar"></span>
+                <span class="preview-dot"></span>
+              </div>
+              <div class="theme-card-info">
+                <strong>Esmeralda Eco</strong>
+                <span>Verde floresta & sustentabilidade</span>
+              </div>
+            </button>
+
+            <button type="button" class="theme-preset-card" data-theme-id="sunset_paulista">
+              <div class="theme-card-preview sunset-paulista">
+                <span class="preview-bar"></span>
+                <span class="preview-dot"></span>
+              </div>
+              <div class="theme-card-info">
+                <strong>Sunset Paulista</strong>
+                <span>Cobre escuro & âmbar urbano</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- SEÇÃO 2: CORES DE DESTAQUE HARMONIZADAS -->
+        <div class="theme-section">
+          <div class="theme-section-header">
+            <label class="theme-section-label">Cor de Destaque Harmonizada</label>
+            <span class="theme-section-note">Garante leitura e contraste automático com o tema</span>
+          </div>
+
+          <div class="accent-colors-row">
+            <button type="button" class="accent-swatch-btn active" data-color="#2563eb" data-preset="blue" style="--swatch-color: #2563eb;" title="Azul Real"></button>
+            <button type="button" class="accent-swatch-btn" data-color="#10b981" data-preset="emerald" style="--swatch-color: #10b981;" title="Esmeralda"></button>
+            <button type="button" class="accent-swatch-btn" data-color="#06b6d4" data-preset="cyan" style="--swatch-color: #06b6d4;" title="Ciano"></button>
+            <button type="button" class="accent-swatch-btn" data-color="#8b5cf6" data-preset="violet" style="--swatch-color: #8b5cf6;" title="Violeta"></button>
+            <button type="button" class="accent-swatch-btn" data-color="#f59e0b" data-preset="amber" style="--swatch-color: #f59e0b;" title="Âmbar Ouro"></button>
+            <button type="button" class="accent-swatch-btn" data-color="#f43f5e" data-preset="coral" style="--swatch-color: #f43f5e;" title="Coral Rubi"></button>
+
+            <!-- Seletor de Cor Livre -->
+            <div class="custom-color-picker-wrapper" title="Escolher cor personalizada">
+              <input type="color" id="themeCustomColorPicker" class="custom-color-input" value="#2563eb">
+              <span class="custom-color-label">Personalizada</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEÇÃO 3: PRÉ-VISUALIZAÇÃO AO VIVO -->
+        <div class="theme-section">
+          <label class="theme-section-label">Pré-visualização dos Componentes</label>
+          <div class="theme-live-preview-box">
+            <button type="button" class="preview-sample-btn">Botão Principal</button>
+            <span class="preview-sample-badge">Na Rota • R$ 36,80</span>
+            <div class="preview-sample-input">
+              <span>Origem: São Paulo</span>
+              <div class="preview-sample-dot"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEÇÃO 4: STATUS DE SINCRONIZAÇÃO E RESET -->
+        <div class="theme-footer-status">
+          <div id="themeSyncStatusBadge" class="theme-sync-badge">
+            <span class="sync-dot"></span>
+            <span id="themeSyncStatusText">Salvo no navegador</span>
+          </div>
+          <button type="button" id="btnResetThemeDefault" class="btn-theme-reset">Restaurar Padrão</button>
+        </div>
+
       </div>
     </div>
   </div>

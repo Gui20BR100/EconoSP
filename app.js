@@ -1745,8 +1745,249 @@ const AppState = {
   simStepIndex: 0
 };
 
+// ================= GERENCIADOR DE TEMAS E CORES HARMONIZADAS =================
+const ThemeManager = {
+  STORAGE_KEY: "econosp_theme_settings_v2",
+  current: {
+    theme: "dark_obsidian",
+    accent: "#2563eb",
+    preset: "blue"
+  },
+  syncTimer: null,
+
+  // Derivação harmônica: calcula tons suaves, borda, glow e contraste garantido
+  deriveHarmonicShades(hexColor) {
+    let cleanHex = (hexColor || "#2563eb").replace("#", "").trim();
+    if (cleanHex.length === 3) {
+      cleanHex = cleanHex.split("").map(c => c + c).join("");
+    }
+    const r = parseInt(cleanHex.substring(0, 2), 16) || 37;
+    const g = parseInt(cleanHex.substring(2, 4), 16) || 99;
+    const b = parseInt(cleanHex.substring(4, 6), 16) || 235;
+
+    // Cálculo de luminância para contraste de leitura AAA
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    const contrastText = luminance > 0.65 ? "#0f172a" : "#ffffff";
+
+    // Variação suave de hover
+    const hoverR = Math.max(0, Math.min(255, Math.round(luminance > 0.5 ? r * 0.85 : r * 1.15)));
+    const hoverG = Math.max(0, Math.min(255, Math.round(luminance > 0.5 ? g * 0.85 : g * 1.15)));
+    const hoverB = Math.max(0, Math.min(255, Math.round(luminance > 0.5 ? b * 0.85 : b * 1.15)));
+    const hoverHex = "#" + [hoverR, hoverG, hoverB].map(v => v.toString(16).padStart(2, "0")).join("");
+
+    return {
+      primary: hexColor,
+      primaryHover: hoverHex,
+      primarySoft: "rgba(" + r + ", " + g + ", " + b + ", 0.14)",
+      primaryBorder: "rgba(" + r + ", " + g + ", " + b + ", 0.38)",
+      primaryGlow: "0 0 16px rgba(" + r + ", " + g + ", " + b + ", 0.28)",
+      primaryContrast: contrastText
+    };
+  },
+
+  applyCSSVariables() {
+    const shades = this.deriveHarmonicShades(this.current.accent);
+    const root = document.documentElement;
+    root.style.setProperty("--primary", shades.primary);
+    root.style.setProperty("--primary-hover", shades.primaryHover);
+    root.style.setProperty("--primary-soft", shades.primarySoft);
+    root.style.setProperty("--primary-border", shades.primaryBorder);
+    root.style.setProperty("--primary-glow", shades.primaryGlow);
+    root.style.setProperty("--primary-contrast", shades.primaryContrast);
+
+    document.body.setAttribute("data-theme", this.current.theme);
+
+    // Atualiza o ponto indicador de cor ativa no cabeçalho
+    const dot = document.getElementById("headerAccentDot");
+    if (dot) dot.style.backgroundColor = shades.primary;
+  },
+
+  setTheme(themeId, autoSave = true) {
+    this.current.theme = themeId;
+    this.applyCSSVariables();
+    this.updateUI();
+    if (autoSave) this.save();
+  },
+
+  setAccent(hexColor, presetKey = "custom", autoSave = true) {
+    this.current.accent = hexColor;
+    this.current.preset = presetKey;
+    this.applyCSSVariables();
+    this.updateUI();
+    if (autoSave) this.save();
+  },
+
+  updateUI() {
+    // Atualiza cards de tema
+    document.querySelectorAll(".theme-preset-card").forEach(c => {
+      c.classList.toggle("active", c.getAttribute("data-theme-id") === this.current.theme);
+    });
+
+    // Atualiza swatches de cores
+    document.querySelectorAll(".accent-swatch-btn").forEach(s => {
+      const swatchPreset = s.getAttribute("data-preset");
+      const swatchColor = s.getAttribute("data-color");
+      const isActive = (this.current.preset === swatchPreset) || (this.current.accent.toLowerCase() === (swatchColor || "").toLowerCase());
+      s.classList.toggle("active", isActive);
+    });
+
+    // Atualiza color picker nativo
+    const colorPicker = document.getElementById("themeCustomColorPicker");
+    if (colorPicker) {
+      colorPicker.value = this.current.accent;
+    }
+
+    this.updateSyncBadge();
+  },
+
+  updateSyncBadge() {
+    const badgeText = document.getElementById("themeSyncStatusText");
+    if (!badgeText) return;
+    if (AppState.currentUser && AppState.currentUser.id) {
+      badgeText.textContent = "Sincronizado na sua conta EconoSP";
+    } else {
+      badgeText.textContent = "Salvo no navegador (entre para sincronizar)";
+    }
+  },
+
+  save() {
+    try {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.current));
+    } catch (e) {
+      console.warn("Aviso ao salvar tema localmente:", e);
+    }
+
+    this.updateSyncBadge();
+
+    // Sincronização automática com Supabase se usuário estiver conectado
+    if (supabaseClient && AppState.currentUser && AppState.currentUser.id) {
+      clearTimeout(this.syncTimer);
+      this.syncTimer = setTimeout(async () => {
+        try {
+          await supabaseClient
+            .from("profiles")
+            .update({
+              theme_settings: this.current,
+              updated_at: new Date().toISOString()
+            })
+            .eq("id", AppState.currentUser.id);
+          
+          const badgeText = document.getElementById("themeSyncStatusText");
+          if (badgeText) badgeText.textContent = "Salvo na nuvem com sucesso";
+        } catch (err) {
+          console.warn("Aviso ao sincronizar tema no Supabase:", err);
+        }
+      }, 400);
+    }
+  },
+
+  applyFromCloud(cloudSettings) {
+    if (!cloudSettings || typeof cloudSettings !== "object") return;
+    if (cloudSettings.theme) this.current.theme = cloudSettings.theme;
+    if (cloudSettings.accent) this.current.accent = cloudSettings.accent;
+    if (cloudSettings.preset) this.current.preset = cloudSettings.preset;
+    this.applyCSSVariables();
+    this.updateUI();
+    try {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.current));
+    } catch (e) {}
+  },
+
+  resetDefault() {
+    this.current = {
+      theme: "dark_obsidian",
+      accent: "#2563eb",
+      preset: "blue"
+    };
+    this.applyCSSVariables();
+    this.updateUI();
+    this.save();
+  },
+
+  applyEarlyTheme() {
+    try {
+      const saved = localStorage.getItem(this.STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.theme) this.current.theme = parsed.theme;
+        if (parsed.accent) this.current.accent = parsed.accent;
+        if (parsed.preset) this.current.preset = parsed.preset;
+      }
+    } catch (e) {}
+    this.applyCSSVariables();
+  },
+
+  init() {
+    this.applyEarlyTheme();
+    this.updateUI();
+
+    const btnOpenTheme = document.getElementById("btnOpenThemeModal");
+    const modalTheme = document.getElementById("modalThemeSettings");
+    const btnCloseTheme = document.getElementById("btnCloseThemeModal");
+    const btnResetDefault = document.getElementById("btnResetThemeDefault");
+    const colorPicker = document.getElementById("themeCustomColorPicker");
+
+    if (btnOpenTheme && modalTheme) {
+      btnOpenTheme.addEventListener("click", () => {
+        this.updateUI();
+        modalTheme.classList.add("active");
+      });
+    }
+
+    if (btnCloseTheme && modalTheme) {
+      btnCloseTheme.addEventListener("click", () => {
+        modalTheme.classList.remove("active");
+      });
+    }
+
+    if (modalTheme) {
+      modalTheme.addEventListener("click", (e) => {
+        if (e.target === modalTheme) modalTheme.classList.remove("active");
+      });
+    }
+
+    // Clique nos cards de tema pré-definido
+    document.querySelectorAll(".theme-preset-card").forEach(card => {
+      card.addEventListener("click", () => {
+        const tId = card.getAttribute("data-theme-id");
+        if (tId) this.setTheme(tId, true);
+      });
+    });
+
+    // Clique nos swatches de cores pré-curadas
+    document.querySelectorAll(".accent-swatch-btn").forEach(swatch => {
+      swatch.addEventListener("click", () => {
+        const color = swatch.getAttribute("data-color");
+        const preset = swatch.getAttribute("data-preset") || "preset";
+        if (color) this.setAccent(color, preset, true);
+      });
+    });
+
+    // Mudança no seletor livre de cor
+    if (colorPicker) {
+      colorPicker.addEventListener("input", (e) => {
+        this.setAccent(e.target.value, "custom", true);
+      });
+      colorPicker.addEventListener("change", (e) => {
+        this.setAccent(e.target.value, "custom", true);
+      });
+    }
+
+    // Botão de restaurar padrão
+    if (btnResetDefault) {
+      btnResetDefault.addEventListener("click", () => {
+        this.resetDefault();
+      });
+    }
+  }
+};
+
+// Aplicação instantânea antes de renderizar para zero FOUC
+ThemeManager.applyEarlyTheme();
+
 // ================= INICIALIZAÇÃO =================
 document.addEventListener("DOMContentLoaded", () => {
+  ThemeManager.init();
   initMapWithGoogleLayers();
   initDriverAndCarInputs();
   initAuthSystem();
@@ -1889,6 +2130,9 @@ function processPlateLookup(rawPlate) {
   updateDriverPillDisplay();
   evaluateRodizioStatus();
   recalculateRoutePlan();
+      if (data.theme_settings) {
+        ThemeManager.applyFromCloud(data.theme_settings);
+      }
   playNotificationBeep(620, 0.1);
 }
 
@@ -2242,6 +2486,9 @@ function applySelectedStrategy(strategyKey) {
 
   // Recalcula custos e emissões de carbono
   recalculateRoutePlan();
+      if (data.theme_settings) {
+        ThemeManager.applyFromCloud(data.theme_settings);
+      }
 
   // Atualiza marcadores e lista se o filtro for no trajeto
   renderMapMarkers();
@@ -2946,6 +3193,9 @@ function initDriverAndCarInputs() {
       AppState.driverName = e.target.value || "Condutor";
       updateDriverPillDisplay();
       recalculateRoutePlan();
+      if (data.theme_settings) {
+        ThemeManager.applyFromCloud(data.theme_settings);
+      }
     });
   }
 
@@ -3128,6 +3378,9 @@ function setupEventListeners() {
     fuelTypeSelect.addEventListener("change", (e) => {
       AppState.fuelType = e.target.value;
       recalculateRoutePlan();
+      if (data.theme_settings) {
+        ThemeManager.applyFromCloud(data.theme_settings);
+      }
       syncUserPreferencesToSupabase();
     });
   }
@@ -3138,6 +3391,9 @@ function setupEventListeners() {
       el.addEventListener("input", recalculateRoutePlan);
       el.addEventListener("change", () => {
         recalculateRoutePlan();
+      if (data.theme_settings) {
+        ThemeManager.applyFromCloud(data.theme_settings);
+      }
         syncUserPreferencesToSupabase();
       });
     }
@@ -3290,6 +3546,9 @@ async function loadUserProfileFromSupabase(userId) {
         priceInput.value = data.default_fuel_price;
       }
       recalculateRoutePlan();
+      if (data.theme_settings) {
+        ThemeManager.applyFromCloud(data.theme_settings);
+      }
     }
   } catch (err) {
     console.warn("Erro ao carregar perfil:", err);
@@ -3308,6 +3567,7 @@ async function syncUserPreferencesToSupabase() {
         preferred_fuel: AppState.fuelType,
         default_efficiency_km_l: eff,
         default_fuel_price: price,
+        theme_settings: ThemeManager.current,
         updated_at: new Date().toISOString()
       })
       .eq("id", AppState.currentUser.id);
@@ -3448,6 +3708,7 @@ function applyLoggedUserState(user) {
     if (btnLogoutHeader) {
       btnLogoutHeader.style.display = "inline-block";
     }
+    ThemeManager.updateSyncBadge();
     loadUserProfileFromSupabase(user.id);
     loadSavedRoutesFromSupabase();
   } else {
@@ -3463,6 +3724,7 @@ function applyLoggedUserState(user) {
     if (btnLogoutHeader) {
       btnLogoutHeader.style.display = "none";
     }
+    ThemeManager.updateSyncBadge();
     loadSavedRoutesFromSupabase();
   }
 }
