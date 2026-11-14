@@ -3185,45 +3185,26 @@ const supabaseClient = (typeof window !== "undefined" && window.supabase)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
   : null;
 
-const AUTH_STORAGE_USERS_KEY = "econosp_users_v1";
-const AUTH_STORAGE_SESSION_KEY = "econosp_session_v1";
-
-function getStoredUsers() {
-  try {
-    const raw = localStorage.getItem(AUTH_STORAGE_USERS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    return [];
+// Tradutor de erros nativos do Supabase Auth para mensagens claras em português
+function formatSupabaseAuthError(error) {
+  if (!error) return "Ocorreu um erro na autenticação.";
+  const msg = error.message || String(error);
+  if (msg.includes("Invalid login credentials")) {
+    return "E-mail ou senha incorretos. Verifique suas credenciais.";
   }
-}
-
-function saveStoredUsers(users) {
-  try {
-    localStorage.setItem(AUTH_STORAGE_USERS_KEY, JSON.stringify(users));
-  } catch (e) {
-    console.warn("Não foi possível salvar usuários:", e);
+  if (msg.includes("User already registered") || msg.includes("already registered")) {
+    return "Este e-mail já está cadastrado. Alterne para a aba 'Entrar'.";
   }
-}
-
-function getActiveSessionUser() {
-  try {
-    const raw = localStorage.getItem(AUTH_STORAGE_SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) {
-    return null;
+  if (msg.includes("Password should be at least 6 characters") || msg.includes("least 6 characters")) {
+    return "A senha deve conter no mínimo 6 caracteres.";
   }
-}
-
-function setActiveSessionUser(user) {
-  try {
-    if (user) {
-      localStorage.setItem(AUTH_STORAGE_SESSION_KEY, JSON.stringify(user));
-    } else {
-      localStorage.removeItem(AUTH_STORAGE_SESSION_KEY);
-    }
-  } catch (e) {
-    console.warn("Erro ao salvar sessão:", e);
+  if (msg.includes("Email not confirmed")) {
+    return "E-mail ainda não confirmado. Verifique sua caixa de entrada.";
   }
+  if (msg.includes("network") || msg.includes("Failed to fetch")) {
+    return "Falha de conexão com o servidor. Verifique sua conexão com a internet.";
+  }
+  return msg;
 }
 
 async function loadPointsFromSupabase() {
@@ -3275,7 +3256,7 @@ async function loadPointsFromSupabase() {
 }
 
 async function loadUserProfileFromSupabase(userId) {
-  if (!supabaseClient || !userId || String(userId).startsWith("usr_")) return;
+  if (!supabaseClient || !userId) return;
   try {
     const { data, error } = await supabaseClient
       .from("profiles")
@@ -3288,6 +3269,11 @@ async function loadUserProfileFromSupabase(userId) {
         AppState.driverName = data.full_name;
         if (AppState.currentUser) AppState.currentUser.name = data.full_name;
         updateDriverPillDisplay();
+        const btnOpenAuth = document.getElementById("btnOpenAuth");
+        if (btnOpenAuth) {
+          const firstName = data.full_name.split(" ")[0];
+          btnOpenAuth.textContent = `Conta: ${firstName}`;
+        }
       }
       const fuelSelect = document.getElementById("calcFuelType");
       const effInput = document.getElementById("calcEfficiency");
@@ -3311,7 +3297,7 @@ async function loadUserProfileFromSupabase(userId) {
 }
 
 async function syncUserPreferencesToSupabase() {
-  if (!supabaseClient || !AppState.currentUser || !AppState.currentUser.id || String(AppState.currentUser.id).startsWith("usr_")) return;
+  if (!supabaseClient || !AppState.currentUser || !AppState.currentUser.id) return;
   const eff = parseFloat(document.getElementById("calcEfficiency")?.value) || 11.0;
   const price = parseFloat(document.getElementById("calcFuelPrice")?.value) || 3.49;
 
@@ -3335,8 +3321,9 @@ async function loadSavedRoutesFromSupabase() {
   const listEl = document.getElementById("savedRoutesList");
   if (!container || !listEl) return;
 
-  if (!supabaseClient || !AppState.currentUser || !AppState.currentUser.id || String(AppState.currentUser.id).startsWith("usr_")) {
+  if (!supabaseClient || !AppState.currentUser || !AppState.currentUser.id) {
     container.style.display = "none";
+    listEl.innerHTML = "";
     return;
   }
 
@@ -3350,6 +3337,7 @@ async function loadSavedRoutesFromSupabase() {
 
     if (error || !data || data.length === 0) {
       container.style.display = "none";
+      listEl.innerHTML = "";
       return;
     }
 
@@ -3358,7 +3346,7 @@ async function loadSavedRoutesFromSupabase() {
       <div class="saved-route-item">
         <div class="saved-route-info" onclick="applySavedRoute('${r.origin_text.replace(/'/g, "\\'")}', '${r.dest_text.replace(/'/g, "\\'")}', '${r.strategy}')">
           <strong>${r.origin_text} &rarr; ${r.dest_text}</strong>
-          <span>${r.distance_km} km • Pedágio: R$ ${Number(r.tolls_cost).toFixed(2)} • Total: R$ ${Number(r.total_cost).toFixed(2)}</span>
+          <span>${r.distance_km} km • Pedágio: R$ ${Number(r.tolls_cost).toFixed(2).replace(".", ",")} • Total: R$ ${Number(r.total_cost).toFixed(2).replace(".", ",")}</span>
         </div>
         <button type="button" class="btn-delete-route" onclick="deleteSavedRoute('${r.id}')" title="Remover rota">Excluir</button>
       </div>
@@ -3391,10 +3379,15 @@ async function deleteSavedRoute(routeId) {
 }
 
 async function saveCurrentRouteToSupabase() {
-  if (!AppState.currentUser) {
+  if (!AppState.currentUser || !AppState.currentUser.id) {
     const modalAuth = document.getElementById("modalAuth");
     if (modalAuth) modalAuth.classList.add("active");
-    showAuthFeedback("Entre na sua conta ou crie um cadastro para salvar rotas.", "error");
+    showAuthFeedback("Entre na sua conta ou crie um cadastro para salvar rotas na nuvem.", "error");
+    return;
+  }
+
+  if (!supabaseClient) {
+    alert("Serviço de banco de dados indisponível no momento.");
     return;
   }
 
@@ -3404,38 +3397,36 @@ async function saveCurrentRouteToSupabase() {
   const fuelCost = (currentRoute.distanceKm / eff) * price;
   const totalCost = fuelCost + currentRoute.tollsCost;
 
-  if (supabaseClient && !String(AppState.currentUser.id).startsWith("usr_")) {
-    const btn = document.getElementById("btnSaveCurrentRoute");
-    if (btn) btn.textContent = "Salvando rota...";
-    try {
-      const { error } = await supabaseClient.from("saved_routes").insert({
-        user_id: AppState.currentUser.id,
-        origin_text: AppState.originText,
-        origin_lat: AppState.originCoords[0],
-        origin_lng: AppState.originCoords[1],
-        dest_text: AppState.destText,
-        dest_lat: AppState.destCoords[0],
-        dest_lng: AppState.destCoords[1],
-        strategy: AppState.selectedStrategy,
-        distance_km: currentRoute.distanceKm,
-        duration_min: currentRoute.durationMin,
-        tolls_cost: currentRoute.tollsCost,
-        total_cost: Math.round(totalCost * 100) / 100
-      });
+  const btn = document.getElementById("btnSaveCurrentRoute");
+  if (btn) btn.textContent = "Salvando rota...";
 
-      if (btn) btn.textContent = "Salvar Rota na Minha Conta";
-      if (error) {
-        alert("Não foi possível salvar a rota: " + error.message);
-        return;
-      }
-      await loadSavedRoutesFromSupabase();
-      alert("Rota salva com sucesso na sua conta.");
-    } catch (err) {
-      if (btn) btn.textContent = "Salvar Rota na Minha Conta";
-      console.warn("Erro ao salvar rota:", err);
+  try {
+    const { error } = await supabaseClient.from("saved_routes").insert({
+      user_id: AppState.currentUser.id,
+      origin_text: AppState.originText,
+      origin_lat: AppState.originCoords[0],
+      origin_lng: AppState.originCoords[1],
+      dest_text: AppState.destText,
+      dest_lat: AppState.destCoords[0],
+      dest_lng: AppState.destCoords[1],
+      strategy: AppState.selectedStrategy,
+      distance_km: currentRoute.distanceKm,
+      duration_min: currentRoute.durationMin,
+      tolls_cost: currentRoute.tollsCost,
+      total_cost: Math.round(totalCost * 100) / 100
+    });
+
+    if (btn) btn.textContent = "Salvar Rota na Minha Conta";
+    if (error) {
+      alert("Não foi possível salvar a rota: " + formatSupabaseAuthError(error));
+      return;
     }
-  } else {
-    alert("Rota registrada localmente na sua sessão.");
+    await loadSavedRoutesFromSupabase();
+    alert("Rota salva com sucesso na sua conta EconoSP.");
+  } catch (err) {
+    if (btn) btn.textContent = "Salvar Rota na Minha Conta";
+    console.warn("Erro ao salvar rota:", err);
+    alert("Falha ao salvar rota. Tente novamente.");
   }
 }
 
@@ -3443,13 +3434,16 @@ function applyLoggedUserState(user) {
   const btnOpenAuth = document.getElementById("btnOpenAuth");
   const btnLogoutHeader = document.getElementById("btnLogoutHeader");
 
-  if (user) {
+  if (user && user.id) {
     AppState.currentUser = user;
     AppState.driverName = user.name || "Condutor";
     updateDriverPillDisplay();
 
     if (btnOpenAuth) {
-      btnOpenAuth.textContent = `Conta: ${user.name.split(" ")[0]}`;
+      const firstName = (user.name || "Condutor").split(" ")[0];
+      btnOpenAuth.textContent = `Conta: ${firstName}`;
+      btnOpenAuth.classList.add("logged-in");
+      btnOpenAuth.title = `Conectado como ${user.email}. Clique para gerenciar.`;
     }
     if (btnLogoutHeader) {
       btnLogoutHeader.style.display = "inline-block";
@@ -3459,13 +3453,16 @@ function applyLoggedUserState(user) {
   } else {
     AppState.currentUser = null;
     AppState.driverName = "Visitante";
+    updateDriverPillDisplay();
+
     if (btnOpenAuth) {
       btnOpenAuth.textContent = "Entrar / Criar Conta";
+      btnOpenAuth.classList.remove("logged-in");
+      btnOpenAuth.title = "Entrar na sua conta ou cadastrar novo perfil";
     }
     if (btnLogoutHeader) {
       btnLogoutHeader.style.display = "none";
     }
-    updateDriverPillDisplay();
     loadSavedRoutesFromSupabase();
   }
 }
@@ -3491,12 +3488,29 @@ function initAuthSystem() {
   const authTabs = document.querySelectorAll(".auth-tab-btn");
   const formLogin = document.getElementById("formAuthLogin");
   const formRegister = document.getElementById("formAuthRegister");
+  const btnSubmitLogin = document.getElementById("btnSubmitLogin");
+  const btnSubmitRegister = document.getElementById("btnSubmitRegister");
 
   // Carrega ocorrências salvas no Supabase
   loadPointsFromSupabase();
 
-  // Verifica sessão ativa do Supabase ou localStorage
   if (supabaseClient) {
+    // 1. Ouvinte reativo oficial para todas as alterações de estado da sessão
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+      if (session && session.user) {
+        const u = session.user;
+        const sessionUser = {
+          id: u.id,
+          name: u.user_metadata?.full_name || u.email?.split("@")[0] || "Condutor",
+          email: u.email
+        };
+        applyLoggedUserState(sessionUser);
+      } else {
+        applyLoggedUserState(null);
+      }
+    });
+
+    // 2. Verificação de sessão já ativa no carregamento da página
     supabaseClient.auth.getSession().then(({ data }) => {
       if (data && data.session && data.session.user) {
         const u = data.session.user;
@@ -3505,16 +3519,16 @@ function initAuthSystem() {
           name: u.user_metadata?.full_name || u.email?.split("@")[0] || "Condutor",
           email: u.email
         };
-        setActiveSessionUser(sessionUser);
         applyLoggedUserState(sessionUser);
       } else {
-        const savedSession = getActiveSessionUser();
-        if (savedSession) applyLoggedUserState(savedSession);
+        applyLoggedUserState(null);
       }
+    }).catch(err => {
+      console.warn("Erro ao obter sessão Supabase:", err);
+      applyLoggedUserState(null);
     });
   } else {
-    const savedSession = getActiveSessionUser();
-    if (savedSession) applyLoggedUserState(savedSession);
+    applyLoggedUserState(null);
   }
 
   function switchAuthTab(mode) {
@@ -3533,6 +3547,9 @@ function initAuthSystem() {
   if (btnOpenAuth && modalAuth) {
     btnOpenAuth.addEventListener("click", () => {
       showAuthFeedback("");
+      if (AppState.currentUser) {
+        showAuthFeedback(`Conectado como ${AppState.currentUser.name} (${AppState.currentUser.email})`, "success");
+      }
       modalAuth.classList.add("active");
     });
   }
@@ -3552,13 +3569,15 @@ function initAuthSystem() {
   if (btnLogoutHeader) {
     btnLogoutHeader.addEventListener("click", async () => {
       if (supabaseClient) {
-        await supabaseClient.auth.signOut();
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) console.warn("Aviso ao encerrar sessão:", error);
       }
-      setActiveSessionUser(null);
       applyLoggedUserState(null);
+      showAuthFeedback("Você saiu da sua conta.", "success");
     });
   }
 
+  // CADASTRO DE CONTA NO SUPABASE
   if (formRegister) {
     formRegister.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -3566,115 +3585,139 @@ function initAuthSystem() {
       const email = (document.getElementById("regEmail")?.value || "").trim().toLowerCase();
       const password = document.getElementById("regPassword")?.value || "";
 
-      if (!name || !email || password.length < 4) {
-        showAuthFeedback("Preencha nome, e-mail válido e senha com no mínimo 4 caracteres.", "error");
+      if (!name) {
+        showAuthFeedback("Por favor, preencha seu nome completo.", "error");
+        return;
+      }
+      if (!email || !email.includes("@")) {
+        showAuthFeedback("Por favor, informe um endereço de e-mail válido.", "error");
+        return;
+      }
+      if (!password || password.length < 6) {
+        showAuthFeedback("A senha deve conter no mínimo 6 caracteres para segurança no Supabase.", "error");
         return;
       }
 
-      if (supabaseClient) {
-        showAuthFeedback("Criando conta no Supabase...", "success");
-        const paddedPassword = password.length < 6 ? password.padEnd(6, "0") : password;
+      if (!supabaseClient) {
+        showAuthFeedback("Serviço de autenticação temporariamente indisponível.", "error");
+        return;
+      }
+
+      if (btnSubmitRegister) {
+        btnSubmitRegister.disabled = true;
+        btnSubmitRegister.textContent = "Criando conta...";
+      }
+      showAuthFeedback("Criando sua conta com segurança no Supabase...", "success");
+
+      try {
         const { data, error } = await supabaseClient.auth.signUp({
           email,
-          password: paddedPassword,
+          password,
           options: {
             data: { full_name: name }
           }
         });
 
         if (error) {
-          showAuthFeedback(error.message || "Erro ao criar conta no Supabase.", "error");
+          showAuthFeedback(formatSupabaseAuthError(error), "error");
           return;
         }
 
         if (data?.user) {
+          // Se o login direto não foi retornado na sessão do signup, autentica com as credenciais
           if (!data.session) {
-            await supabaseClient.auth.signInWithPassword({ email, password: paddedPassword });
+            const loginRes = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (loginRes.error) {
+              showAuthFeedback("Conta criada com sucesso! Use a aba Entrar com seu e-mail e senha.", "success");
+              switchAuthTab("login");
+              return;
+            }
           }
-          const sessionUser = { id: data.user.id, name, email };
-          setActiveSessionUser(sessionUser);
+
+          const sessionUser = {
+            id: data.user.id,
+            name: name,
+            email: email
+          };
           applyLoggedUserState(sessionUser);
-          showAuthFeedback("Conta criada com sucesso no Supabase.", "success");
+          showAuthFeedback("Conta criada e autenticada com sucesso!", "success");
           formRegister.reset();
+
           setTimeout(() => {
             if (modalAuth) modalAuth.classList.remove("active");
-          }, 600);
-          return;
+          }, 800);
+        }
+      } catch (err) {
+        showAuthFeedback(formatSupabaseAuthError(err), "error");
+      } finally {
+        if (btnSubmitRegister) {
+          btnSubmitRegister.disabled = false;
+          btnSubmitRegister.textContent = "Criar Conta e Acessar";
         }
       }
-
-      // Fallback local caso offline
-      const users = getStoredUsers();
-      if (users.some(u => u.email === email)) {
-        showAuthFeedback("Já existe uma conta cadastrada com este e-mail. Use a aba Entrar.", "error");
-        return;
-      }
-
-      const newUser = { id: "usr_" + Date.now(), name, email, password };
-      users.push(newUser);
-      saveStoredUsers(users);
-
-      const sessionUser = { id: newUser.id, name: newUser.name, email: newUser.email };
-      setActiveSessionUser(sessionUser);
-      applyLoggedUserState(sessionUser);
-
-      showAuthFeedback("Conta criada com sucesso.", "success");
-      formRegister.reset();
-      setTimeout(() => {
-        if (modalAuth) modalAuth.classList.remove("active");
-      }, 600);
     });
   }
 
+  // LOGIN DE CONTA NO SUPABASE
   if (formLogin) {
     formLogin.addEventListener("submit", async (e) => {
       e.preventDefault();
       const email = (document.getElementById("loginEmail")?.value || "").trim().toLowerCase();
       const password = document.getElementById("loginPassword")?.value || "";
 
-      if (supabaseClient) {
-        showAuthFeedback("Autenticando no Supabase...", "success");
-        const paddedPassword = password.length < 6 ? password.padEnd(6, "0") : password;
+      if (!email || !password) {
+        showAuthFeedback("Informe seu e-mail e senha para entrar.", "error");
+        return;
+      }
+      if (password.length < 6) {
+        showAuthFeedback("A senha deve ter no mínimo 6 caracteres.", "error");
+        return;
+      }
+
+      if (!supabaseClient) {
+        showAuthFeedback("Serviço de autenticação temporariamente indisponível.", "error");
+        return;
+      }
+
+      if (btnSubmitLogin) {
+        btnSubmitLogin.disabled = true;
+        btnSubmitLogin.textContent = "Entrando...";
+      }
+      showAuthFeedback("Autenticando no Supabase...", "success");
+
+      try {
         const { data, error } = await supabaseClient.auth.signInWithPassword({
           email,
-          password: paddedPassword
+          password
         });
 
-        if (!error && data?.user) {
+        if (error) {
+          showAuthFeedback(formatSupabaseAuthError(error), "error");
+          return;
+        }
+
+        if (data?.user) {
           const sessionUser = {
             id: data.user.id,
             name: data.user.user_metadata?.full_name || data.user.email?.split("@")[0] || "Condutor",
             email: data.user.email
           };
-          setActiveSessionUser(sessionUser);
           applyLoggedUserState(sessionUser);
-          showAuthFeedback("Acesso realizado com sucesso.", "success");
+          showAuthFeedback("Acesso realizado com sucesso!", "success");
           formLogin.reset();
+
           setTimeout(() => {
             if (modalAuth) modalAuth.classList.remove("active");
-          }, 500);
-          return;
+          }, 600);
+        }
+      } catch (err) {
+        showAuthFeedback(formatSupabaseAuthError(err), "error");
+      } finally {
+        if (btnSubmitLogin) {
+          btnSubmitLogin.disabled = false;
+          btnSubmitLogin.textContent = "Entrar na Conta";
         }
       }
-
-      // Fallback para usuários locais já criados anteriormente
-      const users = getStoredUsers();
-      const found = users.find(u => u.email === email && u.password === password);
-
-      if (!found) {
-        showAuthFeedback("E-mail ou senha incorretos. Caso ainda não tenha cadastro, clique em Criar Conta.", "error");
-        return;
-      }
-
-      const sessionUser = { id: found.id, name: found.name, email: found.email };
-      setActiveSessionUser(sessionUser);
-      applyLoggedUserState(sessionUser);
-
-      showAuthFeedback("Acesso realizado com sucesso.", "success");
-      formLogin.reset();
-      setTimeout(() => {
-        if (modalAuth) modalAuth.classList.remove("active");
-      }, 500);
     });
   }
 }

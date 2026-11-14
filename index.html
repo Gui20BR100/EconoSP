@@ -400,9 +400,9 @@
           </div>
           <div class="form-group">
             <label class="form-label" for="loginPassword">Senha:</label>
-            <input type="password" id="loginPassword" class="form-control" required placeholder="Digite sua senha" autocomplete="current-password">
+            <input type="password" id="loginPassword" class="form-control" required minlength="6" placeholder="Mínimo 6 caracteres" autocomplete="current-password">
           </div>
-          <button type="submit" class="btn-auth-submit">Entrar na Conta</button>
+          <button type="submit" id="btnSubmitLogin" class="btn-auth-submit">Entrar na Conta</button>
         </form>
 
         <!-- FORMULÁRIO DE CADASTRO (SEM PLACA) -->
@@ -417,9 +417,10 @@
           </div>
           <div class="form-group">
             <label class="form-label" for="regPassword">Senha:</label>
-            <input type="password" id="regPassword" class="form-control" required minlength="4" placeholder="Mínimo 4 caracteres" autocomplete="new-password">
+            <input type="password" id="regPassword" class="form-control" required minlength="6" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+            <small style="font-size:0.72rem; color:#64748b; margin-top:3px; display:block;">A senha deve ter no mínimo 6 caracteres para segurança no Supabase.</small>
           </div>
-          <button type="submit" class="btn-auth-submit">Criar Conta e Acessar</button>
+          <button type="submit" id="btnSubmitRegister" class="btn-auth-submit">Criar Conta e Acessar</button>
         </form>
       </div>
     </div>
