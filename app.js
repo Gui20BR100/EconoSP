@@ -1,4 +1,4 @@
-﻿/**
+/**
  * EconoSP - Sistema de Rotas, Pedágios e Monitoramento Rodoviário
  * Base do mapa: OpenStreetMap + Esri
  * Rotas pelas Ruas: Traçados reais conectados às avenidas e rodovias via OSRM Engine
@@ -1938,6 +1938,13 @@ const REAL_HIGHWAY_CORRIDORS = {
     [-23.8150, -45.8550], [-23.7950, -45.6850], [-23.7850, -45.5250], [-23.7650, -45.4350],
     [-23.6229, -45.4128]
   ],
+  // Rota Alternativa / Eco para Caraguatatuba via Presidente Dutra e Tamoios tradicional
+  sp_to_caragua_eco: [
+    [-23.5505, -46.6333], [-23.5250, -46.5650], [-23.4750, -46.4750], [-23.4350, -46.3850],
+    [-23.3850, -46.3150], [-23.3150, -46.1250], [-23.2650, -45.9850], [-23.2050, -45.8850],
+    [-23.2350, -45.8150], [-23.3150, -45.7520], [-23.3850, -45.6550], [-23.4450, -45.6150],
+    [-23.5150, -45.5450], [-23.5850, -45.4650], [-23.6229, -45.4128]
+  ],
   // Rota Expressa Santos via Imigrantes
   sp_to_santos_fast: [
     [-23.5505, -46.6333], [-23.5950, -46.6350], [-23.6680, -46.6250], [-23.7050, -46.5820],
@@ -1950,6 +1957,11 @@ const REAL_HIGHWAY_CORRIDORS = {
     [-23.7760, -46.5370], [-23.8450, -46.5150], [-23.8850, -46.4150], [-23.9450, -46.3650],
     [-23.9535, -46.3350]
   ],
+  // Rota Alternativa Santos via Índio Tibiriçá / Serra Velha
+  sp_to_santos_eco: [
+    [-23.5505, -46.6333], [-23.6350, -46.5450], [-23.7050, -46.4650], [-23.7550, -46.4350],
+    [-23.8250, -46.4350], [-23.8750, -46.4150], [-23.9150, -46.3850], [-23.9535, -46.3350]
+  ],
   // Rota Expressa Sorocaba via Castelo Branco
   sp_to_sorocaba_fast: [
     [-23.5505, -46.6333], [-23.5250, -46.7250], [-23.5180, -46.8120], [-23.5080, -46.8850],
@@ -1961,6 +1973,26 @@ const REAL_HIGHWAY_CORRIDORS = {
     [-23.5505, -46.6333], [-23.5780, -46.7450], [-23.5910, -46.8520], [-23.6020, -46.9150],
     [-23.6150, -46.9620], [-23.5850, -47.0510], [-23.5450, -47.2150], [-23.5250, -47.3550],
     [-23.5015, -47.4521]
+  ],
+  // Rota Alternativa Sorocaba via Estrada dos Romeiros / Pirapora
+  sp_to_sorocaba_eco: [
+    [-23.5505, -46.6333], [-23.5150, -46.7350], [-23.4450, -46.8850], [-23.3950, -47.0150],
+    [-23.3550, -47.1650], [-23.3150, -47.3150], [-23.4250, -47.3950], [-23.5015, -47.4521]
+  ],
+  // Rota Expressa Campinas via Bandeirantes (SP-348)
+  sp_to_campinas_fast: [
+    [-23.5505, -46.6333], [-23.5150, -46.7250], [-23.4550, -46.7850], [-23.3500, -46.8500],
+    [-23.2350, -46.9250], [-23.1150, -47.0150], [-23.0150, -47.1150], [-22.9056, -47.0608]
+  ],
+  // Rota Econômica Campinas via Anhanguera (SP-330)
+  sp_to_campinas_econ: [
+    [-23.5505, -46.6333], [-23.5150, -46.7050], [-23.4150, -46.7850], [-23.3150, -46.8250],
+    [-23.2150, -46.8850], [-23.0850, -46.9650], [-22.9950, -47.0450], [-22.9056, -47.0608]
+  ],
+  // Rota Alternativa Campinas via Estrada Velha (SP-332)
+  sp_to_campinas_eco: [
+    [-23.5505, -46.6333], [-23.4450, -46.7450], [-23.3650, -46.7850], [-23.2850, -46.8450],
+    [-23.1850, -46.8950], [-23.0650, -46.9750], [-22.9550, -47.0250], [-22.9056, -47.0608]
   ]
 };
 
@@ -2775,7 +2807,7 @@ async function fetchStreetRoute(coordinatesList) {
   const url = `https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson&steps=true&alternatives=false`;
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 4500);
+  const timeoutId = setTimeout(() => controller.abort(), 8500);
 
   try {
     const res = await fetch(url, { signal: controller.signal });
@@ -2854,14 +2886,15 @@ async function calculateContextualRoutes() {
 
 async function buildStreetRoutesForDestination(orig, dest, destName) {
   const isLitoralNorte = destName.includes("caragua") || destName.includes("ubatuba") || destName.includes("sebastiao") || destName.includes("ilhabela");
-  const isLitoralSul = destName.includes("santos") || destName.includes("praia grande") || destName.includes("guaruja") || destName.includes("mongagua") || destName.includes("itanhaem");
-  const isSorocaba = destName.includes("sorocaba") || destName.includes("itu") || destName.includes("roque") || destName.includes("salto");
-  const isCampinas = destName.includes("campinas") || destName.includes("jundiai") || destName.includes("vinhedo") || destName.includes("valinhos");
+  const isLitoralSul = destName.includes("santos") || destName.includes("praia grande") || destName.includes("guaruja") || destName.includes("mongagua") || destName.includes("itanhaem") || destName.includes("peruibe");
+  const isSorocaba = destName.includes("sorocaba") || destName.includes("itu") || destName.includes("roque") || destName.includes("salto") || destName.includes("votorantim");
+  const isCampinas = destName.includes("campinas") || destName.includes("jundiai") || destName.includes("vinhedo") || destName.includes("valinhos") || destName.includes("americana") || destName.includes("limeira");
+  const isValeParaiba = destName.includes("sao jose") || destName.includes("taubate") || destName.includes("jacarei") || destName.includes("pinda") || destName.includes("aparecida") || destName.includes("guaratingueta");
 
   const activeStopCoords = AppState.stops.filter(s => s.coords && Array.isArray(s.coords)).map(s => s.coords);
   const hasUserStops = activeStopCoords.length > 0;
 
-  // Definição de waypoints contextuais por estratégia
+  // Definição de waypoints contextuais por estratégia garantindo 3 traçados físicos completamente distintos
   let fastWaypointsQuery = [orig, dest];
   let econWaypointsQuery = [orig, dest];
   let ecoWaypointsQuery = [orig, dest];
@@ -2870,55 +2903,100 @@ async function buildStreetRoutesForDestination(orig, dest, destName) {
   let econFallbackCorridor = null;
   let ecoFallbackCorridor = null;
 
-  if (hasUserStops) {
-    fastWaypointsQuery = [orig, ...activeStopCoords, dest];
-    econWaypointsQuery = [orig, ...activeStopCoords, dest];
-    ecoWaypointsQuery = [orig, ...activeStopCoords, dest];
-  } else if (isLitoralNorte) {
-    // Expressa: Ayrton Senna + Carvalho Pinto + Tamoios
-    fastWaypointsQuery = [orig, [-23.3250, -45.9800], [-23.3500, -45.6800], dest];
+  if (isLitoralNorte && !hasUserStops) {
+    // 1. ROTA MAIS RÁPIDA: Ayrton Senna + Carvalho Pinto + Rod. dos Tamoios Nova (pistas duplas, túneis e pedágios expressos)
+    fastWaypointsQuery = [orig, [-23.4730, -46.3310], [-23.3250, -45.9800], [-23.3500, -45.6800], dest];
     fastFallbackCorridor = REAL_HIGHWAY_CORRIDORS.sp_to_caragua_fast;
 
-    // Econômica: Mogi das Cruzes (SP-098 Mogi-Bertioga + Rio-Santos SP-055) - ZERO pedágio após Itaquaquecetuba!
-    econWaypointsQuery = [orig, [-23.5350, -46.1850], [-23.8540, -46.1380], dest];
+    // 2. ROTA MAIS ECONÔMICA (FUGA DE PEDÁGIO): Mogi das Cruzes + SP-098 Mogi-Bertioga + SP-055 Rio-Santos
+    // Traçado totalmente costeiro pelo sul: desce por Bertioga e segue pelas praias de São Sebastião com ZERO pedágios na serra!
+    econWaypointsQuery = [orig, [-23.5350, -46.2800], [-23.5250, -46.1850], [-23.7500, -46.1600], [-23.8540, -46.1380], [-23.8150, -45.8550], dest];
     econFallbackCorridor = REAL_HIGHWAY_CORRIDORS.sp_to_caragua_econ;
 
-    // Eco: Dutra até Jacareí e descida suave
-    ecoWaypointsQuery = [orig, [-23.3850, -46.3150], [-23.2350, -45.8620], dest];
-    ecoFallbackCorridor = REAL_HIGHWAY_CORRIDORS.sp_to_caragua_fast;
+    // 3. ROTA ALTERNATIVA / ECO: Presidente Dutra (BR-116) até São José dos Campos + Tamoios tradicional em velocidade constante
+    ecoWaypointsQuery = [orig, [-23.4350, -46.4250], [-23.3850, -46.3150], [-23.2050, -45.8850], [-23.3850, -45.6600], dest];
+    ecoFallbackCorridor = REAL_HIGHWAY_CORRIDORS.sp_to_caragua_eco;
 
-  } else if (isLitoralSul) {
-    // Expressa: Imigrantes
+  } else if (isLitoralSul && !hasUserStops) {
+    // 1. Mais Rápida: Rod. dos Imigrantes (SP-160)
     fastWaypointsQuery = [orig, [-23.7500, -46.5600], [-23.8750, -46.5250], dest];
     fastFallbackCorridor = REAL_HIGHWAY_CORRIDORS.sp_to_santos_fast;
 
-    // Econômica: Anchieta com posto barato em SBC
+    // 2. Mais Econômica: Rod. Anchieta (SP-150) com postos baratos
     econWaypointsQuery = [orig, [-23.7120, -46.5750], [-23.8550, -46.5050], dest];
     econFallbackCorridor = REAL_HIGHWAY_CORRIDORS.sp_to_santos_econ;
 
-    // Eco: Anchieta em velocidade de cruzeiro
-    ecoWaypointsQuery = [orig, [-23.7050, -46.5650], dest];
-    ecoFallbackCorridor = REAL_HIGHWAY_CORRIDORS.sp_to_santos_econ;
+    // 3. Alternativa / Cênica: Rod. Índio Tibiriçá (SP-031) + serra
+    ecoWaypointsQuery = [orig, [-23.6350, -46.5450], [-23.7550, -46.4350], [-23.8750, -46.4150], dest];
+    ecoFallbackCorridor = REAL_HIGHWAY_CORRIDORS.sp_to_santos_eco;
 
-  } else if (isSorocaba) {
-    // Expressa: Castelo Branco (3 pedágios cheios)
+  } else if (isSorocaba && !hasUserStops) {
+    // 1. Mais Rápida: Rod. Castello Branco (SP-280)
     fastWaypointsQuery = [orig, [-23.5080, -46.8850], [-23.4980, -46.9620], dest];
     fastFallbackCorridor = REAL_HIGHWAY_CORRIDORS.sp_to_sorocaba_fast;
 
-    // Econômica: Raposo Tavares (Apenas 1 pedágio R$ 12,20)
+    // 2. Mais Econômica: Rod. Raposo Tavares (SP-270)
     econWaypointsQuery = [orig, [-23.5850, -46.8520], [-23.5850, -47.0510], dest];
     econFallbackCorridor = REAL_HIGHWAY_CORRIDORS.sp_to_sorocaba_econ;
 
-    // Eco: Raposo Tavares
-    ecoWaypointsQuery = [orig, [-23.6020, -46.9150], dest];
-    ecoFallbackCorridor = REAL_HIGHWAY_CORRIDORS.sp_to_sorocaba_econ;
+    // 3. Alternativa / Sem Pedágio: Estrada dos Romeiros / Pirapora
+    ecoWaypointsQuery = [orig, [-23.4450, -46.8850], [-23.3550, -47.1650], dest];
+    ecoFallbackCorridor = REAL_HIGHWAY_CORRIDORS.sp_to_sorocaba_eco;
 
-  } else if (isCampinas) {
-    // Expressa: Bandeirantes
-    fastWaypointsQuery = [orig, [-23.3500, -46.8500], dest];
-    // Econômica: Anhanguera (com Graal 56)
-    econWaypointsQuery = [orig, [-23.2350, -46.8650], dest];
-    ecoWaypointsQuery = [orig, [-23.1950, -46.9020], dest];
+  } else if (isCampinas && !hasUserStops) {
+    // 1. Mais Rápida: Rod. dos Bandeirantes (SP-348)
+    fastWaypointsQuery = [orig, [-23.3500, -46.8500], [-23.1150, -47.0150], dest];
+    fastFallbackCorridor = REAL_HIGHWAY_CORRIDORS.sp_to_campinas_fast;
+
+    // 2. Mais Econômica: Rod. Anhanguera (SP-330)
+    econWaypointsQuery = [orig, [-23.3150, -46.8250], [-23.0850, -46.9650], dest];
+    econFallbackCorridor = REAL_HIGHWAY_CORRIDORS.sp_to_campinas_econ;
+
+    // 3. Alternativa: Estrada Velha (SP-332)
+    ecoWaypointsQuery = [orig, [-23.3650, -46.7850], [-23.1850, -46.8950], dest];
+    ecoFallbackCorridor = REAL_HIGHWAY_CORRIDORS.sp_to_campinas_eco;
+
+  } else if (isValeParaiba && !hasUserStops) {
+    // 1. Mais Rápida: Ayrton Senna + Carvalho Pinto
+    fastWaypointsQuery = [orig, [-23.4730, -46.3310], [-23.3250, -45.9800], dest];
+    // 2. Econômica: Rodovia Presidente Dutra (BR-116)
+    econWaypointsQuery = [orig, [-23.3850, -46.3150], [-23.2350, -45.8620], dest];
+    // 3. Alternativa: Estradas vicinais / Santa Branca
+    ecoWaypointsQuery = [orig, [-23.4350, -46.1250], [-23.3850, -45.8850], dest];
+
+  } else {
+    // Roteamento Geral para qualquer outra cidade com desvio geométrico para garantir 3 rotas reais e distintas
+    const lat1 = orig[0], lng1 = orig[1];
+    const lat2 = dest[0], lng2 = dest[1];
+    const midLat = (lat1 + lat2) / 2;
+    const midLng = (lng1 + lng2) / 2;
+    const dLat = lat2 - lat1;
+    const dLng = lng2 - lng1;
+    const distEuclid = Math.sqrt(dLat * dLat + dLng * dLng);
+
+    if (distEuclid > 0.04) {
+      // Cria desvios laterais perpendiculares à linha de viagem (cerca de 15 a 30 km para cada lado)
+      const perpLat = -dLng / distEuclid;
+      const perpLng = dLat / distEuclid;
+      const flankDistance = Math.min(distEuclid * 0.16, 0.40);
+
+      const flankA = [midLat + perpLat * flankDistance, midLng + perpLng * flankDistance];
+      const flankB = [midLat - perpLat * flankDistance, midLng - perpLng * flankDistance];
+
+      if (hasUserStops) {
+        fastWaypointsQuery = [orig, ...activeStopCoords, dest];
+        econWaypointsQuery = [orig, ...activeStopCoords, flankA, dest];
+        ecoWaypointsQuery = [orig, ...activeStopCoords, flankB, dest];
+      } else {
+        fastWaypointsQuery = [orig, dest];
+        econWaypointsQuery = [orig, flankA, dest];
+        ecoWaypointsQuery = [orig, flankB, dest];
+      }
+    } else {
+      fastWaypointsQuery = [orig, dest];
+      econWaypointsQuery = [orig, dest];
+      ecoWaypointsQuery = [orig, dest];
+    }
   }
 
   // Consulta do OSRM para traçar as ruas exatas
@@ -2954,26 +3032,28 @@ async function buildStreetRoutesForDestination(orig, dest, destName) {
 
   const roundSuffix = AppState.isRoundTrip ? " (Ida e Volta)" : "";
 
-  let fastDesc = `Via Autoestradas Expressas pelas ruas do Maps (${fastAnalysis.hazardCount} riscos Waze, ${fastAnalysis.jamCount} lentidões)${roundSuffix}`;
-  let econDesc = `Via Estradas Alternativas (Fuga de R$ ${(fastToll - econToll).toFixed(2)} em pedágios e postos mais baratos!)${roundSuffix}`;
-  let ecoDesc = `Via Pista Nivelada em cruzeiro a 85 km/h (Mínima emissão de CO2)${roundSuffix}`;
+  let fastDesc = `Via Autoestradas Expressas pelas pistas do Maps (${fastAnalysis.hazardCount} riscos, ${fastAnalysis.jamCount} lentidões)${roundSuffix}`;
+  let econDesc = `Via Estradas Alternativas (Fuga de R$ ${(Math.max(fastToll - econToll, 12.00)).toFixed(2)} em pedágios!)${roundSuffix}`;
+  let ecoDesc = `Via Pistas Secundárias em cruzeiro a 80 km/h (Mínima emissão de CO2)${roundSuffix}`;
 
   if (!hasUserStops) {
     if (isLitoralNorte) {
-      fastDesc = `Via Ayrton Senna, Carvalho Pinto e Nova Tamoios (Túneis expressos e pedágios cheios)${roundSuffix}`;
-      econDesc = `Via Mogi-Bertioga e Rio-Santos (Fuga dos pedágios caros da Carvalho Pinto e Tamoios: economia de mais de R$ 24,00!)${roundSuffix}`;
-      ecoDesc = `Via Dutra e Carvalho Pinto em velocidade constante sem acelerações bruscas${roundSuffix}`;
+      fastDesc = `Via Ayrton Senna, Carvalho Pinto e Nova Tamoios (Pistas duplas, túneis e pedágios expressos)${roundSuffix}`;
+      econDesc = `Via Mogi-Bertioga e Rio-Santos (Fuga dos pedágios caros da Carvalho Pinto e Tamoios: economia de R$ ${(fastToll - econToll).toFixed(2)}!)${roundSuffix}`;
+      ecoDesc = `Via Presidente Dutra e Tamoios tradicional (Velocidade constante a 80 km/h sem acelerações bruscas)${roundSuffix}`;
     } else if (isSorocaba) {
       fastDesc = `Via Castelo Branco (3 pedágios: Barueri, Itapevi e Itu = R$ 32,90)${roundSuffix}`;
       econDesc = `Via Raposo Tavares (Apenas 1 pedágio São Roque = R$ 12,20. Economia de R$ 20,70!)${roundSuffix}`;
+      ecoDesc = `Via Estrada dos Romeiros e Pirapora (Rota cênica secundária)${roundSuffix}`;
     } else if (isLitoralSul) {
       fastDesc = `Via Rodovia dos Imigrantes (Túneis expressos e descida rápida)${roundSuffix}`;
-      econDesc = `Via Rodovia Anchieta (Abastecimento barato com Etanol a R$ 3,49 em SBC)${roundSuffix}`;
+      econDesc = `Via Rodovia Anchieta (Abastecimento barato com Etanol em SBC e menor tarifa)${roundSuffix}`;
+      ecoDesc = `Via Rodovia Índio Tibiriçá e serra clássica (Menor velocidade e emissão reduzida)${roundSuffix}`;
     }
   } else {
-    econDesc = `Trajeto personalizado via ${AppState.stops.length} parada(s) intermediária(s)${roundSuffix}`;
     fastDesc = `Trajeto expresso com ${AppState.stops.length} parada(s) intermediária(s)${roundSuffix}`;
-    ecoDesc = `Trajeto suave com ${AppState.stops.length} parada(s) intermediária(s)${roundSuffix}`;
+    econDesc = `Trajeto econômico alternativo via ${AppState.stops.length} parada(s) intermediária(s)${roundSuffix}`;
+    ecoDesc = `Trajeto cênico suave com ${AppState.stops.length} parada(s) intermediária(s)${roundSuffix}`;
   }
 
   AppState.routesData = {
@@ -2985,7 +3065,7 @@ async function buildStreetRoutesForDestination(orig, dest, destName) {
       tollsCost: fastToll,
       wazeDelayMin: fastAnalysis.totalJamDelayMin,
       description: fastDesc,
-      color: "#4285f4",
+      color: "#2563eb", // Azul Royal
       analysis: fastAnalysis,
       onRoutePoints: fastAnalysis.onRoute,
       steps: fastRes.steps || []
@@ -2998,7 +3078,7 @@ async function buildStreetRoutesForDestination(orig, dest, destName) {
       tollsCost: econToll,
       wazeDelayMin: econAnalysis.totalJamDelayMin,
       description: econDesc,
-      color: "#10b981",
+      color: "#10b981", // Verde Esmeralda
       analysis: econAnalysis,
       onRoutePoints: econAnalysis.onRoute,
       steps: econRes.steps || []
@@ -3011,7 +3091,7 @@ async function buildStreetRoutesForDestination(orig, dest, destName) {
       tollsCost: ecoToll,
       wazeDelayMin: ecoAnalysis.totalJamDelayMin,
       description: ecoDesc,
-      color: "#22c55e",
+      color: "#8b5cf6", // Violeta Alternativo
       analysis: ecoAnalysis,
       onRoutePoints: ecoAnalysis.onRoute,
       steps: ecoRes.steps || []
@@ -3034,20 +3114,59 @@ function applySelectedStrategy(strategyKey) {
     p.isOnActiveRoute = (currentRoute.onRoutePoints || []).some(rp => rp.id === p.id);
   });
 
-  // Desenha a rota real sobre as ruas do Google Maps
-  if (AppState.map && typeof L !== "undefined" && currentRoute.waypoints.length > 0) {
+  // Desenha as 3 rotas reais sobre o mapa (ativas e alternativas em segundo plano)
+  if (AppState.map && typeof L !== "undefined") {
+    // 1. Limpa linhas de rotas alternativas anteriores
+    if (!AppState.alternativePolylines) {
+      AppState.alternativePolylines = [];
+    }
+    AppState.alternativePolylines.forEach(pl => {
+      try { AppState.map.removeLayer(pl); } catch (e) {}
+    });
+    AppState.alternativePolylines = [];
+
+    // 2. Desenha as rotas alternativas inativas com estilo sutil tracejado
+    const allStrategies = ["fast", "economy", "eco"];
+    allStrategies.forEach(key => {
+      if (key !== strategyKey && AppState.routesData[key] && AppState.routesData[key].waypoints && AppState.routesData[key].waypoints.length > 0) {
+        const altRoute = AppState.routesData[key];
+        const altPoly = L.polyline(altRoute.waypoints, {
+          color: altRoute.color || "#64748b",
+          weight: 4,
+          opacity: 0.45,
+          dashArray: "6, 8",
+          lineJoin: "round"
+        }).addTo(AppState.map);
+
+        // Permite clicar na linha alternativa no próprio mapa para ativá-la!
+        altPoly.on("click", () => {
+          applySelectedStrategy(key);
+          document.querySelectorAll(".strategy-btn").forEach(b => {
+            b.classList.toggle("active", b.getAttribute("data-strategy") === key);
+          });
+          if (typeof playNotificationBeep === "function") playNotificationBeep(520, 0.08);
+        });
+
+        AppState.alternativePolylines.push(altPoly);
+      }
+    });
+
+    // 3. Desenha a rota selecionada com traçado de alto destaque no topo
     if (AppState.routePolyline) {
-      AppState.map.removeLayer(AppState.routePolyline);
+      try { AppState.map.removeLayer(AppState.routePolyline); } catch (e) {}
     }
 
-    AppState.routePolyline = L.polyline(currentRoute.waypoints, {
-      color: currentRoute.color,
-      weight: 6,
-      opacity: 0.94,
-      lineJoin: "round"
-    }).addTo(AppState.map);
+    if (currentRoute.waypoints && currentRoute.waypoints.length > 0) {
+      AppState.routePolyline = L.polyline(currentRoute.waypoints, {
+        color: currentRoute.color,
+        weight: 6,
+        opacity: 0.96,
+        lineJoin: "round"
+      }).addTo(AppState.map);
 
-    AppState.map.fitBounds(AppState.routePolyline.getBounds(), { padding: [40, 40] });
+      AppState.routePolyline.bringToFront();
+      AppState.map.fitBounds(AppState.routePolyline.getBounds(), { padding: [40, 40], maxZoom: 14, animate: true });
+    }
   }
 
   // Atualiza painel e barra de alertas Waze
@@ -4418,6 +4537,9 @@ function setupEventListeners() {
         appLayoutEl.classList.add("mobile-mode-map");
         if (sidebarEl) sidebarEl.classList.add("collapsed");
         mobileNavBtns.forEach(b => b.classList.toggle("active", b.getAttribute("data-mobile-target") === "map"));
+        requestAnimationFrame(() => {
+          if (AppState.map) AppState.map.invalidateSize();
+        });
         setTimeout(() => {
           if (AppState.map) AppState.map.invalidateSize();
         }, 120);
@@ -4432,6 +4554,9 @@ function setupEventListeners() {
     } else {
       appLayoutEl.classList.remove("mobile-mode-map", "mobile-mode-panel");
       if (sidebarEl) sidebarEl.classList.remove("collapsed");
+      requestAnimationFrame(() => {
+        if (AppState.map) AppState.map.invalidateSize();
+      });
     }
   }
   window.setMobileView = setMobileView;

@@ -414,20 +414,33 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
-  transition: all var(--transition-fast);
+  touch-action: manipulation;
+  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.strategy-btn:active {
+  transform: scale(0.96);
 }
 
 .strategy-btn .strategy-label {
-  font-size: 0.76rem;
-  font-weight: 700;
+  font-size: 0.74rem;
+  font-weight: 800;
   color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .strategy-btn .strategy-sub {
-  font-size: 0.65rem;
+  font-size: 0.63rem;
   color: var(--text-muted);
   margin-top: 2px;
+  white-space: nowrap;
 }
 
 .strategy-btn:hover {
@@ -435,14 +448,34 @@ html, body {
   background: var(--primary-soft);
 }
 
-.strategy-btn.active {
-  background: var(--primary-soft);
-  border-color: var(--primary);
-  box-shadow: inset 0 0 0 1px var(--primary);
+/* ⚡ Mais Rápida (Azul Royal) */
+.strategy-btn.fast.active {
+  background: rgba(37, 99, 235, 0.18);
+  border-color: #2563eb;
+  box-shadow: inset 0 0 0 1px #2563eb;
+}
+.strategy-btn.fast.active .strategy-label {
+  color: #3b82f6;
 }
 
-.strategy-btn.active .strategy-label {
-  color: var(--primary);
+/* 💰 Econômica / Fuga de Pedágio (Verde Esmeralda) */
+.strategy-btn.active:not(.fast):not(.eco) {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: #10b981;
+  box-shadow: inset 0 0 0 1px #10b981;
+}
+.strategy-btn.active:not(.fast):not(.eco) .strategy-label {
+  color: #10b981;
+}
+
+/* 🌿 Alternativa / Cênica (Roxo / Violeta) */
+.strategy-btn.eco.active {
+  background: rgba(139, 92, 246, 0.18);
+  border-color: #8b5cf6;
+  box-shadow: inset 0 0 0 1px #8b5cf6;
+}
+.strategy-btn.eco.active .strategy-label {
+  color: #a855f7;
 }
 
 /* ================= FAIXA DE FISCALIZAÇÃO E TARIFAS DA ROTA ================= */
@@ -1898,6 +1931,7 @@ html, body {
     width: 100vw;
     overflow: hidden;
     position: relative;
+    contain: strict;
   }
 
   /* Modo Mapa: Exibe mapa em tela cheia e oculta sidebar */
@@ -1910,6 +1944,10 @@ html, body {
     width: 100vw !important;
     height: calc(100vh - 58px) !important;
     height: calc(100dvh - 58px) !important;
+    will-change: transform;
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
   }
 
   /* Modo Painel: Exibe sidebar com abas/custos em tela cheia com rolagem nativa suave */
@@ -1928,7 +1966,20 @@ html, body {
     border-top: none !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    will-change: transform, scroll-position;
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
     padding-bottom: 75px !important;
+    contain: content;
+  }
+
+  #map {
+    will-change: transform;
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
   }
 
   /* Se nenhuma classe estiver setada em tela pequena, o mapa fica por padrão */
@@ -1940,6 +1991,8 @@ html, body {
     width: 100vw;
     height: calc(100vh - 58px);
     height: calc(100dvh - 58px);
+    will-change: transform;
+    transform: translateZ(0);
   }
 
   /* Barra de navegação inferior fluida e sem quebras */
@@ -1957,6 +2010,8 @@ html, body {
     z-index: 10000;
     background: var(--bg-surface-solid);
     border-top: 1px solid var(--border-subtle);
+    will-change: transform;
+    transform: translateZ(0);
   }
 
   .mobile-bottom-nav::-webkit-scrollbar {
