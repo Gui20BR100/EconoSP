@@ -1742,7 +1742,49 @@ const AppState = {
   audioContext: null,
   simulationRunning: false,
   simulationInterval: null,
-  simStepIndex: 0
+  simStepIndex: 0,
+
+  // Recursos Estilo Rotas Brasil
+  stops: [],
+  stopMarkers: [],
+  vehicleCategory: "car",
+  isRoundTrip: false,
+  currentSteps: [],
+  currentHighways: [],
+  rulerActive: false,
+  rulerPoints: [],
+  rulerMarkers: [],
+  rulerPolyline: null,
+  rulerTooltip: null
+};
+
+// ================= MULTIPLICADORES TARIFÁRIOS POR CATEGORIA DE VEÍCULO E EIXOS (ANTT / ARTESP) =================
+const VEHICLE_CATEGORY_MULTIPLIERS = {
+  car: 1.0,
+  motorcycle: 0.5,
+  truck_2: 2.0,
+  truck_3: 3.0,
+  truck_4: 4.0,
+  truck_5: 5.0,
+  truck_6: 6.0,
+  truck_7: 7.0,
+  truck_9: 9.0,
+  bus_2: 2.0,
+  bus_3: 3.0
+};
+
+const VEHICLE_CATEGORY_LABELS = {
+  car: "Carro de Passeio (1x)",
+  motorcycle: "Motocicleta (0.5x)",
+  truck_2: "Caminhão 2 Eixos (2x)",
+  truck_3: "Caminhão 3 Eixos (3x)",
+  truck_4: "Caminhão 4 Eixos (4x)",
+  truck_5: "Caminhão 5 Eixos (5x)",
+  truck_6: "Caminhão 6 Eixos (6x)",
+  truck_7: "Caminhão 7 Eixos (7x)",
+  truck_9: "Caminhão 9 Eixos (9x)",
+  bus_2: "Ônibus 2 Eixos (2x)",
+  bus_3: "Ônibus 3 Eixos (3x)"
 };
 
 // ================= GERENCIADOR DE TEMAS E CORES HARMONIZADAS =================
@@ -1997,6 +2039,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initMapWithGoogleLayers();
   initDriverAndCarInputs();
   initAuthSystem();
+  initStopsManager();
+  initMapRulerTool();
   renderPointsList();
   setupEventListeners();
   updateQuickStatsBar();
@@ -2183,6 +2227,24 @@ function minDistanceToPolylineKm(pLat, pLng, waypoints) {
   return minD;
 }
 
+// ================= CÁLCULO DE TARIFA DE PEDÁGIO POR CATEGORIA DE VEÍCULO E EIXOS (ROTAS BRASIL) =================
+function getTollTariff(point, vehicleCategory = AppState.vehicleCategory, isRoundTrip = AppState.isRoundTrip) {
+  const basePrice = point.priceNum || parseFloat((point.price || "0").replace(/[^0-9,.]/g, "").replace(",", ".")) || 0;
+  const mult = VEHICLE_CATEGORY_MULTIPLIERS[vehicleCategory] || 1.0;
+  const singleTrip = basePrice * mult;
+  let finalTariff = singleTrip;
+  if (isRoundTrip) {
+    const isBidir = point.isBidirectional !== false; // quase todas praças em SP/BR são bidirecionais
+    finalTariff = isBidir ? (singleTrip * 2) : singleTrip;
+  }
+  return {
+    basePrice,
+    multiplier: mult,
+    singleTrip,
+    finalTariff: Math.round(finalTariff * 100) / 100
+  };
+}
+
 // Analisa os pontos e alertas Waze que estão genuinamente no trajeto
 function analyzeRouteAgainstPoints(waypoints) {
   const onRoute = [];
@@ -2204,7 +2266,8 @@ function analyzeRouteAgainstPoints(waypoints) {
     if (dist <= 2.2) {
       onRoute.push(p);
       if (p.category === "toll") {
-        totalTollsCost += (p.priceNum || parseFloat((p.price || "0").replace(/[^0-9,.]/g, "").replace(",", ".")) || 0);
+        const tariffInfo = getTollTariff(p);
+        totalTollsCost += tariffInfo.finalTariff;
         tollCount++;
       } else if (p.category === "radar") {
         radarCount++;
@@ -2243,7 +2306,7 @@ function analyzeRouteAgainstPoints(waypoints) {
 // ================= MOTOR DE ROTEAMENTO PELAS RUAS DO MAPS (OSRM ENGINE) =================
 async function fetchStreetRoute(coordinatesList) {
   const coordString = coordinatesList.map(c => `${c[1].toFixed(6)},${c[0].toFixed(6)}`).join(";");
-  const url = `https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson&steps=false&alternatives=false`;
+  const url = `https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson&steps=true&alternatives=false`;
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 4500);
@@ -2262,7 +2325,16 @@ async function fetchStreetRoute(coordinatesList) {
     const distanceKm = Math.round(route.distance / 1000);
     const durationMin = Math.round(route.duration / 60);
 
-    return { waypoints, distanceKm, durationMin, success: true };
+    const allSteps = [];
+    if (route.legs && Array.isArray(route.legs)) {
+      route.legs.forEach(leg => {
+        if (leg.steps && Array.isArray(leg.steps)) {
+          leg.steps.forEach(st => allSteps.push(st));
+        }
+      });
+    }
+
+    return { waypoints, distanceKm, durationMin, steps: allSteps, legs: route.legs || [], success: true };
   } catch (e) {
     clearTimeout(timeoutId);
     console.warn("OSRM falhou ou timeout, usando geometria real de corredor:", e.message);
@@ -2282,7 +2354,7 @@ async function calculateContextualRoutes() {
   AppState.destText = destText || "Caraguatatuba";
 
   const btnCalc = document.getElementById("btnCalcRoute");
-  if (btnCalc) btnCalc.textContent = "Calculando rota rodoviária...";
+  if (btnCalc) btnCalc.textContent = "Calculando rota e pedágios...";
 
   try {
     const origCoords = await geocodeAddress(AppState.originText);
@@ -2291,7 +2363,15 @@ async function calculateContextualRoutes() {
     AppState.originCoords = origCoords;
     AppState.destCoords = destCoords;
 
+    // Geocodifica paradas intermediárias ativas
+    for (const stop of AppState.stops) {
+      if (stop.text && (!stop.coords || stop.coords.length !== 2)) {
+        stop.coords = await geocodeAddress(stop.text);
+      }
+    }
+
     updateOriginDestMarkers(origCoords, destCoords);
+    updateStopsMarkers();
 
     // Constrói as 3 rotas reais pelas ruas e rodovias
     await buildStreetRoutesForDestination(origCoords, destCoords, AppState.destText.toLowerCase());
@@ -2302,7 +2382,7 @@ async function calculateContextualRoutes() {
   } catch (err) {
     console.error("Erro rota:", err);
   } finally {
-    if (btnCalc) btnCalc.textContent = "Calcular Rota Rodoviária";
+    if (btnCalc) btnCalc.textContent = "Calcular Rota e Pedágios";
   }
 }
 
@@ -2311,6 +2391,9 @@ async function buildStreetRoutesForDestination(orig, dest, destName) {
   const isLitoralSul = destName.includes("santos") || destName.includes("praia grande") || destName.includes("guaruja") || destName.includes("mongagua") || destName.includes("itanhaem");
   const isSorocaba = destName.includes("sorocaba") || destName.includes("itu") || destName.includes("roque") || destName.includes("salto");
   const isCampinas = destName.includes("campinas") || destName.includes("jundiai") || destName.includes("vinhedo") || destName.includes("valinhos");
+
+  const activeStopCoords = AppState.stops.filter(s => s.coords && Array.isArray(s.coords)).map(s => s.coords);
+  const hasUserStops = activeStopCoords.length > 0;
 
   // Definição de waypoints contextuais por estratégia
   let fastWaypointsQuery = [orig, dest];
@@ -2321,7 +2404,11 @@ async function buildStreetRoutesForDestination(orig, dest, destName) {
   let econFallbackCorridor = null;
   let ecoFallbackCorridor = null;
 
-  if (isLitoralNorte) {
+  if (hasUserStops) {
+    fastWaypointsQuery = [orig, ...activeStopCoords, dest];
+    econWaypointsQuery = [orig, ...activeStopCoords, dest];
+    ecoWaypointsQuery = [orig, ...activeStopCoords, dest];
+  } else if (isLitoralNorte) {
     // Expressa: Ayrton Senna + Carvalho Pinto + Tamoios
     fastWaypointsQuery = [orig, [-23.3250, -45.9800], [-23.3500, -45.6800], dest];
     fastFallbackCorridor = REAL_HIGHWAY_CORRIDORS.sp_to_caragua_fast;
@@ -2380,13 +2467,14 @@ async function buildStreetRoutesForDestination(orig, dest, destName) {
   const econWp = econRes.success ? econRes.waypoints : (econFallbackCorridor || [orig, dest]);
   const ecoWp = ecoRes.success ? ecoRes.waypoints : (ecoFallbackCorridor || fastWp);
 
-  const fastDist = fastRes.success ? fastRes.distanceKm : Math.round(fastWp.length * 9.5);
-  const econDist = econRes.success ? econRes.distanceKm : Math.round(econWp.length * 9.2);
-  const ecoDist = ecoRes.success ? ecoRes.distanceKm : Math.round(ecoWp.length * 9.4);
+  const roundFactor = AppState.isRoundTrip ? 2 : 1;
+  const fastDist = (fastRes.success ? fastRes.distanceKm : Math.round(fastWp.length * 9.5)) * roundFactor;
+  const econDist = (econRes.success ? econRes.distanceKm : Math.round(econWp.length * 9.2)) * roundFactor;
+  const ecoDist = (ecoRes.success ? ecoRes.distanceKm : Math.round(ecoWp.length * 9.4)) * roundFactor;
 
-  const fastDur = fastRes.success ? fastRes.durationMin : Math.round(fastDist * 0.72);
-  const econDur = econRes.success ? econRes.durationMin : Math.round(econDist * 0.90);
-  const ecoDur = ecoRes.success ? ecoRes.durationMin : Math.round(ecoDist * 0.82);
+  const fastDur = (fastRes.success ? fastRes.durationMin : Math.round(fastDist * 0.72)) * roundFactor;
+  const econDur = (econRes.success ? econRes.durationMin : Math.round(econDist * 0.90)) * roundFactor;
+  const ecoDur = (ecoRes.success ? ecoRes.durationMin : Math.round(ecoDist * 0.82)) * roundFactor;
 
   // Análise precisa de incidentes Waze e Pedágios para cada uma das 3 rotas
   const fastAnalysis = analyzeRouteAgainstPoints(fastWp);
@@ -2398,20 +2486,28 @@ async function buildStreetRoutesForDestination(orig, dest, destName) {
   let econToll = econAnalysis.totalTollsCost > 0 ? econAnalysis.totalTollsCost : 5.60;
   let ecoToll = ecoAnalysis.totalTollsCost > 0 ? ecoAnalysis.totalTollsCost : 11.20;
 
-  let fastDesc = `Via Autoestradas Expressas pelas ruas do Maps (${fastAnalysis.hazardCount} riscos Waze, ${fastAnalysis.jamCount} lentidões)`;
-  let econDesc = `Via Estradas Alternativas (Fuga de R$ ${(fastToll - econToll).toFixed(2)} em pedágios e postos mais baratos!)`;
-  let ecoDesc = `Via Pista Nivelada em cruzeiro a 85 km/h (Mínima emissão de CO2)`;
+  const roundSuffix = AppState.isRoundTrip ? " (Ida e Volta)" : "";
 
-  if (isLitoralNorte) {
-    fastDesc = "Via Ayrton Senna, Carvalho Pinto e Nova Tamoios (Túneis expressos e pedágios cheios)";
-    econDesc = "Via Mogi-Bertioga e Rio-Santos (Fuga dos pedágios caros da Carvalho Pinto e Tamoios: economia de mais de R$ 24,00!)";
-    ecoDesc = "Via Dutra e Carvalho Pinto em velocidade constante sem acelerações bruscas";
-  } else if (isSorocaba) {
-    fastDesc = "Via Castelo Branco (3 pedágios: Barueri, Itapevi e Itu = R$ 32,90)";
-    econDesc = "Via Raposo Tavares (Apenas 1 pedágio São Roque = R$ 12,20. Economia de R$ 20,70!)";
-  } else if (isLitoralSul) {
-    fastDesc = "Via Rodovia dos Imigrantes (Túneis expressos e descida rápida)";
-    econDesc = "Via Rodovia Anchieta (Abastecimento barato com Etanol a R$ 3,49 em SBC)";
+  let fastDesc = `Via Autoestradas Expressas pelas ruas do Maps (${fastAnalysis.hazardCount} riscos Waze, ${fastAnalysis.jamCount} lentidões)${roundSuffix}`;
+  let econDesc = `Via Estradas Alternativas (Fuga de R$ ${(fastToll - econToll).toFixed(2)} em pedágios e postos mais baratos!)${roundSuffix}`;
+  let ecoDesc = `Via Pista Nivelada em cruzeiro a 85 km/h (Mínima emissão de CO2)${roundSuffix}`;
+
+  if (!hasUserStops) {
+    if (isLitoralNorte) {
+      fastDesc = `Via Ayrton Senna, Carvalho Pinto e Nova Tamoios (Túneis expressos e pedágios cheios)${roundSuffix}`;
+      econDesc = `Via Mogi-Bertioga e Rio-Santos (Fuga dos pedágios caros da Carvalho Pinto e Tamoios: economia de mais de R$ 24,00!)${roundSuffix}`;
+      ecoDesc = `Via Dutra e Carvalho Pinto em velocidade constante sem acelerações bruscas${roundSuffix}`;
+    } else if (isSorocaba) {
+      fastDesc = `Via Castelo Branco (3 pedágios: Barueri, Itapevi e Itu = R$ 32,90)${roundSuffix}`;
+      econDesc = `Via Raposo Tavares (Apenas 1 pedágio São Roque = R$ 12,20. Economia de R$ 20,70!)${roundSuffix}`;
+    } else if (isLitoralSul) {
+      fastDesc = `Via Rodovia dos Imigrantes (Túneis expressos e descida rápida)${roundSuffix}`;
+      econDesc = `Via Rodovia Anchieta (Abastecimento barato com Etanol a R$ 3,49 em SBC)${roundSuffix}`;
+    }
+  } else {
+    econDesc = `Trajeto personalizado via ${AppState.stops.length} parada(s) intermediária(s)${roundSuffix}`;
+    fastDesc = `Trajeto expresso com ${AppState.stops.length} parada(s) intermediária(s)${roundSuffix}`;
+    ecoDesc = `Trajeto suave com ${AppState.stops.length} parada(s) intermediária(s)${roundSuffix}`;
   }
 
   AppState.routesData = {
@@ -2425,7 +2521,8 @@ async function buildStreetRoutesForDestination(orig, dest, destName) {
       description: fastDesc,
       color: "#4285f4",
       analysis: fastAnalysis,
-      onRoutePoints: fastAnalysis.onRoute
+      onRoutePoints: fastAnalysis.onRoute,
+      steps: fastRes.steps || []
     },
     economy: {
       waypoints: econWp,
@@ -2437,7 +2534,8 @@ async function buildStreetRoutesForDestination(orig, dest, destName) {
       description: econDesc,
       color: "#10b981",
       analysis: econAnalysis,
-      onRoutePoints: econAnalysis.onRoute
+      onRoutePoints: econAnalysis.onRoute,
+      steps: econRes.steps || []
     },
     eco: {
       waypoints: ecoWp,
@@ -2449,7 +2547,8 @@ async function buildStreetRoutesForDestination(orig, dest, destName) {
       description: ecoDesc,
       color: "#22c55e",
       analysis: ecoAnalysis,
-      onRoutePoints: ecoAnalysis.onRoute
+      onRoutePoints: ecoAnalysis.onRoute,
+      steps: ecoRes.steps || []
     }
   };
 }
@@ -2462,6 +2561,7 @@ function applySelectedStrategy(strategyKey) {
   AppState.currentWaypoints = currentRoute.waypoints;
   AppState.routeDistanceKm = currentRoute.distanceKm;
   AppState.routeDurationMin = currentRoute.durationMin;
+  AppState.currentSteps = currentRoute.steps || [];
 
   // Marca os pontos como pertencentes à rota ativa
   POINTS_DATA.forEach(p => {
@@ -2544,6 +2644,18 @@ function updateRouteWazeAlertsBar(route) {
 }
 
 async function geocodeAddress(query) {
+  if (!query || typeof query !== "string") return [-23.5505, -46.6333];
+
+  // Detecção direta de Coordenadas Geográficas (ex: -23.5505, -46.6333 ou -23.5505 -46.6333)
+  const coordMatch = query.match(/^\s*(-?\d+(\.\d+)?)\s*[,;\s]\s*(-?\d+(\.\d+)?)\s*$/);
+  if (coordMatch) {
+    const lat = parseFloat(coordMatch[1]);
+    const lng = parseFloat(coordMatch[3]);
+    if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+      return [lat, lng];
+    }
+  }
+
   const clean = query.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
   for (const key in LOCAL_GEOCODE_CACHE) {
     if (clean.includes(key)) return LOCAL_GEOCODE_CACHE[key];
@@ -2590,10 +2702,43 @@ function updateOriginDestMarkers(origCoords, destCoords) {
     .bindPopup(`<strong>Destino:</strong><br>${AppState.destText}`);
 }
 
+function updateStopsMarkers() {
+  if (!AppState.map || typeof L === "undefined") return;
+
+  if (AppState.stopMarkers && AppState.stopMarkers.length > 0) {
+    AppState.stopMarkers.forEach(m => AppState.map.removeLayer(m));
+  }
+  AppState.stopMarkers = [];
+
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  AppState.stops.forEach((stop, idx) => {
+    if (stop.coords && Array.isArray(stop.coords)) {
+      const letter = alphabet[idx % alphabet.length];
+      const stopIcon = L.divIcon({
+        className: "stop-marker-icon",
+        html: `<div class="map-badge-marker" style="background:#f59e0b; color:#000; font-weight:800;">${letter}</div>`,
+        iconSize: [26, 26],
+        iconAnchor: [13, 13]
+      });
+
+      const m = L.marker(stop.coords, { icon: stopIcon }).addTo(AppState.map)
+        .bindPopup(`<strong>Parada ${letter}:</strong><br>${stop.text || 'Ponto intermediário'}`);
+      AppState.stopMarkers.push(m);
+    }
+  });
+}
+
 function updateGoogleMapsLink() {
   const gmapsLink = document.getElementById("btnOpenGmapsExternal");
   if (gmapsLink) {
-    const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(AppState.originText)}&destination=${encodeURIComponent(AppState.destText)}&travelmode=driving`;
+    let url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(AppState.originText)}&destination=${encodeURIComponent(AppState.destText)}&travelmode=driving`;
+    
+    const validStops = AppState.stops.filter(s => s.text && s.text.trim());
+    if (validStops.length > 0) {
+      const waypointsParam = validStops.map(s => encodeURIComponent(s.text.trim())).join("|");
+      url += `&waypoints=${waypointsParam}`;
+    }
+
     gmapsLink.href = url;
   }
 }
@@ -2603,8 +2748,31 @@ function recalculateRoutePlan() {
   const currentRoute = AppState.routesData[AppState.selectedStrategy] || AppState.routesData.economy;
   const fuelType = AppState.fuelType;
   const v = AppState.vehicleData || { ethanolKmPerL: 10.8, gasolineKmPerL: 15.3, brand: "Renault", model: "Kwid" };
-  const fuelEfficiency = parseFloat(document.getElementById("calcEfficiency")?.value) || (fuelType === "ethanol" ? v.ethanolKmPerL : v.gasolineKmPerL);
-  const customFuelPrice = parseFloat(document.getElementById("calcFuelPrice")?.value) || (fuelType === "ethanol" ? 3.49 : 5.39);
+
+  let defaultEff = 11.0;
+  let defaultPrice = 3.49;
+  let co2Factor = 0.65;
+
+  if (fuelType === "ethanol") {
+    defaultEff = v.ethanolKmPerL || 10.8;
+    defaultPrice = 3.49;
+    co2Factor = 0.65;
+  } else if (fuelType === "gasoline") {
+    defaultEff = v.gasolineKmPerL || 15.3;
+    defaultPrice = 5.39;
+    co2Factor = 2.28;
+  } else if (fuelType === "diesel") {
+    defaultEff = 10.2;
+    defaultPrice = 5.89;
+    co2Factor = 2.68;
+  } else if (fuelType === "gnv") {
+    defaultEff = 13.5;
+    defaultPrice = 4.79;
+    co2Factor = 1.95;
+  }
+
+  const fuelEfficiency = parseFloat(document.getElementById("calcEfficiency")?.value) || defaultEff;
+  const customFuelPrice = parseFloat(document.getElementById("calcFuelPrice")?.value) || defaultPrice;
 
   const distanceKm = currentRoute.distanceKm;
   const tollsCost = currentRoute.tollsCost;
@@ -2612,23 +2780,45 @@ function recalculateRoutePlan() {
   const litersNeeded = (distanceKm / fuelEfficiency);
   const fuelCost = litersNeeded * customFuelPrice;
   const totalCost = fuelCost + tollsCost;
+  const costPerKm = distanceKm > 0 ? (totalCost / distanceKm) : 0;
 
-  const co2Factor = fuelType === "ethanol" ? 0.65 : 2.28;
   const totalCo2Kg = litersNeeded * co2Factor;
   const savedCo2VsGasoline = (litersNeeded * 2.28) - totalCo2Kg;
 
   const delayText = currentRoute.wazeDelayMin > 0 ? ` (+${currentRoute.wazeDelayMin}m trânsito)` : "";
-  document.getElementById("calcDistanceDisplay").textContent = `${Math.round(distanceKm)} km (${currentRoute.durationMin} min${delayText})`;
-  document.getElementById("calcFuelCostDisplay").textContent = `R$ ${fuelCost.toFixed(2)}`;
-  document.getElementById("calcTollsDisplay").textContent = `R$ ${tollsCost.toFixed(2)}`;
-  document.getElementById("calcTotalDisplay").textContent = `R$ ${totalCost.toFixed(2)}`;
+  const distEl = document.getElementById("calcDistanceDisplay");
+  if (distEl) distEl.textContent = `${Math.round(distanceKm)} km (${currentRoute.durationMin} min${delayText})`;
+
+  const fuelCostEl = document.getElementById("calcFuelCostDisplay");
+  if (fuelCostEl) fuelCostEl.textContent = `R$ ${fuelCost.toFixed(2).replace(".", ",")}`;
+
+  const tollsEl = document.getElementById("calcTollsDisplay");
+  if (tollsEl) tollsEl.textContent = `R$ ${tollsCost.toFixed(2).replace(".", ",")}`;
+
+  const totalEl = document.getElementById("calcTotalDisplay");
+  if (totalEl) totalEl.textContent = `R$ ${totalCost.toFixed(2).replace(".", ",")}`;
+
+  const litersEl = document.getElementById("calcLitersDisplay");
+  if (litersEl) {
+    const unit = fuelType === "gnv" ? "m³" : "L";
+    litersEl.textContent = `${litersNeeded.toFixed(1)} ${unit}`;
+  }
+
+  const costPerKmEl = document.getElementById("calcCostPerKmDisplay");
+  if (costPerKmEl) {
+    costPerKmEl.textContent = `R$ ${costPerKm.toFixed(2).replace(".", ",")} /km`;
+  }
 
   const carbonEl = document.getElementById("carbonFootprintValue");
   if (carbonEl) {
     if (fuelType === "ethanol") {
       carbonEl.innerHTML = `<strong>${totalCo2Kg.toFixed(1)} kg CO2</strong> <span style="font-size:0.75rem; color:#86efac;">Etanol (-${savedCo2VsGasoline.toFixed(1)} kg vs gasolina)</span>`;
-    } else {
+    } else if (fuelType === "gasoline") {
       carbonEl.innerHTML = `<strong>${totalCo2Kg.toFixed(1)} kg CO2</strong> <span style="font-size:0.75rem; color:#fde68a;">Gasolina Comum</span>`;
+    } else if (fuelType === "diesel") {
+      carbonEl.innerHTML = `<strong>${totalCo2Kg.toFixed(1)} kg CO2</strong> <span style="font-size:0.75rem; color:#93c5fd;">Diesel S-10 Comercial</span>`;
+    } else if (fuelType === "gnv") {
+      carbonEl.innerHTML = `<strong>${totalCo2Kg.toFixed(1)} kg CO2</strong> <span style="font-size:0.75rem; color:#a7f3d0;">Gás Natural Veicular</span>`;
     }
   }
 
@@ -2645,6 +2835,416 @@ function recalculateRoutePlan() {
         <strong>Ocorrências no trajeto:</strong> ${a.hazardCount} pontos de atenção | ${a.jamCount} retenções | ${a.worksCount} obras | ${a.policeCount} bases policiais.
       </div>
     `;
+  }
+
+  // Atualiza as abas discriminadas padrão Rotas Brasil
+  renderTollPlazaTable(currentRoute.onRoutePoints);
+  renderItinerary(currentRoute);
+}
+
+// ================= TABELA DISCRIMINADA DE PRAÇAS DE PEDÁGIO (ROTAS BRASIL) =================
+function renderTollPlazaTable(pointsOnRoute = []) {
+  const tableBody = document.getElementById("tollTableBody");
+  const footerTotal = document.getElementById("tollTableFooterTotal");
+  const emptyMsg = document.getElementById("tollTableEmptyMsg");
+  const dataTable = document.getElementById("tollDataTable");
+  const categoryBadge = document.getElementById("tollTableCategoryBadge");
+
+  const category = AppState.vehicleCategory || "car";
+  if (categoryBadge) {
+    categoryBadge.textContent = VEHICLE_CATEGORY_LABELS[category] || "Carro de Passeio (1x)";
+  }
+
+  if (!tableBody) return;
+
+  const tollPoints = (pointsOnRoute || []).filter(p => p.category === "toll");
+
+  if (tollPoints.length === 0) {
+    tableBody.innerHTML = "";
+    if (dataTable) dataTable.style.display = "none";
+    if (emptyMsg) emptyMsg.style.display = "block";
+    if (footerTotal) footerTotal.textContent = "R$ 0,00";
+    return;
+  }
+
+  if (dataTable) dataTable.style.display = "table";
+  if (emptyMsg) emptyMsg.style.display = "none";
+
+  let sumTariff = 0;
+  const rowsHtml = tollPoints.map((p, idx) => {
+    const tariffInfo = getTollTariff(p, category, AppState.isRoundTrip);
+    sumTariff += tariffInfo.finalTariff;
+
+    const highway = p.highway || (p.desc && p.desc.includes("SP-") ? p.desc.match(/SP-\d+/)?.[0] : "Rodovia Estadual");
+    const kmText = p.km || "km ref.";
+    const concessionaire = p.concessionaire || "Concessionária Local";
+    const direction = AppState.isRoundTrip ? "Ida e Volta" : (p.direction || "Sentido Destino");
+
+    return `
+      <tr>
+        <td><strong>${idx + 1}</strong></td>
+        <td>
+          <div style="font-weight:700; color:var(--text-main);">${p.name || 'Praça de Pedágio'}</div>
+          <div style="font-size:0.68rem; color:var(--text-muted);">${concessionaire}</div>
+        </td>
+        <td>
+          <span style="font-weight:600;">${highway}</span>
+          <div style="font-size:0.68rem; color:var(--text-muted);">${kmText}</div>
+        </td>
+        <td><span style="font-size:0.72rem; color:var(--text-secondary);">${direction}</span></td>
+        <td style="font-family:var(--font-mono); font-weight:700; color:var(--danger-text);">R$ ${tariffInfo.finalTariff.toFixed(2).replace(".", ",")}</td>
+        <td>
+          <button type="button" class="toll-btn-view" onclick="focusOnPoint('${p.id}')" title="Ver praça no mapa">Ver</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  tableBody.innerHTML = rowsHtml;
+  if (footerTotal) {
+    footerTotal.textContent = `R$ ${sumTariff.toFixed(2).replace(".", ",")}`;
+  }
+}
+
+// ================= ITINERÁRIO RODOVIÁRIO PASSO A PASSO (ROTAS BRASIL) =================
+function renderItinerary(currentRoute) {
+  const stepsListEl = document.getElementById("itineraryStepsList");
+  const summaryEl = document.getElementById("itineraryHighwaysSummary");
+  const totalBadge = document.getElementById("itineraryTotalBadge");
+
+  if (!stepsListEl) return;
+
+  const steps = currentRoute.steps || AppState.currentSteps || [];
+  const distanceKm = currentRoute.distanceKm || AppState.routeDistanceKm || 0;
+
+  if (totalBadge) {
+    totalBadge.textContent = `${distanceKm} km • ${currentRoute.durationMin || 0} min`;
+  }
+
+  // Se não houver steps detalhados do OSRM (fallback sintético)
+  if (!steps || steps.length === 0) {
+    stepsListEl.innerHTML = `
+      <div class="itinerary-step-item">
+        <div class="itinerary-step-dot">1</div>
+        <div class="itinerary-step-instruction">Partida em ${AppState.originText}</div>
+        <div class="itinerary-step-meta">Inicie a viagem no sentido indicado</div>
+      </div>
+      <div class="itinerary-step-item">
+        <div class="itinerary-step-dot">2</div>
+        <div class="itinerary-step-instruction">${currentRoute.description || 'Siga pelo corredor rodoviário principal'}</div>
+        <div class="itinerary-step-meta">${distanceKm} km de percurso rodoviário</div>
+      </div>
+      <div class="itinerary-step-item">
+        <div class="itinerary-step-dot">3</div>
+        <div class="itinerary-step-instruction">Chegada ao destino em ${AppState.destText}</div>
+        <div class="itinerary-step-meta">Destino final alcançado com sucesso</div>
+      </div>
+    `;
+    if (summaryEl) {
+      summaryEl.innerHTML = `<span class="highway-badge-pill">Rodovia Principal</span>`;
+    }
+    return;
+  }
+
+  // Extrai nomes de rodovias e avenidas
+  const highwayNames = new Set();
+  steps.forEach(s => {
+    if (s.name && s.name.trim().length > 1) {
+      highwayNames.add(s.name.trim());
+    }
+  });
+
+  if (summaryEl) {
+    summaryEl.innerHTML = Array.from(highwayNames).slice(0, 6).map(h => `
+      <span class="highway-badge-pill">${h}</span>
+    `).join("");
+  }
+
+  const maneuverDict = {
+    "depart": "Inicie o trajeto",
+    "arrive": "Chegada ao destino",
+    "turn-right": "Vire à direita",
+    "turn-left": "Vire à esquerda",
+    "turn-slight right": "Mantenha-se à direita",
+    "turn-slight left": "Mantenha-se à esquerda",
+    "turn-sharp right": "Curva fechada à direita",
+    "turn-sharp left": "Curva fechada à esquerda",
+    "on ramp-right": "Pegue a alça de acesso à direita",
+    "on ramp-left": "Pegue a alça de acesso à esquerda",
+    "on ramp": "Acesse a rodovia pela alça de entrada",
+    "off ramp-right": "Pegue a saída à direita",
+    "off ramp-left": "Pegue a saída à esquerda",
+    "off ramp": "Pegue a saída",
+    "fork-right": "Na bifurcação, siga à direita",
+    "fork-left": "Na bifurcação, siga à esquerda",
+    "merge-right": "Faça a confluência à direita",
+    "merge-left": "Faça a confluência à esquerda",
+    "merge": "Mantenha-se no fluxo principal",
+    "roundabout": "Entre na rotatória",
+    "continue": "Continue em frente"
+  };
+
+  stepsListEl.innerHTML = steps.map((s, idx) => {
+    const key = s.maneuver ? `${s.maneuver.type || ''}-${s.maneuver.modifier || ''}`.replace(/-$/, '') : 'continue';
+    const baseAction = maneuverDict[key] || maneuverDict[s.maneuver?.type] || "Continue";
+    const road = s.name ? ` na <strong>${s.name}</strong>` : "";
+    const distMeters = s.distance || 0;
+    const distText = distMeters >= 1000 ? `${(distMeters / 1000).toFixed(1)} km` : `${Math.round(distMeters)} metros`;
+
+    return `
+      <div class="itinerary-step-item">
+        <div class="itinerary-step-dot">${idx + 1}</div>
+        <div class="itinerary-step-instruction">${baseAction}${road}</div>
+        <div class="itinerary-step-meta">Prossiga por ${distText}</div>
+      </div>
+    `;
+  }).join("");
+}
+
+// ================= GERENCIADOR DE PARADAS MÚLTIPLAS (ROTAS BRASIL) =================
+function initStopsManager() {
+  const btnAddStop = document.getElementById("btnAddStop");
+  const btnSwap = document.getElementById("btnSwapEndpoints");
+  const checkRoundTrip = document.getElementById("checkRoundTrip");
+  const vehicleSelect = document.getElementById("vehicleCategorySelect");
+  const btnShareRoute = document.getElementById("btnShareRoute");
+  const btnPrintRoute = document.getElementById("btnPrintRoute");
+
+  if (btnAddStop) {
+    btnAddStop.addEventListener("click", () => {
+      if (AppState.stops.length >= 8) {
+        alert("Máximo de 8 paradas intermediárias atingido.");
+        return;
+      }
+      const newStop = {
+        id: "stop_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4),
+        text: "",
+        coords: null
+      };
+      AppState.stops.push(newStop);
+      renderStopsList();
+    });
+  }
+
+  if (btnSwap) {
+    btnSwap.addEventListener("click", () => {
+      const origInput = document.getElementById("originInput");
+      const destInput = document.getElementById("destInput");
+      if (origInput && destInput) {
+        const tmp = origInput.value;
+        origInput.value = destInput.value;
+        destInput.value = tmp;
+
+        if (AppState.stops.length > 1) {
+          AppState.stops.reverse();
+          renderStopsList();
+        }
+
+        calculateContextualRoutes();
+      }
+    });
+  }
+
+  if (checkRoundTrip) {
+    checkRoundTrip.addEventListener("change", (e) => {
+      AppState.isRoundTrip = e.target.checked;
+      calculateContextualRoutes();
+    });
+  }
+
+  if (vehicleSelect) {
+    vehicleSelect.addEventListener("change", (e) => {
+      AppState.vehicleCategory = e.target.value;
+      const currentRoute = AppState.routesData[AppState.selectedStrategy] || AppState.routesData.economy;
+      const analysis = analyzeRouteAgainstPoints(currentRoute.waypoints);
+      currentRoute.tollsCost = analysis.totalTollsCost;
+      recalculateRoutePlan();
+    });
+  }
+
+  if (btnShareRoute) {
+    btnShareRoute.addEventListener("click", copyRouteSummaryToClipboard);
+  }
+
+  if (btnPrintRoute) {
+    btnPrintRoute.addEventListener("click", () => window.print());
+  }
+
+  renderStopsList();
+}
+
+function renderStopsList() {
+  const container = document.getElementById("stopsListContainer");
+  if (!container) return;
+
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  container.innerHTML = AppState.stops.map((stop, idx) => {
+    const letter = alphabet[idx % alphabet.length];
+    return `
+      <div class="stop-field-row" id="row_${stop.id}">
+        <span class="stop-label-pill">Parada ${letter}</span>
+        <input type="text" class="stop-input" value="${stop.text || ''}" 
+          placeholder="Parada ${letter} (cidade, rua ou coordenadas)..." 
+          onchange="updateStopText('${stop.id}', this.value)">
+        <button type="button" class="btn-remove-stop" onclick="removeStop('${stop.id}')" title="Remover esta parada">&times;</button>
+      </div>
+    `;
+  }).join("");
+}
+
+function updateStopText(stopId, newText) {
+  const stop = AppState.stops.find(s => s.id === stopId);
+  if (stop) {
+    stop.text = (newText || "").trim();
+    stop.coords = null;
+  }
+}
+
+function removeStop(stopId) {
+  AppState.stops = AppState.stops.filter(s => s.id !== stopId);
+  renderStopsList();
+  calculateContextualRoutes();
+}
+
+// ================= EXPORTAÇÃO E COMPARTILHAMENTO DE RESUMO =================
+function copyRouteSummaryToClipboard() {
+  const currentRoute = AppState.routesData[AppState.selectedStrategy] || AppState.routesData.economy;
+  const fuelTypeLabels = {
+    ethanol: "Etanol Hidratado",
+    gasoline: "Gasolina Comum",
+    diesel: "Diesel S-10",
+    gnv: "GNV (Gás Natural)"
+  };
+  const categoryLabel = VEHICLE_CATEGORY_LABELS[AppState.vehicleCategory || "car"] || "Carro de Passeio";
+  const stopsText = AppState.stops.length > 0 ? `\nParadas: ${AppState.stops.map(s => s.text).join(" -> ")}` : "";
+  const roundTripText = AppState.isRoundTrip ? "Sim (Ida e Volta)" : "Não (Somente Ida)";
+
+  const eff = parseFloat(document.getElementById("calcEfficiency")?.value) || 11.0;
+  const price = parseFloat(document.getElementById("calcFuelPrice")?.value) || 3.49;
+  const liters = (currentRoute.distanceKm / eff);
+  const fuelCost = liters * price;
+  const totalCost = fuelCost + currentRoute.tollsCost;
+  const costPerKm = currentRoute.distanceKm > 0 ? (totalCost / currentRoute.distanceKm) : 0;
+
+  const tollPoints = (currentRoute.onRoutePoints || []).filter(p => p.category === "toll");
+
+  const summary = [
+    `*EconoSP - Resumo da Viagem*`,
+    `========================================`,
+    `Origem: ${AppState.originText}`,
+    stopsText ? stopsText.trim() : null,
+    `Destino: ${AppState.destText}`,
+    `Ida e Volta: ${roundTripText}`,
+    `Veículo: ${categoryLabel}`,
+    `Distância Total: ${currentRoute.distanceKm} km`,
+    `Tempo Estimado: ${Math.floor(currentRoute.durationMin / 60)}h ${currentRoute.durationMin % 60}min`,
+    `Pedágios: R$ ${currentRoute.tollsCost.toFixed(2).replace(".", ",")} (${tollPoints.length} praças)`,
+    `Combustível: R$ ${fuelCost.toFixed(2).replace(".", ",")} (${liters.toFixed(1)} L de ${fuelTypeLabels[AppState.fuelType] || 'Combustível'})`,
+    `----------------------------------------`,
+    `*CUSTO TOTAL: R$ ${totalCost.toFixed(2).replace(".", ",")}*`,
+    `Custo Médio: R$ ${costPerKm.toFixed(2).replace(".", ",")}/km`,
+    `========================================`,
+    `Calculado em EconoSP (https://econosp.vercel.app)`
+  ].filter(Boolean).join("\n");
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(summary).then(() => {
+      alert("Resumo estruturado copiado com sucesso! Você pode colar no WhatsApp ou enviar por mensagem.");
+    }).catch(() => {
+      prompt("Copie o resumo abaixo:", summary);
+    });
+  } else {
+    prompt("Copie o resumo abaixo:", summary);
+  }
+}
+
+// ================= FERRAMENTA RÉGUA DE MEDIÇÃO NO MAPA (ROTAS BRASIL) =================
+function initMapRulerTool() {
+  const btnRuler = document.getElementById("btnMapRuler");
+  if (!btnRuler) return;
+
+  btnRuler.addEventListener("click", () => {
+    AppState.rulerActive = !AppState.rulerActive;
+    btnRuler.classList.toggle("active", AppState.rulerActive);
+
+    const mapEl = document.getElementById("map");
+
+    if (AppState.rulerActive) {
+      if (mapEl) mapEl.style.cursor = "crosshair";
+      AppState.rulerPoints = [];
+      clearRulerLayers();
+      alert("Modo Régua Ativo: clique em pontos do mapa para medir distâncias em linha reta.");
+    } else {
+      if (mapEl) mapEl.style.cursor = "";
+      clearRulerLayers();
+    }
+  });
+
+  if (AppState.map) {
+    AppState.map.on("click", (e) => {
+      if (!AppState.rulerActive) return;
+      handleRulerMapClick(e.latlng);
+    });
+  }
+}
+
+function clearRulerLayers() {
+  if (AppState.rulerPolyline && AppState.map) {
+    AppState.map.removeLayer(AppState.rulerPolyline);
+    AppState.rulerPolyline = null;
+  }
+  if (AppState.rulerMarkers && AppState.rulerMarkers.length > 0) {
+    AppState.rulerMarkers.forEach(m => AppState.map.removeLayer(m));
+    AppState.rulerMarkers = [];
+  }
+  if (AppState.rulerTooltip && AppState.map) {
+    AppState.map.removeLayer(AppState.rulerTooltip);
+    AppState.rulerTooltip = null;
+  }
+  AppState.rulerPoints = [];
+}
+
+function handleRulerMapClick(latlng) {
+  if (!AppState.map) return;
+  AppState.rulerPoints.push(latlng);
+
+  const marker = L.circleMarker(latlng, {
+    radius: 5,
+    color: "#f59e0b",
+    fillColor: "#ffffff",
+    fillOpacity: 1,
+    weight: 2
+  }).addTo(AppState.map);
+  AppState.rulerMarkers.push(marker);
+
+  if (AppState.rulerPoints.length > 1) {
+    if (AppState.rulerPolyline) {
+      AppState.map.removeLayer(AppState.rulerPolyline);
+    }
+    AppState.rulerPolyline = L.polyline(AppState.rulerPoints, {
+      color: "#f59e0b",
+      weight: 3,
+      dashArray: "6, 6"
+    }).addTo(AppState.map);
+
+    let totalDistKm = 0;
+    for (let i = 0; i < AppState.rulerPoints.length - 1; i++) {
+      totalDistKm += AppState.rulerPoints[i].distanceTo(AppState.rulerPoints[i + 1]) / 1000;
+    }
+
+    if (AppState.rulerTooltip) {
+      AppState.map.removeLayer(AppState.rulerTooltip);
+    }
+
+    AppState.rulerTooltip = L.popup({
+      closeButton: false,
+      autoClose: false,
+      closeOnClick: false,
+      className: "ruler-tooltip-popup"
+    })
+      .setLatLng(latlng)
+      .setContent(`<div class="ruler-tooltip">Distância Linear: <strong>${totalDistKm.toFixed(2)} km</strong></div>`)
+      .openOn(AppState.map);
   }
 }
 
@@ -3374,6 +3974,21 @@ function setupEventListeners() {
   if (fuelTypeSelect) {
     fuelTypeSelect.addEventListener("change", (e) => {
       AppState.fuelType = e.target.value;
+      const effInput = document.getElementById("calcEfficiency");
+      const priceInput = document.getElementById("calcFuelPrice");
+      if (AppState.fuelType === "diesel") {
+        if (effInput) effInput.value = "10.2";
+        if (priceInput) priceInput.value = "5.89";
+      } else if (AppState.fuelType === "gnv") {
+        if (effInput) effInput.value = "13.5";
+        if (priceInput) priceInput.value = "4.79";
+      } else if (AppState.fuelType === "gasoline") {
+        if (effInput) effInput.value = (AppState.vehicleData?.gasolineKmPerL || 15.3).toFixed(1);
+        if (priceInput) priceInput.value = "5.39";
+      } else {
+        if (effInput) effInput.value = (AppState.vehicleData?.ethanolKmPerL || 10.8).toFixed(1);
+        if (priceInput) priceInput.value = "3.49";
+      }
       recalculateRoutePlan();
       syncUserPreferencesToSupabase();
     });
@@ -3574,6 +4189,8 @@ async function syncUserPreferencesToSupabase() {
   }
 }
 
+let savedRoutesCache = [];
+
 async function loadSavedRoutesFromSupabase() {
   const container = document.getElementById("savedRoutesContainer");
   const listEl = document.getElementById("savedRoutesList");
@@ -3599,21 +4216,56 @@ async function loadSavedRoutesFromSupabase() {
       return;
     }
 
+    savedRoutesCache = data;
     container.style.display = "block";
-    listEl.innerHTML = data.map(r => `
-      <div class="saved-route-item">
-        <div class="saved-route-info" onclick="applySavedRoute('${r.origin_text.replace(/'/g, "\\'")}', '${r.dest_text.replace(/'/g, "\\'")}', '${r.strategy}')">
-          <strong>${r.origin_text} &rarr; ${r.dest_text}</strong>
-          <span>${r.distance_km} km • Pedágio: R$ ${Number(r.tolls_cost).toFixed(2).replace(".", ",")} • Total: R$ ${Number(r.total_cost).toFixed(2).replace(".", ",")}</span>
+    listEl.innerHTML = data.map(r => {
+      const stopsCount = (r.waypoints && Array.isArray(r.waypoints) && r.waypoints.length > 0) ? ` • ${r.waypoints.length} paradas` : "";
+      const roundTripLabel = r.round_trip ? " • Ida e Volta" : "";
+      const vehLabel = (r.vehicle_category && VEHICLE_CATEGORY_LABELS[r.vehicle_category]) ? ` • ${VEHICLE_CATEGORY_LABELS[r.vehicle_category].split(" ")[0]}` : "";
+
+      return `
+        <div class="saved-route-item">
+          <div class="saved-route-info" onclick="applySavedRouteById('${r.id}')">
+            <strong>${r.origin_text} &rarr; ${r.dest_text}</strong>
+            <span>${r.distance_km} km${stopsCount}${roundTripLabel}${vehLabel} • Pedágio: R$ ${Number(r.tolls_cost).toFixed(2).replace(".", ",")} • Total: R$ ${Number(r.total_cost).toFixed(2).replace(".", ",")}</span>
+          </div>
+          <button type="button" class="btn-delete-route" onclick="deleteSavedRoute('${r.id}')" title="Remover rota">Excluir</button>
         </div>
-        <button type="button" class="btn-delete-route" onclick="deleteSavedRoute('${r.id}')" title="Remover rota">Excluir</button>
-      </div>
-    `).join("");
+      `;
+    }).join("");
   } catch (err) {
     console.warn("Erro ao listar rotas salvas:", err);
     container.style.display = "none";
     listEl.innerHTML = "";
   }
+}
+
+function applySavedRouteById(routeId) {
+  const r = (savedRoutesCache || []).find(item => item.id === routeId);
+  if (!r) return;
+
+  const origInput = document.getElementById("originInput");
+  const destInput = document.getElementById("destInput");
+  if (origInput) origInput.value = r.origin_text;
+  if (destInput) destInput.value = r.dest_text;
+
+  AppState.stops = Array.isArray(r.waypoints) ? r.waypoints : [];
+  renderStopsList();
+
+  AppState.vehicleCategory = r.vehicle_category || "car";
+  const vehicleSelect = document.getElementById("vehicleCategorySelect");
+  if (vehicleSelect) vehicleSelect.value = AppState.vehicleCategory;
+
+  AppState.isRoundTrip = !!r.round_trip;
+  const checkRoundTrip = document.getElementById("checkRoundTrip");
+  if (checkRoundTrip) checkRoundTrip.checked = AppState.isRoundTrip;
+
+  AppState.selectedStrategy = r.strategy || "economy";
+  document.querySelectorAll(".strategy-btn").forEach(b => {
+    b.classList.toggle("active", b.getAttribute("data-strategy") === AppState.selectedStrategy);
+  });
+
+  calculateContextualRoutes();
 }
 
 function applySavedRoute(originText, destText, strategy) {
@@ -3673,7 +4325,10 @@ async function saveCurrentRouteToSupabase() {
       distance_km: currentRoute.distanceKm,
       duration_min: currentRoute.durationMin,
       tolls_cost: currentRoute.tollsCost,
-      total_cost: Math.round(totalCost * 100) / 100
+      total_cost: Math.round(totalCost * 100) / 100,
+      waypoints: AppState.stops || [],
+      vehicle_category: AppState.vehicleCategory || "car",
+      round_trip: !!AppState.isRoundTrip
     });
 
     if (btn) btn.textContent = "Salvar Rota na Minha Conta";

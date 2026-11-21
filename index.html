@@ -30,6 +30,12 @@
         </div>
 
         <div class="console-header-actions">
+          <!-- Botão de Rastreamento / Logs de Auditoria -->
+          <button id="btnOpenLogsModal" class="btn-icon-action logs-action" type="button" title="Histórico de atividades e auditoria do site">
+            <span class="logs-status-dot"></span>
+            <span>Logs</span>
+          </button>
+
           <!-- Botão de Personalização de Tema / Aparência -->
           <button id="btnOpenThemeModal" class="btn-icon-action theme-action" type="button" title="Aparência e Cores da Interface">
             <span class="theme-accent-indicator" id="headerAccentDot"></span>
@@ -60,21 +66,62 @@
           <!-- Ponto de Partida -->
           <div class="route-field origin-field">
             <span class="field-label-pill">Partida</span>
-            <input type="text" id="originInput" value="São Paulo, SP" placeholder="Local de partida ou rua...">
+            <input type="text" id="originInput" value="São Paulo, SP" placeholder="Local de partida, rua ou coordenadas...">
             <button id="btnLocateMe" class="btn-gps-locate" type="button" title="Usar localização GPS atual da minha rua">
               GPS
+            </button>
+            <button id="btnSwapEndpoints" class="btn-swap-endpoints" type="button" title="Inverter partida e destino">
+              ⇄
+            </button>
+          </div>
+
+          <!-- Container Dinâmico de Paradas Intermediárias (Estilo Rotas Brasil) -->
+          <div id="stopsListContainer" class="stops-list-container">
+            <!-- Paradas intermediárias adicionadas dinamicamente aqui -->
+          </div>
+
+          <!-- Ação para Adicionar Parada -->
+          <div class="add-stop-row">
+            <button id="btnAddStop" class="btn-add-stop" type="button" title="Adicionar parada intermediária ao trajeto">
+              + Adicionar Parada
             </button>
           </div>
 
           <!-- Ponto de Destino -->
           <div class="route-field dest-field">
             <span class="field-label-pill">Destino</span>
-            <input type="text" id="destInput" value="Caraguatatuba, SP" placeholder="Destino (município ou endereço)...">
+            <input type="text" id="destInput" value="Caraguatatuba, SP" placeholder="Destino, cidade ou coordenadas...">
+          </div>
+
+          <!-- Opções Avançadas da Rota (Ida e Volta & Tipo de Veículo) -->
+          <div class="route-options-row">
+            <label class="checkbox-route-option" for="checkRoundTrip" title="Duplica quilometragem e calcula pedágios nos dois sentidos">
+              <input type="checkbox" id="checkRoundTrip">
+              <span>Calcular Ida e Volta</span>
+            </label>
+          </div>
+
+          <!-- Seletor de Categoria de Veículo & Eixos (Padrão ANTT / Rotas Brasil) -->
+          <div class="vehicle-axle-selector-group">
+            <label class="form-label" for="vehicleCategorySelect">Categoria do Veículo / Eixos:</label>
+            <select id="vehicleCategorySelect" class="form-control vehicle-select">
+              <option value="car" selected>Carro de Passeio / Utilitário (2 eixos)</option>
+              <option value="motorcycle">Motocicleta / Ciclomotor</option>
+              <option value="truck_2">Comercial / Caminhão 2 Eixos (rodagem dupla)</option>
+              <option value="truck_3">Caminhão 3 Eixos (Toco / Trucado)</option>
+              <option value="truck_4">Caminhão 4 Eixos</option>
+              <option value="truck_5">Caminhão 5 Eixos</option>
+              <option value="truck_6">Caminhão 6 Eixos</option>
+              <option value="truck_7">Caminhão 7 Eixos (Bitrem)</option>
+              <option value="truck_9">Caminhão 9 Eixos (Rodotrem)</option>
+              <option value="bus_2">Ônibus 2 Eixos</option>
+              <option value="bus_3">Ônibus 3 Eixos</option>
+            </select>
           </div>
 
           <!-- Botão Principal: Calcular Rota -->
           <button id="btnCalcRoute" class="btn-primary-action" type="button">
-            Calcular Rota Rodoviária
+            Calcular Rota e Pedágios
           </button>
 
           <!-- Stubs compatíveis com handlers anteriores (ocultos) -->
@@ -123,16 +170,22 @@
         </div>
       </div>
 
-      <!-- NAVEGAÇÃO EM ABAS (FEATURE HUB) -->
+      <!-- NAVEGAÇÃO EM ABAS (FEATURE HUB ESTILO ROTAS BRASIL) -->
       <div class="console-tabs-bar">
         <nav class="sidebar-tabs">
-          <button class="tab-btn active" data-tab="calc" type="button">
+          <button class="tab-btn active" data-tab="calc" type="button" title="Custos e parâmetros">
             <span>Custos & Veículo</span>
           </button>
-          <button class="tab-btn" data-tab="points" type="button">
-            <span>Pedágios & Radares</span>
+          <button class="tab-btn" data-tab="toll-table" type="button" title="Tabela discriminada de praças de pedágio">
+            <span>Praças de Pedágio</span>
           </button>
-          <button class="tab-btn" data-tab="tips" type="button">
+          <button class="tab-btn" data-tab="itinerary" type="button" title="Itinerário e manobras passo a passo">
+            <span>Itinerário</span>
+          </button>
+          <button class="tab-btn" data-tab="points" type="button" title="Radares e postos">
+            <span>Radares & Postos</span>
+          </button>
+          <button class="tab-btn" data-tab="tips" type="button" title="Rodízio SP">
             <span>Rodízio SP</span>
           </button>
         </nav>
@@ -164,6 +217,8 @@
               <select id="calcFuelType" class="form-control">
                 <option value="ethanol" selected>Etanol Hidratado</option>
                 <option value="gasoline">Gasolina Comum</option>
+                <option value="diesel">Diesel S-10</option>
+                <option value="gnv">GNV (Gás Natural)</option>
               </select>
             </div>
 
@@ -204,10 +259,28 @@
                 <div class="calc-summary-label">Custo Total</div>
                 <div id="calcTotalDisplay" class="calc-summary-val primary-val">R$ 58,90</div>
               </div>
+              <div class="calc-summary-item">
+                <div class="calc-summary-label">Consumo Estimado</div>
+                <div id="calcLitersDisplay" class="calc-summary-val">15,0 L</div>
+              </div>
+              <div class="calc-summary-item">
+                <div class="calc-summary-label">Custo Médio / km</div>
+                <div id="calcCostPerKmDisplay" class="calc-summary-val">R$ 0,36 /km</div>
+              </div>
             </div>
 
             <div id="calcEconomyTips" class="route-comparison-box">
               <!-- Comparações inseridas via JS -->
+            </div>
+
+            <!-- Ações de Exportação e Compartilhamento (Estilo Rotas Brasil) -->
+            <div class="calc-export-actions">
+              <button id="btnShareRoute" type="button" class="btn-share-route" title="Copiar resumo completo para WhatsApp ou área de transferência">
+                Copiar Resumo (WhatsApp)
+              </button>
+              <button id="btnPrintRoute" type="button" class="btn-print-route" title="Imprimir relatório rodoviário detalhado">
+                Imprimir Relatório
+              </button>
             </div>
 
             <!-- Salvar rota na conta do usuário no Supabase -->
@@ -224,6 +297,55 @@
             <a id="btnOpenGmapsExternal" href="#" target="_blank" class="btn-open-gmaps">
               Abrir Trajeto no Google Maps
             </a>
+          </div>
+        </div>
+
+        <!-- ABA: TABELA DISCRIMINADA DE PRAÇAS DE PEDÁGIO (Estilo Rotas Brasil) -->
+        <div id="tab-toll-table" class="tab-pane" style="display: none;">
+          <div class="tab-pane-header">
+            <div class="tab-pane-title">Tabela de Praças de Pedágio</div>
+            <div id="tollTableCategoryBadge" class="vehicle-badge-pill">Carro de Passeio (1x)</div>
+          </div>
+          <div class="toll-table-wrapper">
+            <table class="toll-data-table" id="tollDataTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Praça / Concessionária</th>
+                  <th>Rodovia / km</th>
+                  <th>Sentido</th>
+                  <th>Tarifa</th>
+                  <th>Mapa</th>
+                </tr>
+              </thead>
+              <tbody id="tollTableBody">
+                <!-- Preenchido dinamicamente via JS -->
+              </tbody>
+              <tfoot id="tollTableFooter">
+                <tr>
+                  <th colspan="4" style="text-align:right;">Total Pedágios:</th>
+                  <th id="tollTableFooterTotal" class="toll-total-cell">R$ 0,00</th>
+                  <th></th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <div id="tollTableEmptyMsg" class="toll-empty-msg" style="display:none;">
+            Nenhuma praça de pedágio encontrada no traçado da rota atual.
+          </div>
+        </div>
+
+        <!-- ABA: ITINERÁRIO RODOVIÁRIO PASSO A PASSO (Estilo Rotas Brasil) -->
+        <div id="tab-itinerary" class="tab-pane" style="display: none;">
+          <div class="tab-pane-header">
+            <div class="tab-pane-title">Itinerário Passo a Passo</div>
+            <div id="itineraryTotalBadge" class="itinerary-badge-pill">... km</div>
+          </div>
+          <div id="itineraryHighwaysSummary" class="itinerary-highways-summary">
+            <!-- Vias e rodovias percorridas -->
+          </div>
+          <div id="itineraryStepsList" class="itinerary-steps-list">
+            <!-- Instruções de manobra passo a passo geradas pelo OSRM -->
           </div>
         </div>
 
@@ -337,6 +459,9 @@
           <button class="layer-switch-btn" data-layer="terrain" type="button" title="Mapa com relevo topográfico">
             Topografia
           </button>
+          <button id="btnMapRuler" class="layer-switch-btn ruler-btn" type="button" title="Medir distância em linha reta no mapa (Régua)">
+            Régua
+          </button>
         </div>
 
         <!-- HUD FLUTUANTE DO MODO SIMULAÇÃO (CENTRO SUPERIOR) -->
@@ -366,8 +491,14 @@
     <button type="button" class="mobile-nav-btn" data-mobile-target="calc">
       <span class="mobile-nav-label">Custos</span>
     </button>
-    <button type="button" class="mobile-nav-btn" data-mobile-target="points">
+    <button type="button" class="mobile-nav-btn" data-mobile-target="toll-table">
       <span class="mobile-nav-label">Pedágios</span>
+    </button>
+    <button type="button" class="mobile-nav-btn" data-mobile-target="itinerary">
+      <span class="mobile-nav-label">Itinerário</span>
+    </button>
+    <button type="button" class="mobile-nav-btn" data-mobile-target="points">
+      <span class="mobile-nav-label">Pontos</span>
     </button>
     <button type="button" class="mobile-nav-btn" data-mobile-target="tips">
       <span class="mobile-nav-label">Rodízio</span>
@@ -540,6 +671,59 @@
             <span id="themeSyncStatusText">Salvo no navegador</span>
           </div>
           <button type="button" id="btnResetThemeDefault" class="btn-theme-reset">Restaurar Padrão</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL DE AUDITORIA E LOGS DE ATIVIDADE ================= -->
+  <div id="modalActivityLogs" class="modal-overlay">
+    <div class="modal-dialog logs-dialog">
+      <div class="modal-header">
+        <div class="logs-header-title">
+          <h3>Registro de Atividades do Site</h3>
+          <span class="logs-header-subtitle">Auditoria de acessos, rotas salvas, temas e alterações no sistema</span>
+        </div>
+        <button id="btnCloseLogsModal" class="btn-modal-close" type="button" title="Fechar">&times;</button>
+      </div>
+
+      <div class="modal-body logs-modal-body">
+        
+        <!-- BARRA DE FILTROS E BUSCA -->
+        <div class="logs-controls-bar">
+          <div class="logs-category-tabs">
+            <button type="button" class="log-filter-btn active" data-log-cat="all">Todos</button>
+            <button type="button" class="log-filter-btn" data-log-cat="auth">Acessos</button>
+            <button type="button" class="log-filter-btn" data-log-cat="routes">Rotas</button>
+            <button type="button" class="log-filter-btn" data-log-cat="settings">Aparência</button>
+            <button type="button" class="log-filter-btn" data-log-cat="system">Sistema</button>
+          </div>
+          <div class="logs-search-wrapper">
+            <input type="text" id="searchLogsInput" placeholder="Buscar por e-mail, ação ou descrição..." class="form-control">
+            <button id="btnRefreshLogs" class="btn-refresh-logs" type="button" title="Recarregar registros">Atualizar</button>
+          </div>
+        </div>
+
+        <!-- ESTATÍSTICAS DOS LOGS -->
+        <div class="logs-stats-strip">
+          <div class="log-stat-item">
+            <span class="log-stat-label">Total de Eventos</span>
+            <strong id="logStatTotal">...</strong>
+          </div>
+          <div class="log-stat-item">
+            <span class="log-stat-label">Última Ação</span>
+            <strong id="logStatLastAction">...</strong>
+          </div>
+          <div class="log-stat-item">
+            <span class="log-stat-label">Status do Log</span>
+            <strong style="color:var(--success-text);">Ativo (Nuvem Supabase)</strong>
+          </div>
+        </div>
+
+        <!-- LISTAGEM DA LINHA DO TEMPO DOS LOGS -->
+        <div id="activityLogsList" class="activity-logs-list">
+          <!-- Inserido dinamicamente via JS -->
         </div>
 
       </div>
