@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>EconoSP - Modo Offline</title>
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <meta name="theme-color" content="#090d16">
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --bg-card: #0f172a;
+      --border-subtle: #1e293b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --warning: #f59e0b;
+      --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-stack);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .offline-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 40px 28px;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .offline-icon-wrapper {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(245, 158, 11, 0.12);
+      border: 2px solid rgba(245, 158, 11, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--warning);
+      font-size: 2.2rem;
+      margin-bottom: 4px;
+    }
+
+    .offline-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-main);
+    }
+
+    .offline-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .offline-tips-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px dashed var(--border-subtle);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-align: left;
+      line-height: 1.45;
+      width: 100%;
+    }
+
+    .offline-tips-box strong {
+      color: var(--text-main);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .btn-retry {
+      background-color: var(--primary);
+      color: #ffffff;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.15s ease;
+      width: 100%;
+      margin-top: 6px;
+    }
+
+    .btn-retry:hover {
+      background-color: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-return-app {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border-subtle);
+      padding: 10px 24px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 100%;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-return-app:hover {
+      color: var(--text-main);
+      border-color: var(--primary);
+    }
+
+    .offline-status-live {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--warning);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.4; }
+      50% { opacity: 1; }
+      100% { opacity: 0.4; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="offline-card">
+    <div class="offline-icon-wrapper" aria-hidden="true">
+      &#x26A0;
+    </div>
+
+    <h1 class="offline-title">Sem Conexão à Internet</h1>
+
+    <p class="offline-desc">
+      O EconoSP necessita de acesso à rede para calcular rotas inéditas no OSRM e sincronizar com o banco de dados Supabase em tempo real.
+    </p>
+
+    <div class="offline-tips-box">
+      <strong>Disponível Offline no App:</strong>
+      &bull; Consulta de regras e horários do Rodízio SP<br>
+      &bull; Decodificador local de placas Mercosul<br>
+      &bull; Guia rodoviário e normas de trânsito<br>
+      &bull; Tabela de tarifas da rota já calculada
+    </div>
+
+    <button type="button" class="btn-retry" id="btnRetry">
+      Tentar Novamente
+    </button>
+
+    <a href="index.html" class="btn-return-app">
+      Abrir EconoSP em Cache
+    </a>
+
+    <div class="offline-status-live">
+      <span class="status-dot"></span>
+      <span>Aguardando restabelecimento do sinal...</span>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("btnRetry").addEventListener("click", () => {
+      window.location.reload();
+    });
+
+    // Redirecionamento automático assim que a conexão retornar
+    window.addEventListener("online", () => {
+      window.location.href = "index.html";
+    });
+  </script>
+</body>
+</html>

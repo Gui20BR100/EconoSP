@@ -1,0 +1,39 @@
+{
+  "name": "EconoSP - Rotas, Pedágios e Monitoramento SP",
+  "short_name": "EconoSP",
+  "description": "Cálculo de rotas rodoviárias econômicas, praças de pedágio por eixos, radares e monitoramento em tempo real de São Paulo.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#090d16",
+  "theme_color": "#2563eb",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["navigation", "travel", "utilities"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

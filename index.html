@@ -2,9 +2,21 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>EconoSP - Sistema Rodoviário de Rotas, Pedágios e Monitoramento SP</title>
   
+  <!-- Manifesto PWA e Configuração de Aplicativo -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#090d16" id="metaThemeColor">
+  
+  <!-- Suporte Nativo a iOS Safari Standalone -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="EconoSP">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+
   <!-- Estilos Leaflet Map -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   
@@ -12,6 +24,12 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <!-- INDICADOR DE CONEXÃO OFFLINE FLUTUANTE -->
+  <div id="offlineIndicatorBanner" class="offline-indicator-banner" style="display: none;">
+    <span class="offline-dot"></span>
+    <span>Modo Offline: Utilizando dados em cache. Recursos em tempo real pausados.</span>
+  </div>
 
   <!-- ================= SHELL DO APLICATIVO (DASHBOARD SPLIT-VIEW) ================= -->
   <div class="app-layout">
@@ -30,6 +48,12 @@
         </div>
 
         <div class="console-header-actions">
+          <!-- Botão de Instalação PWA (Disponível em navegadores com suporte a PWA) -->
+          <button id="btnInstallPwa" class="btn-icon-action install-action" type="button" title="Instalar aplicativo EconoSP no dispositivo" style="display: none;">
+            <span class="install-pwa-icon">&#x21E9;</span>
+            <span>Instalar</span>
+          </button>
+
           <!-- Botão de Rastreamento / Logs de Auditoria -->
           <button id="btnOpenLogsModal" class="btn-icon-action logs-action" type="button" title="Histórico de atividades e auditoria do site">
             <span class="logs-status-dot"></span>

@@ -1839,6 +1839,19 @@ const ThemeManager = {
 
     document.body.setAttribute("data-theme", this.current.theme);
 
+    // Atualiza a barra de status do celular e PWA (meta theme-color)
+    const themeBgMap = {
+      dark_obsidian: "#090d16",
+      light_minimal: "#f8fafc",
+      midnight_cyber: "#030712",
+      eco_highway: "#061a12",
+      sunset_paulista: "#1c100e"
+    };
+    const metaTheme = document.getElementById("metaThemeColor");
+    if (metaTheme) {
+      metaTheme.setAttribute("content", themeBgMap[this.current.theme] || "#090d16");
+    }
+
     // Atualiza o ponto indicador de cor ativa no cabeçalho
     const dot = document.getElementById("headerAccentDot");
     if (dot) dot.style.backgroundColor = shades.primary;
@@ -2033,9 +2046,94 @@ const ThemeManager = {
 // Aplicação instantânea antes de renderizar para zero FOUC
 ThemeManager.applyEarlyTheme();
 
+// ================= INTEGRAÇÃO PROGRESSIVE WEB APP (PWA) E SERVICE WORKER =================
+let deferredPwaInstallPrompt = null;
+
+function initPwaAndServiceWorker() {
+  // 1. Registro do Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js', { scope: './' })
+        .then((reg) => {
+          console.log('[EconoSP PWA] Service Worker registrado com sucesso. Escopo:', reg.scope);
+
+          reg.onupdatefound = () => {
+            const installingWorker = reg.installing;
+            if (installingWorker) {
+              installingWorker.onstatechange = () => {
+                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('[EconoSP PWA] Nova versão do app disponível.');
+                }
+              };
+            }
+          };
+        })
+        .catch((err) => {
+          console.warn('[EconoSP PWA] Falha ao registrar Service Worker:', err);
+        });
+    });
+  }
+
+  // 2. Captura de evento de instalação PWA (beforeinstallprompt)
+  const btnInstall = document.getElementById('btnInstallPwa');
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPwaInstallPrompt = e;
+    if (btnInstall) {
+      btnInstall.style.display = 'inline-flex';
+    }
+  });
+
+  if (btnInstall) {
+    btnInstall.addEventListener('click', async () => {
+      if (!deferredPwaInstallPrompt) return;
+      btnInstall.style.display = 'none';
+      deferredPwaInstallPrompt.prompt();
+      const choiceResult = await deferredPwaInstallPrompt.userChoice;
+      if (choiceResult && choiceResult.outcome === 'accepted') {
+        console.log('[EconoSP PWA] Usuário aceitou instalar o EconoSP.');
+      }
+      deferredPwaInstallPrompt = null;
+    });
+  }
+
+  window.addEventListener('appinstalled', () => {
+    console.log('[EconoSP PWA] Aplicativo instalado com sucesso.');
+    if (btnInstall) btnInstall.style.display = 'none';
+    deferredPwaInstallPrompt = null;
+  });
+
+  // 3. Monitoramento em Tempo Real de Conectividade (Online / Offline)
+  const offlineBanner = document.getElementById('offlineIndicatorBanner');
+
+  function updateNetworkStatus() {
+    const isOnline = navigator.onLine;
+    if (offlineBanner) {
+      offlineBanner.style.display = isOnline ? 'none' : 'flex';
+    }
+  }
+
+  window.addEventListener('online', () => {
+    updateNetworkStatus();
+    if (typeof playNotificationBeep === 'function') {
+      playNotificationBeep(650, 0.08);
+    }
+  });
+
+  window.addEventListener('offline', () => {
+    updateNetworkStatus();
+    if (typeof playNotificationBeep === 'function') {
+      playNotificationBeep(320, 0.15);
+    }
+  });
+
+  updateNetworkStatus();
+}
+
 // ================= INICIALIZAÇÃO =================
 document.addEventListener("DOMContentLoaded", () => {
   ThemeManager.init();
+  initPwaAndServiceWorker();
   initMapWithGoogleLayers();
   initDriverAndCarInputs();
   initAuthSystem();
