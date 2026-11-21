@@ -185,6 +185,144 @@ function lookupVehicleByPlate(rawPlate) {
 // ================= MEGA BANCO DE DADOS: PONTOS, RADARES, PEDÁGIOS E WAZE REAL =================
 // Mega Base de Dados Atualizada do EconoSP: Pedágios Oficiais, Radares Fixos e Postos
 const POINTS_DATA = [
+  // ================= 0. NOVOS PÓRTICOS FREE FLOW DE SÃO PAULO (COBRANÇA SEM CANCELA - ARTESP / GOV SP) =================
+  {
+    id: "toll-freeflow-tamoios-contorno-sul",
+    name: "Pórtico Free Flow Contorno Sul - Rod. dos Tamoios",
+    highway: "SP-099 Rodovia dos Tamoios (Contorno Sul)",
+    km: "km 13,5",
+    category: "toll",
+    isFreeFlow: true,
+    lat: -23.7020,
+    lng: -45.4210,
+    price: "R$ 5,90",
+    priceNum: 5.90,
+    concessionaire: "Concessionária Tamoios (ARTESP)",
+    freeFlowUrl: "https://freeflowtamoios.com.br",
+    desc: "Pórtico 100% eletrônico sem cancelas no Contorno Sul entre Caraguatatuba e São Sebastião / Ilhabela.",
+    economyTip: "Com TAG (Sem Parar, ConectCar, Veloe, Move Mais, Taggy) o débito é automático sem parar.",
+    dangerTip: "⚠️ ATENÇÃO: Sem cabines físicas! Sem TAG, pague em até 30 dias pelo app 'Tamoios Free Flow' ou site oficial. Evasão gera multa grave de R$ 195,23 e 5 pontos (Art. 209-A CTB)."
+  },
+  {
+    id: "toll-freeflow-econoroeste-jaboticabal",
+    name: "Pórtico Free Flow Jaboticabal - SP-333",
+    highway: "SP-333 Rodovia Carlos Tonanni",
+    km: "km 110,6",
+    category: "toll",
+    isFreeFlow: true,
+    lat: -21.2580,
+    lng: -48.3240,
+    price: "R$ 17,60",
+    priceNum: 17.60,
+    concessionaire: "EcoNoroeste (ARTESP)",
+    freeFlowUrl: "https://pedagiodigital.econoroeste.com.br",
+    desc: "Pórtico Free Flow de passagem livre na SP-333 em Jaboticabal. Desconto de 5% para veículos com TAG.",
+    economyTip: "Com TAG a tarifa cai para R$ 16,72 automaticamente.",
+    dangerTip: "⚠️ Sem cancela! Pague em até 30 dias no portal Siga Fácil ou site da concessionária. Evite multa de R$ 195,23."
+  },
+  {
+    id: "toll-freeflow-econoroeste-itapolis",
+    name: "Pórtico Free Flow Itápolis - SP-333",
+    highway: "SP-333 Rodovia Laurentino Mascari",
+    km: "km 179",
+    category: "toll",
+    isFreeFlow: true,
+    lat: -21.5950,
+    lng: -48.8130,
+    price: "R$ 9,70",
+    priceNum: 9.70,
+    concessionaire: "EcoNoroeste (ARTESP)",
+    freeFlowUrl: "https://pedagiodigital.econoroeste.com.br",
+    desc: "Cobrança automática por pórtico óptico sem cabine na ligação entre Itápolis e Borborema.",
+    economyTip: "Tarifa com TAG: R$ 9,21. Notícias recentes alertam motoristas desatentos sobre evasão involuntária.",
+    dangerTip: "⚠️ Pague em até 30 dias nos totens SAU ou via Pix/Cartão no site oficial para evitar 5 pontos na CNH."
+  },
+  {
+    id: "toll-freeflow-econoroeste-dobrada",
+    name: "Pórtico Free Flow Dobrada - SP-326",
+    highway: "SP-326 Rodovia Brigadeiro Faria Lima",
+    km: "km 307,6",
+    category: "toll",
+    isFreeFlow: true,
+    lat: -21.5160,
+    lng: -48.3940,
+    price: "R$ 11,20",
+    priceNum: 11.20,
+    concessionaire: "EcoNoroeste (ARTESP)",
+    freeFlowUrl: "https://pedagiodigital.econoroeste.com.br",
+    desc: "Pórtico Free Flow na Rodovia Brigadeiro Faria Lima no trecho de Dobrada / Matão.",
+    economyTip: "Desconto com TAG: R$ 10,64. Totens de autoatendimento disponíveis nas bases SAU.",
+    dangerTip: "⚠️ Não há cancela nem operador! Consulte a placa do veículo em até 30 dias para evitar autuação de R$ 195,23."
+  },
+  {
+    id: "toll-freeflow-econoroeste-taiuva",
+    name: "Pórtico Free Flow Taiúva - SP-326",
+    highway: "SP-326 Rodovia Brigadeiro Faria Lima",
+    km: "km 357",
+    category: "toll",
+    isFreeFlow: true,
+    lat: -21.1440,
+    lng: -48.4720,
+    price: "R$ 10,20",
+    priceNum: 10.20,
+    concessionaire: "EcoNoroeste (ARTESP)",
+    freeFlowUrl: "https://pedagiodigital.econoroeste.com.br",
+    desc: "Pórtico automático na SP-326 próximo a Taiúva e Bebedouro.",
+    economyTip: "Com TAG: R$ 9,69. Passagem direta na velocidade da rodovia.",
+    dangerTip: "⚠️ Atenção a sites e boletos falsos na internet: utilize apenas o Siga Fácil ARTESP ou portal oficial da concessionária."
+  },
+  {
+    id: "toll-freeflow-rodoanel-norte-guarulhos",
+    name: "Pórtico Free Flow Rodoanel Norte - SP-021",
+    highway: "SP-021 Rodoanel Mário Covas (Trecho Norte)",
+    km: "km 135",
+    category: "toll",
+    isFreeFlow: true,
+    lat: -23.4180,
+    lng: -46.5020,
+    price: "R$ 5,10",
+    priceNum: 5.10,
+    concessionaire: "Via Appia / ARTESP",
+    freeFlowUrl: "https://sigafacil.sp.gov.br",
+    desc: "Pórtico Free Flow digital pioneiro do Trecho Norte do Rodoanel Metropolitano em Guarulhos.",
+    economyTip: "Economiza tempo ao evitar filas nas entradas da Dutra e Fernão Dias.",
+    dangerTip: "⚠️ Cobrança por pórtico. Pague em até 30 dias pelo portal estadual Siga Fácil ARTESP."
+  },
+  {
+    id: "toll-freeflow-rio-santos-paraty",
+    name: "Pórtico Free Flow Paraty / Ubatuba - BR-101",
+    highway: "BR-101 Rodovia Rio-Santos",
+    km: "km 538",
+    category: "toll",
+    isFreeFlow: true,
+    lat: -23.2180,
+    lng: -44.7170,
+    price: "R$ 4,60",
+    priceNum: 4.60,
+    concessionaire: "CCR RioSP",
+    freeFlowUrl: "https://www.ccrriosp.com.br",
+    desc: "Pórtico Free Flow da Rio-Santos na divisa de SP e RJ. Leitura óptica automática de placas.",
+    economyTip: "Totens de autoatendimento no SAU km 31,8 em Ubatuba para pagamento sem juros.",
+    dangerTip: "⚠️ Prazo de 30 dias para regularizar o pagamento. Multa de evasão prevista no CTB (R$ 195,23 + 5 pontos)."
+  },
+  {
+    id: "toll-freeflow-rio-santos-mangaratiba",
+    name: "Pórtico Free Flow Mangaratiba - BR-101",
+    highway: "BR-101 Rodovia Rio-Santos",
+    km: "km 447",
+    category: "toll",
+    isFreeFlow: true,
+    lat: -22.9590,
+    lng: -44.0410,
+    price: "R$ 4,60",
+    priceNum: 4.60,
+    concessionaire: "CCR RioSP",
+    freeFlowUrl: "https://www.ccrriosp.com.br",
+    desc: "Pórtico automático sem cabines físicas da CCR RioSP no trecho litorâneo.",
+    economyTip: "Sem filas ou paradas. Pague pelo app CCR RioSP, WhatsApp ou com TAG ativa.",
+    dangerTip: "⚠️ Não espere notificação pelos correios! A consulta deve ser feita ativamente pela placa do veículo."
+  },
+
   // ================= 1. PRAÇAS DE PEDÁGIO OFICIAIS DE SÃO PAULO =================
   // Sistema Anchieta-Imigrantes (Ecovias)
   {
@@ -886,6 +1024,134 @@ const POINTS_DATA = [
   },
 
   // ================= 2. BANCO AMPLIADO DE RADARES FIXOS EM SÃO PAULO =================
+  // Novos Radares CET SP (Base Oficial de Fiscalização Eletrônica CET / Prefeitura de SP)
+  {
+    id: "rad-cet-marginal-tiete-santana-novo",
+    name: "Radar CET Marginal Tietê - Santana (Ponte Cruzeiro do Sul)",
+    highway: "Marginal Tietê (Pista Expressa, km 13)",
+    km: "km 13",
+    category: "radar",
+    lat: -23.5160,
+    lng: -46.6290,
+    speed: "90 km/h (Expressa) / 70 km/h (Central) / 50 km/h (Local)",
+    concessionaire: "CET-SP",
+    desc: "Radar inteligente CET com leitura OCR e monitoramento de velocidade por faixas na Marginal Tietê.",
+    dangerTip: "Velocidades diferenciadas por pista. Câmeras monitoram também veículos de carga restritos e rodízio municipal.",
+    economyTip: "Manter ritmo uniforme na faixa expressa evita até 15% de consumo em arrancadas."
+  },
+  {
+    id: "rad-cet-marginal-pinheiros-morumbi-novo",
+    name: "Radar CET Marginal Pinheiros - Ponte Morumbi / Chucri Zaidan",
+    highway: "Marginal Pinheiros (Pista Expressa, km 12)",
+    km: "km 12",
+    category: "radar",
+    lat: -23.6210,
+    lng: -46.7030,
+    speed: "90 km/h (Expressa) / 70 km/h (Local)",
+    concessionaire: "CET-SP",
+    desc: "Pórtico de fiscalização eletrônica da CET em ambos os sentidos da Marginal Pinheiros.",
+    dangerTip: "Controle eletrônico rigoroso no horário de pico (7h-10h e 17h-20h) para rodízio e velocidade.",
+    economyTip: "Acesso facilitado para a Berrini e Av. Roque Petroni Junior."
+  },
+  {
+    id: "rad-cet-radial-leste-tatuape-novo",
+    name: "Radar CET Radial Leste - Estação Metrô Tatuapé",
+    highway: "Av. Radial Leste (Rua Melo Freire)",
+    km: "km 4",
+    category: "radar",
+    lat: -23.5395,
+    lng: -46.5770,
+    speed: "60 km/h",
+    concessionaire: "CET-SP",
+    desc: "Pórtico eletrônico com câmeras OCR em ambos os sentidos da principal via de ligação da Zona Leste.",
+    dangerTip: "Fiscalização ativa 24h para velocidade e nos picos para o rodízio de placas da capital.",
+    economyTip: "Sincronia semafórica calculada para condutores a 60 km/h estáveis."
+  },
+  {
+    id: "rad-cet-23-de-maio-ibirapuera-novo",
+    name: "Radar CET Av. 23 de Maio - Passarela Ciccillo Matarazzo",
+    highway: "Corredor Norte-Sul (Av. 23 de Maio)",
+    km: "km 4",
+    category: "radar",
+    lat: -23.5820,
+    lng: -46.6495,
+    speed: "60 km/h",
+    concessionaire: "CET-SP",
+    desc: "Câmeras suspensas na passarela sobre a 23 de Maio junto ao Parque Ibirapuera.",
+    dangerTip: "Trecho em declive que induz excesso de velocidade; mantenha a atenção no velocímetro.",
+    economyTip: "Fluidez excelente fora dos horários de pico comercial."
+  },
+  {
+    id: "rad-cet-salim-farah-maluf-novo",
+    name: "Radar CET Av. Salim Farah Maluf - Tatuapé / Mooca",
+    highway: "Av. Professor Salim Farah Maluf",
+    km: "km 3",
+    category: "radar",
+    lat: -23.5605,
+    lng: -46.5730,
+    speed: "60 km/h",
+    concessionaire: "CET-SP",
+    desc: "Radar fixo nos dois sentidos na crucial ligação da Via Anchieta com a Dutra e Ayrton Senna.",
+    dangerTip: "Fiscalização de avanço de semáforo, velocidade e faixa de ônibus.",
+    economyTip: "Ligação estratégica para cruzar a Zona Leste sem pagar pedágios do Rodoanel."
+  },
+  {
+    id: "rad-cet-reboucas-novo",
+    name: "Radar CET Av. Rebouças - Hospital das Clínicas",
+    highway: "Av. Rebouças (Complexo Viário)",
+    km: "km 2",
+    category: "radar",
+    lat: -23.5570,
+    lng: -46.6690,
+    speed: "50 km/h",
+    concessionaire: "CET-SP",
+    desc: "Câmera de fiscalização de velocidade de 50 km/h e invasão de faixa exclusiva de ônibus.",
+    dangerTip: "Faixa da direita exclusiva de transporte coletivo com autuação automática.",
+    economyTip: "Utilize faixas da esquerda para seguir em direção à Av. Brasil e Faria Lima."
+  },
+  // Novos Radares DER-SP e Concessionárias da Malha Rodoviária Paulista
+  {
+    id: "rad-der-sp055-bertioga-novo",
+    name: "Radar DER-SP Rio-Santos - Bertioga / Boracéia",
+    highway: "SP-055 Rodovia Rio-Santos (Manoel Hyppolito Rego)",
+    km: "km 198",
+    category: "radar",
+    lat: -23.7710,
+    lng: -45.8640,
+    speed: "60 km/h",
+    concessionaire: "DER-SP",
+    desc: "Radar fixo do DER-SP em trecho de travessia urbana de pedestres e acesso às praias de Bertioga.",
+    dangerTip: "Redução de limite de 80 km/h para 60 km/h com fiscalização severa.",
+    economyTip: "Atenção a banhistas e ciclistas no acostamento nos fins de semana e feriados."
+  },
+  {
+    id: "rad-der-sp099-tamoios-trecho-serra-novo",
+    name: "Radar DER-SP Rodovia dos Tamoios - Serra Nova",
+    highway: "SP-099 Rodovia dos Tamoios (Pista Nova de Subida)",
+    km: "km 74",
+    category: "radar",
+    lat: -23.6050,
+    lng: -45.4520,
+    speed: "80 km/h",
+    concessionaire: "Concessionária Tamoios (ARTESP)",
+    desc: "Fiscalização eletrônica nos viadutos e no maior túnel rodoviário do Brasil (5,5 km).",
+    dangerTip: "Velocidade rigorosamente controlada dentro dos túneis para segurança máxima contra colisões.",
+    economyTip: "A nova pista de serra reduziu o tempo de subida em mais de 25 minutos."
+  },
+  {
+    id: "rad-der-sp330-anhanguera-limeira-novo",
+    name: "Radar DER/AutoBAn Rod. Anhanguera - Limeira",
+    highway: "SP-330 Rodovia Anhanguera",
+    km: "km 145",
+    category: "radar",
+    lat: -22.5850,
+    lng: -47.4250,
+    speed: "100 km/h",
+    concessionaire: "CCR AutoBAn",
+    desc: "Radar fixo nos dois sentidos na transição entre Limeira e Cordeirópolis.",
+    dangerTip: "Atenção ao fluxo pesado de caminhões canavieiros e bitrens na faixa da direita.",
+    economyTip: "Pista duplicada de ótimo pavimento com consumo homogêneo."
+  },
   // Marginais e Expressas da Capital SP
   {
     id: "rad-marg-tiete-01",
@@ -3085,12 +3351,20 @@ function renderTollPlazaTable(pointsOnRoute = []) {
     const concessionaire = p.concessionaire || "Concessionária Local";
     const direction = AppState.isRoundTrip ? "Ida e Volta" : (p.direction || "Sentido Destino");
 
+    const freeFlowBadge = p.isFreeFlow 
+      ? '<span class="badge-freeflow-table" title="Pórtico eletrônico sem cancelas">FREE FLOW ⚠️</span>' 
+      : '';
+    const freeFlowNotice = p.isFreeFlow
+      ? '<div style="font-size:0.65rem; color:#ef4444; font-weight:700; margin-top:2px;">⚠️ Pague em até 30 dias p/ evitar multa de R$ 195,23</div>'
+      : '';
+
     return `
       <tr>
         <td><strong>${idx + 1}</strong></td>
         <td>
-          <div style="font-weight:700; color:var(--text-main);">${p.name || 'Praça de Pedágio'}</div>
+          <div style="font-weight:700; color:var(--text-main);">${p.name || 'Praça de Pedágio'} ${freeFlowBadge}</div>
           <div style="font-size:0.68rem; color:var(--text-muted);">${concessionaire}</div>
+          ${freeFlowNotice}
         </td>
         <td>
           <span style="font-weight:600;">${highway}</span>
@@ -3520,8 +3794,17 @@ function createMarkerIcon(category, extra) {
 
   let bg = "#16a34a";
   let symbol = "C";
+  const isFreeFlow = extra && (extra.isFreeFlow || (typeof extra === "object" && extra.isFreeFlow));
 
-  if (category === "toll") { bg = "#dc2626"; symbol = "P"; }
+  if (category === "toll") {
+    if (isFreeFlow) {
+      bg = "#7e22ce";
+      symbol = "FF";
+    } else {
+      bg = "#dc2626";
+      symbol = "P";
+    }
+  }
   else if (category === "radar") { bg = "#d97706"; symbol = "R"; }
   else if (category === "gas") { bg = "#16a34a"; symbol = "C"; }
   else if (category === "waze_hazard") { bg = "#be123c"; symbol = "!"; }
@@ -3530,9 +3813,11 @@ function createMarkerIcon(category, extra) {
   else if (category === "waze_police") { bg = "#2563eb"; symbol = "F"; }
   else if (category === "waze_weather") { bg = "#0891b2"; symbol = "N"; }
 
+  const borderStyle = isFreeFlow ? "border: 2px solid #facc15; box-shadow: 0 0 10px rgba(126, 34, 206, 0.7);" : "";
+
   return L.divIcon({
     className: "custom-div-icon",
-    html: `<div class="map-badge-marker" style="background:${bg}; cursor:pointer;">${symbol}</div>`,
+    html: `<div class="map-badge-marker" style="background:${bg}; cursor:pointer; ${borderStyle}">${symbol}</div>`,
     iconSize: [26, 26],
     iconAnchor: [13, 13],
     popupAnchor: [0, -14]
@@ -3546,7 +3831,7 @@ function renderMapMarkers() {
   const filteredPoints = getFilteredPoints();
 
   filteredPoints.forEach((point) => {
-    const icon = createMarkerIcon(point.category, point.speed || point.price);
+    const icon = createMarkerIcon(point.category, point);
     const marker = L.marker([point.lat, point.lng], { icon: icon });
     marker.bindPopup(buildPopupHtml(point));
     AppState.markersLayer.addLayer(marker);
@@ -3559,8 +3844,22 @@ function buildPopupHtml(p) {
   let priceOrAlert = "";
 
   if (p.category === "toll") {
-    categoryLabel = "Praça de Pedágio";
-    priceOrAlert = `<div class="popup-highlight" style="color:#dc2626;">Tarifa: ${p.price}</div>`;
+    if (p.isFreeFlow) {
+      categoryLabel = "FREE FLOW ⚠️ Sem Cancela";
+      tagClass = "toll freeflow-tag";
+      priceOrAlert = `
+        <div class="popup-highlight" style="color:#7e22ce; font-weight:800;">Tarifa Básica: ${p.price}</div>
+        <div style="background:rgba(239,68,68,0.1); border:1px solid #ef4444; border-radius:6px; padding:6px 8px; margin:6px 0; font-size:0.75rem; color:#b91c1c; font-weight:700; line-height:1.35;">
+          ⚠️ ATENÇÃO: Cobrança por pórtico eletrônico. Pague em até 30 dias pela placa para EVITAR MULTA de R$ 195,23 e 5 pontos na CNH (Art. 209-A CTB).
+        </div>
+        <a href="${p.freeFlowUrl || 'https://sigafacil.sp.gov.br'}" target="_blank" rel="noopener" style="display:inline-block; font-size:0.72rem; color:#2563eb; font-weight:700; text-decoration:underline;">
+          🌐 Portal Oficial de Pagamento da Rodovia &rarr;
+        </a>
+      `;
+    } else {
+      categoryLabel = "Praça de Pedágio";
+      priceOrAlert = `<div class="popup-highlight" style="color:#dc2626;">Tarifa: ${p.price}</div>`;
+    }
   } else if (p.category === "radar") {
     categoryLabel = `Radar Fixo: ${p.speed}`;
     priceOrAlert = `<div class="popup-highlight" style="color:#d97706;">Fiscalização Eletrônica</div>`;
@@ -3639,8 +3938,16 @@ function renderPointsList() {
     let tipBlock = "";
 
     if (p.category === "toll") {
-      priceBadge = `<span class="point-price-tag toll">${p.price}</span>`;
-      tipBlock = `<div class="point-economy-tip">${p.economyTip || p.concessionaire || ''}</div>`;
+      if (p.isFreeFlow) {
+        priceBadge = `<span class="point-price-tag freeflow">FREE FLOW: ${p.price}</span>`;
+        tipBlock = `
+          <div class="point-danger-tip" style="color:#ef4444; font-weight:700;">⚠️ Sem cancela! Pague em até 30 dias para evitar multa de R$ 195,23 (Art. 209-A CTB) e 5 pontos na CNH.</div>
+          <div class="point-economy-tip">${p.economyTip || p.concessionaire || ''}</div>
+        `;
+      } else {
+        priceBadge = `<span class="point-price-tag toll">${p.price}</span>`;
+        tipBlock = `<div class="point-economy-tip">${p.economyTip || p.concessionaire || ''}</div>`;
+      }
     } else if (p.category === "radar") {
       priceBadge = `<span class="point-price-tag fine">Limite: ${p.speed}</span>`;
       tipBlock = `<div class="point-danger-tip">${p.dangerTip || 'Fiscalização eletrônica de velocidade.'}</div>`;
