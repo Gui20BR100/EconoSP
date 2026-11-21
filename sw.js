@@ -206,3 +206,53 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
+
+// ================= GESTÃO DE NOTIFICAÇÕES EM SEGUNDO PLANO =================
+let exitNotificationTimer = null;
+
+self.addEventListener('message', (event) => {
+  if (!event.data) return;
+
+  // 1. Agendamento ao sair ou minimizar o app (Continue a viagem!)
+  if (event.data.type === 'SCHEDULE_EXIT_NOTIFICATION') {
+    if (exitNotificationTimer) clearTimeout(exitNotificationTimer);
+    const delay = event.data.delay || 4000;
+    const title = event.data.title || '🚗 Continue a viagem!';
+    const options = {
+      body: event.data.body || 'Suas rotas, pedágios calculados e alertas continuam salvos no EconoSP. Toque para voltar!',
+      icon: './icons/icon-192.png',
+      badge: './icons/icon-192.png',
+      tag: 'econosp-continue-trip',
+      vibrate: [200, 100, 200],
+      renotify: true,
+      data: { url: './' }
+    };
+    exitNotificationTimer = setTimeout(() => {
+      self.registration.showNotification(title, options);
+      exitNotificationTimer = null;
+    }, delay);
+  }
+
+  // 2. Cancela notificação de saída caso o usuário retorne rapidamente à tela
+  if (event.data.type === 'CANCEL_EXIT_NOTIFICATION') {
+    if (exitNotificationTimer) {
+      clearTimeout(exitNotificationTimer);
+      exitNotificationTimer = null;
+    }
+  }
+
+  // 3. Exibição imediata solicitada pelo aplicativo
+  if (event.data.type === 'SHOW_NOTIFICATION_IMMEDIATE') {
+    const title = event.data.title || 'EconoSP';
+    const options = {
+      body: event.data.body || '',
+      icon: event.data.icon || './icons/icon-192.png',
+      badge: event.data.badge || './icons/icon-192.png',
+      tag: event.data.tag || 'econosp-alert',
+      vibrate: [200, 100, 200],
+      renotify: true,
+      data: { url: event.data.url || './' }
+    };
+    self.registration.showNotification(title, options);
+  }
+});

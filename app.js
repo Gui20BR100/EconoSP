@@ -1877,8 +1877,8 @@ const POINTS_DATA = [
 // Base rápida de geocodificação offline para municípios e pontos de SP
 const LOCAL_GEOCODE_CACHE = {
   "sao paulo": [-23.5505, -46.6333],
-  "sp": [-23.5505, -46.6333],
-  "centro": [-23.5505, -46.6333],
+  "centro de sao paulo": [-23.5505, -46.6333],
+  "praca da se": [-23.5505, -46.6333],
   "se": [-23.5505, -46.6333],
   "paulista": [-23.5615, -46.6559],
   "av paulista": [-23.5615, -46.6559],
@@ -2427,15 +2427,8 @@ function initPwaAndServiceWorker() {
 
   updateNetworkStatus();
 
-  // 4. Teste Interativo de Notificação Push
-  const btnHeaderPushTest = document.getElementById('btnHeaderPushTest');
-  if (btnHeaderPushTest) {
-    btnHeaderPushTest.addEventListener('click', triggerTestPushNotification);
-  }
-  const btnBottomPushTest = document.getElementById('btnBottomPushTest');
-  if (btnBottomPushTest) {
-    btnBottomPushTest.addEventListener('click', triggerTestPushNotification);
-  }
+  // 4. Inicializa Central de Notificações Inteligentes
+  SmartNotifications.init();
 }
 
 // Toast flutuante de confirmação da notificação push
@@ -2456,75 +2449,289 @@ function showPushSuccessToast(message) {
   }, 4500);
 }
 
-// Disparo de teste da notificação push
-async function triggerTestPushNotification() {
-  if (!('Notification' in window)) {
-    alert('Seu navegador ou dispositivo atual não suporta a API de Notificações.');
-    return;
-  }
+// ================= SISTEMA INTELIGENTE DE NOTIFICAÇÕES (PWA / PUSH) =================
+const SmartNotifications = {
+  lastExitNotif: 0,
+  permission: ('Notification' in window) ? Notification.permission : 'unsupported',
 
-  // Resposta tátil e sonora imediata
-  if (typeof playNotificationBeep === 'function') {
-    playNotificationBeep(640, 0.12);
-  }
-  if ('vibrate' in navigator) {
-    try {
-      navigator.vibrate([150, 80, 200]);
-    } catch (e) {}
-  }
+  init() {
+    this.updatePermissionBadge();
+    this.setupListeners();
+    this.checkHolidayOnStartup();
+  },
 
-  let perm = Notification.permission;
-  if (perm === 'default') {
-    try {
-      perm = await Notification.requestPermission();
-    } catch (err) {
-      console.warn('[EconoSP Push] Falha ao solicitar permissão:', err);
-    }
-  }
-
-  if (perm === 'denied') {
-    alert('As notificações estão bloqueadas nas permissões do seu navegador.\n\nPara ativá-las:\n1. Toque no ícone de configurações ao lado do endereço (ou no cadeado)\n2. Ative a permissão de "Notificações"\n3. Recarregue a página.');
-    return;
-  }
-
-  if (perm !== 'granted') {
-    alert('Permissão de notificação não concedida.');
-    return;
-  }
-
-  const notificationTitle = '🔔 EconoSP: Alerta de Pedágio e Rota';
-  const notificationOptions = {
-    body: 'Teste de Notificação Push funcionando com sucesso no seu dispositivo! Monitoramento de tarifas e trânsito ativo.',
-    icon: './icons/icon-192.png',
-    badge: './icons/icon-192.png',
-    tag: 'econosp-test-' + Date.now(),
-    vibrate: [200, 100, 200],
-    renotify: true,
-    data: {
-      url: './'
-    }
-  };
-
-  try {
-    if ('serviceWorker' in navigator) {
-      const reg = await navigator.serviceWorker.ready;
-      if (reg && reg.showNotification) {
-        await reg.showNotification(notificationTitle, notificationOptions);
-      } else {
-        new Notification(notificationTitle, notificationOptions);
+  updatePermissionBadge() {
+    const badge = document.getElementById("notifPermissionStatusBadge");
+    const btnGrant = document.getElementById("btnGrantNotifPermission");
+    if (!('Notification' in window)) {
+      if (badge) {
+        badge.textContent = "Não suportado";
+        badge.className = "notif-badge denied";
       }
-    } else {
-      new Notification(notificationTitle, notificationOptions);
+      if (btnGrant) btnGrant.style.display = "none";
+      return;
     }
-    showPushSuccessToast('🔔 Notificação enviada! Verifique a barra de notificações do seu celular.');
-  } catch (err) {
-    console.error('[EconoSP Push] Erro ao disparar notificação via Service Worker:', err);
+
+    const perm = Notification.permission;
+    this.permission = perm;
+
+    if (badge) {
+      if (perm === "granted") {
+        badge.textContent = "Ativo e Concedido";
+        badge.className = "notif-badge granted";
+      } else if (perm === "denied") {
+        badge.textContent = "Bloqueado pelo Navegador";
+        badge.className = "notif-badge denied";
+      } else {
+        badge.textContent = "Pendente / Não solicitado";
+        badge.className = "notif-badge";
+      }
+    }
+
+    if (btnGrant) {
+      btnGrant.style.display = perm === "granted" ? "none" : "inline-block";
+      btnGrant.textContent = perm === "denied" ? "Como desbloquear" : "Ativar Notificações";
+    }
+  },
+
+  async requestPermission() {
+    if (!('Notification' in window)) {
+      alert("Seu navegador atual não suporta notificações web/PWA.");
+      return false;
+    }
+
+    let perm = Notification.permission;
+    if (perm === "default") {
+      try {
+        perm = await Notification.requestPermission();
+      } catch (e) {
+        console.warn("[EconoSP Notif] Erro permissão:", e);
+      }
+    }
+
+    this.updatePermissionBadge();
+
+    if (perm === "denied") {
+      alert("As notificações estão bloqueadas no seu navegador.\n\nPara ativá-las:\n1. Toque no ícone de opções ao lado do endereço (cadeado)\n2. Permita as Notificações\n3. Recarregue a página.");
+      return false;
+    }
+
+    return perm === "granted";
+  },
+
+  async show(title, body, tag = "econosp-alert", extra = {}) {
+    if (!('Notification' in window)) return;
+
+    if (Notification.permission !== "granted") {
+      const granted = await this.requestPermission();
+      if (!granted) return;
+    }
+
+    // Efeito tátil e sonoro se suportado
+    if (typeof playNotificationBeep === "function") playNotificationBeep(640, 0.1);
+    if ('vibrate' in navigator) {
+      try { navigator.vibrate([120, 60, 160]); } catch (e) {}
+    }
+
+    const options = {
+      body: body,
+      icon: "./icons/icon-192.png",
+      badge: "./icons/icon-192.png",
+      tag: tag + "-" + Date.now(),
+      vibrate: [200, 100, 200],
+      renotify: true,
+      data: { url: "./", ...extra }
+    };
+
     try {
-      new Notification(notificationTitle, notificationOptions);
-      showPushSuccessToast('🔔 Notificação enviada com sucesso!');
-    } catch (fallbackErr) {
-      alert('Falha ao disparar a notificação: ' + (err.message || fallbackErr.message));
+      if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.ready;
+        if (reg && reg.showNotification) {
+          await reg.showNotification(title, options);
+          showPushSuccessToast("🔔 " + title);
+          return;
+        }
+      }
+      new Notification(title, options);
+      showPushSuccessToast("🔔 " + title);
+    } catch (err) {
+      console.warn("[EconoSP Notif] Fallback direto:", err);
+      try {
+        new Notification(title, options);
+        showPushSuccessToast("🔔 " + title);
+      } catch (e) {
+        alert("Não foi possível emitir a notificação: " + (err.message || e.message));
+      }
     }
+  },
+
+  // 1. "🚗 Continue a viagem!" (ao fechar ou minimizar o aplicativo)
+  handleAppExit(delay = 4000) {
+    const now = Date.now();
+    if (now - this.lastExitNotif < 3 * 60 * 1000) return;
+    this.lastExitNotif = now;
+
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'SCHEDULE_EXIT_NOTIFICATION',
+        delay: delay,
+        title: '🚗 Continue a viagem!',
+        body: 'Suas rotas calculadas, economia e alertas de pedágio continuam prontos para você no EconoSP.'
+      });
+    }
+  },
+
+  handleAppEnter() {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'CANCEL_EXIT_NOTIFICATION'
+      });
+    }
+  },
+
+  // 2. "🏖️ Feriado é logo ali!" (detecta feriados de SP/Brasil ou sextas-feiras)
+  triggerHolidayNudge(force = false) {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 4 = Quinta, 5 = Sexta
+    const hour = now.getHours();
+    const isWeekend = (dayOfWeek === 4 && hour >= 15) || (dayOfWeek === 5) || (dayOfWeek === 6);
+
+    const holidays = [
+      { m: 0, d: 1, name: "Ano Novo" },
+      { m: 0, d: 25, name: "Aniv. de São Paulo" },
+      { m: 3, d: 21, name: "Tiradentes" },
+      { m: 4, d: 1, name: "Dia do Trabalho" },
+      { m: 6, d: 9, name: "Revolução Constitucionalista" },
+      { m: 8, d: 7, name: "Independência" },
+      { m: 9, d: 12, name: "N. Sra. Aparecida" },
+      { m: 10, d: 2, name: "Finados" },
+      { m: 10, d: 15, name: "Proclamação da República" },
+      { m: 10, d: 20, name: "Dia da Consciência Negra" },
+      { m: 11, d: 25, name: "Natal" }
+    ];
+
+    let foundHoliday = null;
+    holidays.forEach(h => {
+      const hDate = new Date(now.getFullYear(), h.m, h.d);
+      const diff = Math.ceil((hDate - now) / (1000 * 60 * 60 * 24));
+      if (diff >= 0 && diff <= 4) {
+        foundHoliday = h;
+      }
+    });
+
+    if (force || foundHoliday || isWeekend) {
+      const title = foundHoliday ? `🏖️ Feriado é logo ali (${foundHoliday.name})!` : '🏖️ Feriado é logo ali!';
+      const body = 'Vai pegar a estrada? Planeje sua rota no EconoSP, fuja dos pedágios abusivos e evite filas na descida!';
+      this.show(title, body, 'econosp-holiday');
+    }
+  },
+
+  // 3. "🌊 Próxima estação: praia!"
+  triggerBeachNudge() {
+    const title = '🌊 Próxima estação: praia!';
+    const body = 'Descida para o litoral sem sustos! Descubra rotas econômicas com tarifa zero na serra e economize com o EconoSP.';
+    this.show(title, body, 'econosp-beach');
+  },
+
+  // 4. "⚡ Alerta Free Flow e Multas"
+  triggerFreeFlowAlert() {
+    const title = '⚡ Alerta na Rodovia: Free Flow sem cancela';
+    const body = 'Atenção: Novo pórtico Free Flow identificado. Efetue o pagamento em até 30 dias para evitar multa grave de R$ 195,23 (Art. 209-A).';
+    this.show(title, body, 'econosp-freeflow');
+  },
+
+  checkHolidayOnStartup() {
+    const now = new Date();
+    const day = now.getDay();
+    const hour = now.getHours();
+    if (day === 5 && hour >= 12 && hour <= 14) {
+      const lastCheck = localStorage.getItem("econosp_holiday_nudge_date");
+      const todayStr = now.toISOString().split("T")[0];
+      if (lastCheck !== todayStr) {
+        localStorage.setItem("econosp_holiday_nudge_date", todayStr);
+        this.triggerHolidayNudge(false);
+      }
+    }
+  },
+
+  setupListeners() {
+    // Monitoramento de saída do aplicativo / minimização
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") {
+        this.handleAppExit(4000);
+      } else if (document.visibilityState === "visible") {
+        this.handleAppEnter();
+        this.updatePermissionBadge();
+      }
+    });
+
+    window.addEventListener("pagehide", () => {
+      this.handleAppExit(3000);
+    });
+
+    // Botões de abertura do modal de notificações
+    const btnHeaderPush = document.getElementById("btnHeaderPushTest");
+    const btnBottomPush = document.getElementById("btnBottomPushTest");
+    const btnOpenFromTips = document.getElementById("btnOpenNotifModalFromTips");
+    const modalNotif = document.getElementById("modalNotifications");
+    const btnCloseNotif = document.getElementById("btnCloseNotifModal");
+    const btnGrant = document.getElementById("btnGrantNotifPermission");
+
+    const openModal = () => {
+      if (modalNotif) {
+        modalNotif.classList.add("active");
+        this.updatePermissionBadge();
+      }
+    };
+
+    if (btnHeaderPush) btnHeaderPush.addEventListener("click", openModal);
+    if (btnBottomPush) btnBottomPush.addEventListener("click", openModal);
+    if (btnOpenFromTips) btnOpenFromTips.addEventListener("click", openModal);
+
+    if (btnCloseNotif && modalNotif) {
+      btnCloseNotif.addEventListener("click", () => modalNotif.classList.remove("active"));
+      modalNotif.addEventListener("click", (e) => {
+        if (e.target === modalNotif) modalNotif.classList.remove("active");
+      });
+    }
+
+    if (btnGrant) {
+      btnGrant.addEventListener("click", async () => {
+        await this.requestPermission();
+      });
+    }
+
+    // Botões de gatilho de cada teste
+    document.querySelectorAll(".btn-notif-trigger").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const type = btn.getAttribute("data-notif-type");
+        const granted = await this.requestPermission();
+        if (!granted) return;
+
+        if (type === "exit") {
+          this.show("🚗 Continue a viagem!", "Suas rotas calculadas, economia e alertas de pedágio continuam prontos para você no EconoSP.", "econosp-exit");
+        } else if (type === "exit-delay") {
+          this.handleAppExit(4000);
+          showPushSuccessToast("⏳ Agendado para daqui a 4 segundos! Minimize o navegador ou saia do app agora para ver o alerta chegar.");
+        } else if (type === "holiday") {
+          this.triggerHolidayNudge(true);
+        } else if (type === "beach") {
+          this.triggerBeachNudge();
+        } else if (type === "freeflow") {
+          this.triggerFreeFlowAlert();
+        }
+      });
+    });
+  }
+};
+
+function triggerTestPushNotification() {
+  const modalNotif = document.getElementById("modalNotifications");
+  if (modalNotif) {
+    modalNotif.classList.add("active");
+    SmartNotifications.updatePermissionBadge();
+  } else {
+    SmartNotifications.show("🔔 EconoSP: Alerta de Pedágio e Rota", "Notificação de teste funcionando no seu dispositivo!", "econosp-test");
   }
 }
 
@@ -2855,10 +3062,14 @@ async function calculateContextualRoutes() {
   if (btnCalc) btnCalc.textContent = "Calculando rota e pedágios...";
 
   try {
-    const origCoords = await geocodeAddress(AppState.originText);
+    let origCoords = null;
+    if (AppState.isGpsOrigin && AppState.originCoords && Array.isArray(AppState.originCoords) && AppState.originCoords.length === 2) {
+      origCoords = AppState.originCoords;
+    } else {
+      origCoords = await geocodeAddress(AppState.originText);
+      AppState.originCoords = origCoords;
+    }
     const destCoords = await geocodeAddress(AppState.destText);
-
-    AppState.originCoords = origCoords;
     AppState.destCoords = destCoords;
 
     // Geocodifica paradas intermediárias ativas
@@ -3059,6 +3270,7 @@ async function buildStreetRoutesForDestination(orig, dest, destName) {
   AppState.routesData = {
     fast: {
       waypoints: fastWp,
+      queryWaypoints: fastWaypointsQuery,
       distanceKm: fastDist,
       baseDurationMin: fastDur,
       durationMin: fastDur + fastAnalysis.totalJamDelayMin,
@@ -3072,6 +3284,7 @@ async function buildStreetRoutesForDestination(orig, dest, destName) {
     },
     economy: {
       waypoints: econWp,
+      queryWaypoints: econWaypointsQuery,
       distanceKm: econDist,
       baseDurationMin: econDur,
       durationMin: econDur + econAnalysis.totalJamDelayMin,
@@ -3085,6 +3298,7 @@ async function buildStreetRoutesForDestination(orig, dest, destName) {
     },
     eco: {
       waypoints: ecoWp,
+      queryWaypoints: ecoWaypointsQuery,
       distanceKm: ecoDist,
       baseDurationMin: ecoDur,
       durationMin: ecoDur + ecoAnalysis.totalJamDelayMin,
@@ -3175,6 +3389,9 @@ function applySelectedStrategy(strategyKey) {
   // Recalcula custos e emissões de carbono
   recalculateRoutePlan();
 
+  // Atualiza link e waypoints do Google Maps para a estratégia selecionada
+  updateGoogleMapsLink();
+
   // Atualiza marcadores e lista se o filtro for no trajeto
   renderMapMarkers();
   renderPointsList();
@@ -3242,9 +3459,15 @@ async function geocodeAddress(query) {
   }
 
   const clean = query.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  
+  // 1. Correspondência exata de município ou ponto de referência conhecido
   for (const key in LOCAL_GEOCODE_CACHE) {
-    if (clean.includes(key)) return LOCAL_GEOCODE_CACHE[key];
+    if (clean === key || clean === key + ", sp" || clean === key + " sp" || clean === key + " - sp" || clean === "cidade de " + key) {
+      return LOCAL_GEOCODE_CACHE[key];
+    }
   }
+
+  // 2. Consulta à API de Geocodificação OpenStreetMap Nominatim para endereços/ruas completas
   try {
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ", Brasil")}&limit=1`;
     const resp = await fetch(url, { headers: { "Accept-Language": "pt-BR" } });
@@ -3256,6 +3479,13 @@ async function geocodeAddress(query) {
     }
   } catch (e) {
     console.warn("Geocode error:", e);
+  }
+
+  // 3. Fallback inteligente apenas se offline/sem rede (busca por palavra inteira)
+  for (const key in LOCAL_GEOCODE_CACHE) {
+    if (new RegExp(`\\b${key}\\b`, "i").test(clean)) {
+      return LOCAL_GEOCODE_CACHE[key];
+    }
   }
   return [-23.5505, -46.6333];
 }
@@ -3313,18 +3543,67 @@ function updateStopsMarkers() {
   });
 }
 
+function getGoogleMapsUrlForActiveRoute() {
+  const currentRoute = AppState.routesData[AppState.selectedStrategy] || AppState.routesData.economy;
+  if (!currentRoute) return "";
+
+  // 1. Origem precisa: usa latitude/longitude com 6 casas decimais se disponível (GPS ou geocodificado)
+  let origParam = "";
+  if (AppState.originCoords && Array.isArray(AppState.originCoords) && AppState.originCoords.length === 2) {
+    origParam = `${AppState.originCoords[0].toFixed(6)},${AppState.originCoords[1].toFixed(6)}`;
+  } else {
+    origParam = encodeURIComponent(AppState.originText || "São Paulo, SP");
+  }
+
+  // 2. Destino preciso: coordenadas se disponíveis
+  let destParam = "";
+  if (AppState.destCoords && Array.isArray(AppState.destCoords) && AppState.destCoords.length === 2) {
+    destParam = `${AppState.destCoords[0].toFixed(6)},${AppState.destCoords[1].toFixed(6)}`;
+  } else {
+    destParam = encodeURIComponent(AppState.destText || "Caraguatatuba, SP");
+  }
+
+  let url = `https://www.google.com/maps/dir/?api=1&origin=${origParam}&destination=${destParam}&travelmode=driving`;
+
+  const waypointsList = [];
+
+  // 3. Paradas intermediárias adicionadas manualmente pelo usuário
+  const validStops = AppState.stops.filter(s => s && ((s.coords && s.coords.length === 2) || (s.text && s.text.trim())));
+  validStops.forEach(s => {
+    if (s.coords && Array.isArray(s.coords) && s.coords.length === 2) {
+      waypointsList.push(`${s.coords[0].toFixed(6)},${s.coords[1].toFixed(6)}`);
+    } else if (s.text && s.text.trim()) {
+      waypointsList.push(encodeURIComponent(s.text.trim()));
+    }
+  });
+
+  // 4. Waypoints estratégicos da modalidade selecionada (ex: Mogi-Bertioga / Rio-Santos na Econômica, Carvalho Pinto na Expressa)
+  // Força o Google Maps a seguir o MESMO corredor rodoviário escolhido no EconoSP!
+  if (currentRoute.queryWaypoints && currentRoute.queryWaypoints.length > 2) {
+    const intermediateQueryPoints = currentRoute.queryWaypoints.slice(1, -1);
+    intermediateQueryPoints.forEach(pt => {
+      if (Array.isArray(pt) && pt.length === 2) {
+        waypointsList.push(`${pt[0].toFixed(6)},${pt[1].toFixed(6)}`);
+      }
+    });
+  }
+
+  if (waypointsList.length > 0) {
+    url += `&waypoints=${waypointsList.join("|")}`;
+  }
+
+  return url;
+}
+
 function updateGoogleMapsLink() {
   const gmapsLink = document.getElementById("btnOpenGmapsExternal");
-  if (gmapsLink) {
-    let url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(AppState.originText)}&destination=${encodeURIComponent(AppState.destText)}&travelmode=driving`;
-    
-    const validStops = AppState.stops.filter(s => s.text && s.text.trim());
-    if (validStops.length > 0) {
-      const waypointsParam = validStops.map(s => encodeURIComponent(s.text.trim())).join("|");
-      url += `&waypoints=${waypointsParam}`;
-    }
+  if (!gmapsLink) return;
 
+  const url = getGoogleMapsUrlForActiveRoute();
+  if (url) {
     gmapsLink.href = url;
+    gmapsLink.setAttribute("target", "_blank");
+    gmapsLink.setAttribute("rel", "noopener noreferrer");
   }
 }
 
@@ -4470,8 +4749,32 @@ function setupEventListeners() {
       input.addEventListener("keydown", (e) => {
         if (e.key === "Enter") calculateContextualRoutes();
       });
+      if (id === "originInput") {
+        input.addEventListener("input", () => {
+          AppState.isGpsOrigin = false;
+          const btnLocate = document.getElementById("btnLocateMe");
+          if (btnLocate) btnLocate.textContent = "GPS";
+        });
+      }
     }
   });
+
+  const btnOpenGmaps = document.getElementById("btnOpenGmapsExternal");
+  if (btnOpenGmaps) {
+    btnOpenGmaps.addEventListener("click", (e) => {
+      e.preventDefault();
+      const url = getGoogleMapsUrlForActiveRoute();
+      if (!url) {
+        alert("Por favor, calcule ou selecione uma rota antes de abrir no Google Maps.");
+        return;
+      }
+      // No celular / PWA, window.open abre o aplicativo nativo do Google Maps ou uma nova aba externa no navegador
+      const win = window.open(url, "_blank", "noopener,noreferrer");
+      if (!win || win.closed || typeof win.closed === "undefined") {
+        window.location.href = url;
+      }
+    });
+  }
 
   const btnLocateMe = document.getElementById("btnLocateMe");
   if (btnLocateMe) btnLocateMe.addEventListener("click", () => requestUserGeolocation(true));

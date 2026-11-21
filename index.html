@@ -323,8 +323,9 @@
               <div id="savedRoutesList" class="saved-routes-list"></div>
             </div>
 
-            <a id="btnOpenGmapsExternal" href="#" target="_blank" class="btn-open-gmaps">
-              Abrir Trajeto no Google Maps
+            <a id="btnOpenGmapsExternal" href="#" target="_blank" rel="noopener noreferrer" class="btn-open-gmaps" title="Abrir esta rota idêntica no aplicativo ou site do Google Maps">
+              <span class="gmaps-btn-icon">🗺️</span>
+              <span>Abrir Trajeto Idêntico no Google Maps</span>
             </a>
           </div>
         </div>
@@ -480,6 +481,17 @@
             <div class="guide-step-card">
               <div class="guide-step-title">4. Condução sob Neblina na Serra</div>
               <p class="guide-step-text">Em trechos de serra (Imigrantes, Anchieta e Tamoios), reduza a velocidade e aumente a distância de seguimento. Nunca acione o pisca-alerta em tráfego contínuo.</p>
+            </div>
+
+            <!-- Central de Notificações Inteligentes no Painel -->
+            <div class="guide-step-card notif-promo-box" style="border-left: 3px solid #3b82f6;">
+              <div class="guide-step-title" style="display:flex; justify-content:space-between; align-items:center;">
+                <span>🔔 Notificações Inteligentes</span>
+                <button id="btnOpenNotifModalFromTips" class="btn-icon-action" type="button" style="font-size:0.72rem; padding:4px 8px;">Configurar</button>
+              </div>
+              <p class="guide-step-text">
+                O EconoSP avisa você quando a viagem é pausada ("Continue a viagem!"), antecipa rotas na véspera de feriados e fins de semana e avisa sobre praças e novos pórticos Free Flow.
+              </p>
             </div>
 
           </div>
@@ -823,6 +835,124 @@
 
         <h4 class="modal-section-title">4. Sistema Free Flow (Pedágio Eletrônico sem Cabine)</h4>
         <p>Pórticos de leitura eletrônica identificam a passagem automaticamente. Veículos sem tag ativa devem efetuar o pagamento nos canais oficiais da concessionária em até 15 dias corridos para evitar autuação por evasão (Art. 209-A do CTB - R$ 195,23).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL CENTRAL DE NOTIFICAÇÕES INTELIGENTES ================= -->
+  <div id="modalNotifications" class="modal-overlay">
+    <div class="modal-dialog notif-dialog">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-icon-badge">🔔</span>
+          <div>
+            <h3>Central de Notificações Inteligentes</h3>
+            <span class="modal-subtitle">Lembretes de viagem, alertas de feriado e economia</span>
+          </div>
+        </div>
+        <button id="btnCloseNotifModal" class="btn-modal-close" type="button" aria-label="Fechar">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Status de Permissão -->
+        <div class="notif-status-card">
+          <div class="notif-status-info">
+            <span class="notif-status-title">Status no Dispositivo:</span>
+            <span id="notifPermissionStatusBadge" class="notif-badge">Verificando...</span>
+          </div>
+          <button id="btnGrantNotifPermission" class="btn-primary-action notif-perm-btn" type="button">
+            Ativar Notificações
+          </button>
+        </div>
+
+        <p class="notif-intro-text">
+          O EconoSP envia notificações contextuais e não-invasivas para você economizar pedágios, evitar multas e aproveitar viagens. Teste os disparos abaixo:
+        </p>
+
+        <!-- Grid de Notificações Disponíveis -->
+        <div class="notif-cards-grid">
+          
+          <!-- Card 1: Continue a Viagem -->
+          <div class="notif-card">
+            <div class="notif-card-header">
+              <span class="notif-emoji">🚗</span>
+              <div class="notif-card-info">
+                <strong>Continue a viagem!</strong>
+                <span class="notif-card-timing">Ao fechar ou minimizar o aplicativo</span>
+              </div>
+            </div>
+            <p class="notif-card-desc">
+              Garante que você não perca seu traçado calculado, paradas e custos ao alternar entre apps.
+            </p>
+            <div class="notif-btn-row">
+              <button class="btn-notif-trigger" data-notif-type="exit" type="button">
+                Testar Agora
+              </button>
+              <button class="btn-notif-trigger secondary" data-notif-type="exit-delay" type="button" title="Agenda para 4 segundos para você minimizar o app e ver o alerta chegar!">
+                Simular Saída (4s)
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 2: Feriado é logo ali -->
+          <div class="notif-card">
+            <div class="notif-card-header">
+              <span class="notif-emoji">🏖️</span>
+              <div class="notif-card-info">
+                <strong>Feriado é logo ali!</strong>
+                <span class="notif-card-timing">Vésperas de feriados e fins de semana</span>
+              </div>
+            </div>
+            <p class="notif-card-desc">
+              Alerta antes de datas movimentadas para você planejar a rota antecipadamente e fugir de filas e pedágios caros.
+            </p>
+            <div class="notif-btn-row">
+              <button class="btn-notif-trigger" data-notif-type="holiday" type="button">
+                Testar "Feriado é logo ali!"
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 3: Próxima estação: praia! -->
+          <div class="notif-card">
+            <div class="notif-card-header">
+              <span class="notif-emoji">🌊</span>
+              <div class="notif-card-info">
+                <strong>Próxima estação: praia!</strong>
+                <span class="notif-card-timing">Descida da serra e fins de semana</span>
+              </div>
+            </div>
+            <p class="notif-card-desc">
+              Lembrete descontraído para conferir a melhor rota econômica pelo litoral com custo zero na serra.
+            </p>
+            <div class="notif-btn-row">
+              <button class="btn-notif-trigger" data-notif-type="beach" type="button">
+                Testar "Próxima estação: praia!"
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 4: Alerta Free Flow -->
+          <div class="notif-card">
+            <div class="notif-card-header">
+              <span class="notif-emoji">⚡</span>
+              <div class="notif-card-info">
+                <strong>Alerta Free Flow e Multas</strong>
+                <span class="notif-card-timing">Durante trajetos com pórticos sem cancela</span>
+              </div>
+            </div>
+            <p class="notif-card-desc">
+              Avisa sobre novos pórticos automáticos e o prazo regulamentar de pagamento para evitar multa de evasão (Art. 209-A).
+            </p>
+            <div class="notif-btn-row">
+              <button class="btn-notif-trigger" data-notif-type="freeflow" type="button">
+                Testar Alerta Free Flow
+              </button>
+            </div>
+          </div>
+
+        </div>
+
       </div>
     </div>
   </div>
