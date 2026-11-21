@@ -2128,6 +2128,106 @@ function initPwaAndServiceWorker() {
   });
 
   updateNetworkStatus();
+
+  // 4. Teste Interativo de Notificação Push
+  const btnHeaderPushTest = document.getElementById('btnHeaderPushTest');
+  if (btnHeaderPushTest) {
+    btnHeaderPushTest.addEventListener('click', triggerTestPushNotification);
+  }
+  const btnBottomPushTest = document.getElementById('btnBottomPushTest');
+  if (btnBottomPushTest) {
+    btnBottomPushTest.addEventListener('click', triggerTestPushNotification);
+  }
+}
+
+// Toast flutuante de confirmação da notificação push
+function showPushSuccessToast(message) {
+  let toast = document.getElementById('econospPushToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'econospPushToast';
+    toast.style.cssText = 'position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(10px);background:#10b981;color:#ffffff;padding:10px 18px;border-radius:8px;font-size:0.82rem;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,0.35);z-index:99999;display:flex;align-items:center;gap:8px;transition:opacity 0.3s ease, transform 0.3s ease;text-align:center;max-width:90vw;pointer-events:none;opacity:0;';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.style.opacity = '1';
+  toast.style.transform = 'translateX(-50%) translateY(0)';
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-50%) translateY(10px)';
+  }, 4500);
+}
+
+// Disparo de teste da notificação push
+async function triggerTestPushNotification() {
+  if (!('Notification' in window)) {
+    alert('Seu navegador ou dispositivo atual não suporta a API de Notificações.');
+    return;
+  }
+
+  // Resposta tátil e sonora imediata
+  if (typeof playNotificationBeep === 'function') {
+    playNotificationBeep(640, 0.12);
+  }
+  if ('vibrate' in navigator) {
+    try {
+      navigator.vibrate([150, 80, 200]);
+    } catch (e) {}
+  }
+
+  let perm = Notification.permission;
+  if (perm === 'default') {
+    try {
+      perm = await Notification.requestPermission();
+    } catch (err) {
+      console.warn('[EconoSP Push] Falha ao solicitar permissão:', err);
+    }
+  }
+
+  if (perm === 'denied') {
+    alert('As notificações estão bloqueadas nas permissões do seu navegador.\n\nPara ativá-las:\n1. Toque no ícone de configurações ao lado do endereço (ou no cadeado)\n2. Ative a permissão de "Notificações"\n3. Recarregue a página.');
+    return;
+  }
+
+  if (perm !== 'granted') {
+    alert('Permissão de notificação não concedida.');
+    return;
+  }
+
+  const notificationTitle = '🔔 EconoSP: Alerta de Pedágio e Rota';
+  const notificationOptions = {
+    body: 'Teste de Notificação Push funcionando com sucesso no seu dispositivo! Monitoramento de tarifas e trânsito ativo.',
+    icon: './icons/icon-192.png',
+    badge: './icons/icon-192.png',
+    tag: 'econosp-test-' + Date.now(),
+    vibrate: [200, 100, 200],
+    renotify: true,
+    data: {
+      url: './'
+    }
+  };
+
+  try {
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.ready;
+      if (reg && reg.showNotification) {
+        await reg.showNotification(notificationTitle, notificationOptions);
+      } else {
+        new Notification(notificationTitle, notificationOptions);
+      }
+    } else {
+      new Notification(notificationTitle, notificationOptions);
+    }
+    showPushSuccessToast('🔔 Notificação enviada! Verifique a barra de notificações do seu celular.');
+  } catch (err) {
+    console.error('[EconoSP Push] Erro ao disparar notificação via Service Worker:', err);
+    try {
+      new Notification(notificationTitle, notificationOptions);
+      showPushSuccessToast('🔔 Notificação enviada com sucesso!');
+    } catch (fallbackErr) {
+      alert('Falha ao disparar a notificação: ' + (err.message || fallbackErr.message));
+    }
+  }
 }
 
 // ================= INICIALIZAÇÃO =================
@@ -2144,11 +2244,13 @@ document.addEventListener("DOMContentLoaded", () => {
   updateQuickStatsBar();
   evaluateRodizioStatus();
 
+  // Em dispositivos móveis, inicia por padrão no modo Mapa em tela cheia para evitar lentidão
+  if (window.innerWidth <= 900 && typeof window.setMobileView === "function") {
+    window.setMobileView("map");
+  }
+
   // Traçado inicial das rotas contextuais com ruas do mapa
   calculateContextualRoutes();
-
-  // GPS silencioso na inicialização
-  requestUserGeolocation(false);
 });
 
 // ================= MAPA GOOGLE =================
@@ -2896,6 +2998,11 @@ function recalculateRoutePlan() {
   const totalEl = document.getElementById("calcTotalDisplay");
   if (totalEl) totalEl.textContent = `R$ ${totalCost.toFixed(2).replace(".", ",")}`;
 
+  const mobilePlannerChipText = document.getElementById("mobilePlannerChipText");
+  if (mobilePlannerChipText) {
+    mobilePlannerChipText.textContent = `📍 ${activeStrategy.title}: R$ ${totalCost.toFixed(2).replace(".", ",")} (${Math.round(distanceKm)} km)`;
+  }
+
   const litersEl = document.getElementById("calcLitersDisplay");
   if (litersEl) {
     const unit = fuelType === "gnv" ? "m³" : "L";
@@ -3575,25 +3682,26 @@ function focusOnPoint(id) {
   if (!point || !AppState.map) return;
 
   if (window.innerWidth <= 900) {
-    const mapCanvas = document.getElementById("mapCanvasWrapper");
-    if (mapCanvas) {
-      mapCanvas.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (typeof window.setMobileView === "function") {
+      window.setMobileView("map");
     }
     document.querySelectorAll(".mobile-nav-btn").forEach(b => {
       b.classList.toggle("active", b.getAttribute("data-mobile-target") === "map");
     });
   }
 
-  AppState.map.setView([point.lat, point.lng], 14, { animate: true });
-  if (AppState.markersLayer) {
-    AppState.markersLayer.eachLayer(layer => {
-      if (layer.getLatLng && 
-          Math.abs(layer.getLatLng().lat - point.lat) < 0.0001 && 
-          Math.abs(layer.getLatLng().lng - point.lng) < 0.0001) {
-        layer.openPopup();
-      }
-    });
-  }
+  setTimeout(() => {
+    AppState.map.setView([point.lat, point.lng], 14, { animate: true });
+    if (AppState.markersLayer) {
+      AppState.markersLayer.eachLayer(layer => {
+        if (layer.getLatLng && 
+            Math.abs(layer.getLatLng().lat - point.lat) < 0.0001 && 
+            Math.abs(layer.getLatLng().lng - point.lng) < 0.0001) {
+          layer.openPopup();
+        }
+      });
+    }
+  }, 120);
 
   playNotificationBeep(520, 0.08);
 }
@@ -3992,6 +4100,35 @@ function setupEventListeners() {
   const btnCloseSidebar = document.getElementById("btnCloseSidebar");
   const drawerHandleLabel = document.getElementById("drawerHandleLabel");
 
+  const appLayoutEl = document.querySelector(".app-layout");
+  const btnMobileOpenPlanner = document.getElementById("btnMobileOpenPlanner");
+
+  function setMobileView(mode) {
+    if (!appLayoutEl) return;
+    if (window.innerWidth <= 900) {
+      if (mode === "map") {
+        appLayoutEl.classList.remove("mobile-mode-panel");
+        appLayoutEl.classList.add("mobile-mode-map");
+        if (sidebarEl) sidebarEl.classList.add("collapsed");
+        mobileNavBtns.forEach(b => b.classList.toggle("active", b.getAttribute("data-mobile-target") === "map"));
+        setTimeout(() => {
+          if (AppState.map) AppState.map.invalidateSize();
+        }, 120);
+      } else {
+        appLayoutEl.classList.remove("mobile-mode-map");
+        appLayoutEl.classList.add("mobile-mode-panel");
+        if (sidebarEl) {
+          sidebarEl.classList.remove("collapsed");
+          sidebarEl.scrollTop = 0;
+        }
+      }
+    } else {
+      appLayoutEl.classList.remove("mobile-mode-map", "mobile-mode-panel");
+      if (sidebarEl) sidebarEl.classList.remove("collapsed");
+    }
+  }
+  window.setMobileView = setMobileView;
+
   function setSidebarOpen(isOpen) {
     if (!sidebarEl) return;
     sidebarEl.classList.toggle("collapsed", !isOpen);
@@ -4021,8 +4158,27 @@ function setupEventListeners() {
   if (btnMapDrawerHandle) btnMapDrawerHandle.addEventListener("click", toggleSidebarDrawer);
   if (btnCloseSidebar) btnCloseSidebar.addEventListener("click", () => setSidebarOpen(false));
 
+  if (btnMobileOpenPlanner) {
+    btnMobileOpenPlanner.addEventListener("click", () => {
+      setMobileView("panel");
+      activateSidebarTab("calc");
+      playNotificationBeep(520, 0.05);
+    });
+  }
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 900) {
+      if (appLayoutEl) appLayoutEl.classList.remove("mobile-mode-map", "mobile-mode-panel");
+      if (AppState.map) AppState.map.invalidateSize();
+    }
+  });
+
   function activateSidebarTab(targetTab) {
-    setSidebarOpen(true);
+    if (window.innerWidth <= 900) {
+      setMobileView("panel");
+    } else {
+      setSidebarOpen(true);
+    }
     tabBtns.forEach(b => b.classList.toggle("active", b.getAttribute("data-tab") === targetTab));
     document.querySelectorAll(".tab-pane").forEach(pane => pane.style.display = "none");
     const activePane = document.getElementById(`tab-${targetTab}`);
@@ -4045,12 +4201,9 @@ function setupEventListeners() {
       btn.classList.add("active");
 
       if (target === "map") {
-        setSidebarOpen(false);
-        const mapSection = document.getElementById("mapSection");
-        if (mapSection) mapSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        setMobileView("map");
       } else {
         activateSidebarTab(target);
-        if (sidebarEl) sidebarEl.scrollIntoView({ behavior: "smooth", block: "start" });
       }
       playNotificationBeep(500, 0.04);
     });

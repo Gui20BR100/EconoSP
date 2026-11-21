@@ -150,3 +150,59 @@ function limitCacheSize(cacheName, maxItems) {
     });
   });
 }
+
+// ================= SUPORTE A NOTIFICAÇÕES PUSH =================
+self.addEventListener('push', (event) => {
+  let data = {
+    title: 'EconoSP - Atualização de Rota',
+    body: 'Alerta de tráfego e tarifas atualizado para a sua viagem.',
+    icon: './icons/icon-192.png',
+    badge: './icons/icon-192.png',
+    tag: 'econosp-push-update'
+  };
+
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+      data = { ...data, ...payload };
+    } catch (e) {
+      data.body = event.data.text();
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: data.icon || './icons/icon-192.png',
+    badge: data.badge || './icons/icon-192.png',
+    tag: data.tag || 'econosp-push-alert',
+    vibrate: [200, 100, 200, 100, 300],
+    renotify: true,
+    data: {
+      url: data.url || './'
+    }
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+// Manipulador de clique na notificação: foca na janela existente ou abre o PWA
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  const targetUrl = (event.notification.data && event.notification.data.url) || './';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(targetUrl);
+      }
+    })
+  );
+});

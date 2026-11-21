@@ -54,6 +54,11 @@
             <span>Instalar</span>
           </button>
 
+          <!-- Botão de Teste de Notificação Push -->
+          <button id="btnHeaderPushTest" class="btn-icon-action push-action" type="button" title="Testar disparo de notificação push no celular">
+            <span>🔔 Push</span>
+          </button>
+
           <!-- Botão de Rastreamento / Logs de Auditoria -->
           <button id="btnOpenLogsModal" class="btn-icon-action logs-action" type="button" title="Histórico de atividades e auditoria do site">
             <span class="logs-status-dot"></span>
@@ -454,8 +459,11 @@
         <button id="btnToggleAudio" class="btn-console-tool" type="button" title="Ativar ou desativar avisos sonoros">
           Som: Ativo
         </button>
+        <button id="btnBottomPushTest" class="btn-console-tool" type="button" title="Testar disparo de notificação push">
+          🔔 Notificação
+        </button>
         <button id="btnOpenManual" class="btn-console-tool" type="button" title="Consultar orientações e normas">
-          Guia Rodoviário
+          Guia
         </button>
       </div>
 
@@ -470,6 +478,12 @@
     <!-- ÁREA EXPANSIVA DO MAPA (VIEWPORT TOTAL) -->
     <main class="map-viewport" id="mapSection">
       <div class="map-canvas-wrapper" id="mapCanvasWrapper">
+        <!-- CHIP FLUTUANTE MOBILE PARA VER RESUMO/CALCULADORA -->
+        <button id="btnMobileOpenPlanner" class="mobile-map-planner-chip" type="button" title="Abrir painel de rotas e custos">
+          <span id="mobilePlannerChipText">📍 Rota: Traçado Ativo</span>
+          <span class="chip-badge">Ver Custos</span>
+        </button>
+
         <div id="map"></div>
 
         <!-- SELETOR DE CAMADAS FLUTUANTE (CANTO SUPERIOR DIREITO) -->

@@ -1883,28 +1883,117 @@ html, body {
   border-radius: 2px;
 }
 
-/* ================= RESPONSIVIDADE (TELA MENOR QUE 900PX) ================= */
+/* ================= RESPONSIVIDADE E MODO MOBILE COMPLETO (< 900PX) ================= */
 @media (max-width: 900px) {
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    touch-action: manipulation;
+  }
+
   .app-layout {
-    flex-direction: column-reverse;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    width: 100vw;
+    overflow: hidden;
+    position: relative;
   }
 
-  .console-sidebar {
-    width: 100%;
-    max-width: 100%;
-    min-width: 100%;
-    height: 52vh;
-    border-right: none;
+  /* Modo Mapa: Exibe mapa em tela cheia e oculta sidebar */
+  .app-layout.mobile-mode-map .console-sidebar {
+    display: none !important;
+  }
+
+  .app-layout.mobile-mode-map .map-viewport {
+    display: block !important;
+    width: 100vw !important;
+    height: calc(100vh - 58px) !important;
+    height: calc(100dvh - 58px) !important;
+  }
+
+  /* Modo Painel: Exibe sidebar com abas/custos em tela cheia com rolagem nativa suave */
+  .app-layout.mobile-mode-panel .map-viewport {
+    display: none !important;
+  }
+
+  .app-layout.mobile-mode-panel .console-sidebar {
+    display: flex !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    min-width: 100vw !important;
+    height: calc(100vh - 58px) !important;
+    height: calc(100dvh - 58px) !important;
+    border-right: none !important;
+    border-top: none !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 75px !important;
+  }
+
+  /* Se nenhuma classe estiver setada em tela pequena, o mapa fica por padrão */
+  .app-layout:not(.mobile-mode-panel) .console-sidebar {
+    display: none;
+  }
+  .app-layout:not(.mobile-mode-panel) .map-viewport {
+    display: block;
+    width: 100vw;
+    height: calc(100vh - 58px);
+    height: calc(100dvh - 58px);
+  }
+
+  /* Barra de navegação inferior fluida e sem quebras */
+  .mobile-bottom-nav {
+    display: flex !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    white-space: nowrap;
+    height: 58px;
+    padding: 6px 8px;
+    padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));
+    gap: 4px;
+    z-index: 10000;
+    background: var(--bg-surface-solid);
     border-top: 1px solid var(--border-subtle);
-    padding-bottom: 50px;
   }
 
-  .map-viewport {
-    height: 48vh;
+  .mobile-bottom-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-nav-btn {
+    flex: 1 0 auto;
+    min-width: 58px;
+    min-height: 44px;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    touch-action: manipulation;
+  }
+
+  /* Touch targets acessíveis e sem lag de 300ms */
+  button, input, select {
+    touch-action: manipulation;
+  }
+
+  .btn-primary-action {
+    min-height: 48px;
+    font-size: 0.95rem;
+  }
+
+  .btn-icon-action {
+    min-height: 40px;
+    padding: 6px 12px;
   }
 
   .hud-simulation-card {
-    min-width: 300px;
+    min-width: 280px;
+    max-width: calc(100vw - 24px);
     top: 8px;
     padding: 8px 12px;
   }
@@ -1914,9 +2003,59 @@ html, body {
     right: 8px;
   }
 
-  .mobile-bottom-nav {
+  /* Chip flutuante no mapa para abrir o painel de custos */
+  .mobile-map-planner-chip {
+    position: absolute;
+    top: max(12px, env(safe-area-inset-top, 12px));
+    left: 12px;
+    right: 130px;
+    z-index: 999;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
     display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--text-main);
+    font-size: 0.75rem;
+    font-weight: 700;
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+    text-align: left;
+    backdrop-filter: blur(8px);
   }
+
+  .mobile-map-planner-chip .chip-badge {
+    background: var(--primary-soft);
+    color: var(--primary);
+    padding: 3px 8px;
+    border-radius: var(--radius-xs);
+    font-size: 0.7rem;
+    font-weight: 800;
+    white-space: nowrap;
+    margin-left: 6px;
+  }
+}
+
+/* Em telas desktop normais, esconder o chip mobile */
+@media (min-width: 901px) {
+  .mobile-map-planner-chip {
+    display: none !important;
+  }
+}
+
+/* Estilo do Botão de Teste de Notificação Push */
+.btn-icon-action.push-action {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+  font-weight: 700;
+}
+
+.btn-icon-action.push-action:hover {
+  background: var(--warning);
+  color: #000;
 }
 
 /* ================= RECURSOS PADRÃO ROTAS BRASIL ================= */
